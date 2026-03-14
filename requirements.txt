@@ -1,0 +1,17 @@
+torch==2.9.1
+torchvision==0.24.1
+opencv-python==4.12.0.88
+pillow==12.1.1
+albumentations==2.0.8
+numpy==2.2.6
+scipy==1.16.3
+pycocotools==2.0.11
+nuscenes-devkit
+matplotlib==3.10.7
+seaborn==0.13.2
+tensorboard==2.20.0
+ipykernel==6.29.5
+PyYAML==6.0.2
+omegaconf==2.3.0
+tqdm==4.67.1
+scikit-learn==1.7.2
