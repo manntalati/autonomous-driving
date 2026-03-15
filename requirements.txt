@@ -15,3 +15,4 @@ PyYAML==6.0.2
 omegaconf==2.3.0
 tqdm==4.67.1
 scikit-learn==1.7.2
+pytest==9.0.2
