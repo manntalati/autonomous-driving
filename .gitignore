@@ -1,2 +1,4 @@
 data/raw/v1.0-mini
 .venv
+data/__pycache__
+utils/__pycache__

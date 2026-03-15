@@ -25,12 +25,12 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 
 ## Stack
 - PyTorch (custom training loops, mixed precision)
-- KITTI / nuScenes mini dataset
+- nuScenes mini dataset (10 scenes, ~404 samples, 6 cameras)
 - OpenCV, Matplotlib for visualization
 - Metrics: mAP (detection), mIoU (segmentation)
 
 ## Phase Progress
-- [ ] Phase 0 — Setup & Data Pipeline
+- [✅] Phase 0 — Setup & Data Pipeline
 - [ ] Phase 1 — CNN Backbone
 - [ ] Phase 2 — 2D Detection
 - [ ] Phase 3 — Segmentation
@@ -39,7 +39,25 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 - [ ] Phase 6 — Temporal Fusion
 - [ ] Phase 7 — Integration & Demo
 
+## Completed Work
+### Phase 0 ✅
+- `requirements.txt` — curated project deps (torch, torchvision, albumentations, nuscenes-devkit, etc.)
+- Full folder structure: models/{backbone,detection,segmentation,bev,temporal}, data/, training/, evaluation/, utils/, notebooks/, demo/, configs/
+- `notebooks/p0_2_data_exploration.ipynb` — schema walkthrough, 6-camera viz, bbox projection, intrinsic/extrinsic params, LiDAR projection, instance trajectory
+- `data/transforms.py` — train (flip, crop, jitter, blur, normalize) + val pipelines via albumentations; bbox-aware
+- `data/dataset.py` — NuScenesDetectionDataset: 3-class detection (car/ped/cyclist), 3D→2D box projection, scene-level train/val split, collate_fn
+- `data/dataloader.py` — get_loaders() factory returning train/val DataLoaders; pin_memory, configurable cameras
+- `utils/visualize.py` — draw_boxes (cv2, per-class color), visualize_batch (un-normalize + grid), visualize_sample
+
+## Key Decisions
+- Dataset: nuScenes mini only (not full trainval) — sufficient for showcasing DL skills
+- 3 detection classes: car (0), pedestrian (1), cyclist (2) — 12 of 23 nuScenes categories mapped
+- Train/val split: first 8 scenes train, last 2 val — split by scene to prevent data leakage
+- Input resolution: 448×800 (downsampled from native 900×1600)
+
 ## Collaboration Notes
 - Act as project manager: present tickets phase by phase
+- Break down tasks into method-level skeletons; user fills in implementations
+- Review user code when asked — point out bugs, never silently fix them
 - Update CLAUDE.md as phases are completed
 - Emphasize DL concepts from CS 444 throughout implementation

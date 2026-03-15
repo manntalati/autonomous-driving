@@ -44,7 +44,7 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 | Component | Technology |
 |---|---|
 | Framework | PyTorch |
-| Dataset | KITTI / nuScenes (mini split) |
+| Dataset | nuScenes mini (10 scenes, ~404 samples, 6 cameras) |
 | Computer Vision | OpenCV |
 | Visualization | Matplotlib, OpenCV |
 | Training | Custom training loops, LR scheduling, mixed precision |
@@ -60,10 +60,10 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 
 | Ticket | Task | Status |
 |---|---|---|
-| `P0-1` | Set up repo structure, virtual env, and dependencies (PyTorch, OpenCV, etc.) | [ ] |
-| `P0-2` | Download & explore dataset (KITTI or nuScenes mini split) — understand annotations, camera params | [ ] |
-| `P0-3` | Build a custom `Dataset` class with data loading, augmentations, and train/val splits | [ ] |
-| `P0-4` | Build a `DataLoader` pipeline with visualization utilities (draw bboxes, overlay masks) | [ ] |
+| `P0-1` | Set up repo structure, virtual env, and dependencies (PyTorch, OpenCV, etc.) | [✅] |
+| `P0-2` | Download & explore dataset (KITTI or nuScenes mini split) — understand annotations, camera params | [✅] |
+| `P0-3` | Build a custom `Dataset` class with data loading, augmentations, and train/val splits | [✅] |
+| `P0-4` | Build a `DataLoader` pipeline with visualization utilities (draw bboxes, overlay masks) | [✅] |
 
 ---
 
@@ -194,7 +194,11 @@ source venv/bin/activate  # or venv\Scripts\activate on Windows
 # Install dependencies
 pip install -r requirements.txt
 
-# Download dataset (instructions in data/README.md)
+# Place nuScenes mini at data/raw/v1.0-mini/
+# Download from https://www.nuscenes.org/nuscenes#download (mini split, ~4GB)
+
+# Verify data pipeline end-to-end
+python -m data.dataloader
 ```
 
 ---
@@ -204,12 +208,14 @@ pip install -r requirements.txt
 ```
 autonomous-driving/
 ├── README.md
+├── CLAUDE.md
 ├── requirements.txt
 ├── configs/                  # Training configs and hyperparameters
-├── data/                     # Dataset download scripts and data loaders
-│   ├── README.md
-│   ├── dataset.py
-│   └── transforms.py
+├── data/
+│   ├── dataset.py            # NuScenesDetectionDataset — 3-class detection, 3D→2D projection
+│   ├── dataloader.py         # get_loaders() — train/val DataLoader factory
+│   ├── transforms.py         # albumentations pipelines (train + val, bbox-aware)
+│   └── raw/v1.0-mini/        # nuScenes mini dataset
 ├── models/                   # All model architectures
 │   ├── backbone/             # CNN and ViT backbones
 │   ├── detection/            # Object detection head
@@ -217,11 +223,10 @@ autonomous-driving/
 │   ├── bev/                  # Bird's eye view transform
 │   └── temporal/             # Temporal fusion module
 ├── training/                 # Training loops, losses, schedulers
-│   ├── train.py
-│   ├── losses.py
-│   └── schedulers.py
 ├── evaluation/               # Metrics (mAP, mIoU) and eval scripts
-├── utils/                    # Visualization, logging, helpers
-├── notebooks/                # Exploration and experiment notebooks
+├── utils/
+│   └── visualize.py          # draw_boxes, visualize_batch, visualize_sample
+├── notebooks/
+│   └── p0_2_data_exploration.ipynb  # nuScenes schema, cameras, intrinsics, LiDAR projection
 └── demo/                     # End-to-end inference and demo scripts
 ```
