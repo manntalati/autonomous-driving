@@ -126,28 +126,3 @@ def collate_fn(batch):
     images = torch.stack([item[0] for item in batch])
     targets = [item[1] for item in batch]
     return images, targets
-
-# ── Sanity check ────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    from torch.utils.data import DataLoader
-
-    DATA_ROOT = Path("data/raw/v1.0-mini")
-    nusc = NuScenes(version="v1.0-mini", dataroot=str(DATA_ROOT), verbose=False)
-
-    train_ds = NuScenesDetectionDataset(nusc, DATA_ROOT, split="train")
-    val_ds   = NuScenesDetectionDataset(nusc, DATA_ROOT, split="val")
-
-    print(f"Train samples : {len(train_ds)}")
-    print(f"Val samples   : {len(val_ds)}")
-
-    img, targets = train_ds[0]
-    print(f"Image shape   : {img.shape}")
-    print(f"Boxes         : {targets['boxes']}")
-    print(f"Labels        : {[CLASS_NAMES[l] for l in targets['labels'].tolist()]}")
-
-    loader = DataLoader(train_ds, batch_size=4, shuffle=True,
-                        num_workers=0, collate_fn=collate_fn)
-    images, batch_targets = next(iter(loader))
-    print(f"Batch shape   : {images.shape}")
-    print("Sanity check passed.")

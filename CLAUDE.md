@@ -31,7 +31,7 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 
 ## Phase Progress
 - [✅] Phase 0 — Setup & Data Pipeline
-- [ ] Phase 1 — CNN Backbone
+- [🔄] Phase 1 — CNN Backbone (P1-1 ✅, P1-2 ✅, P1-3 ✅, P1-4 🔄, P1-5 🔄)
 - [ ] Phase 2 — 2D Detection
 - [ ] Phase 3 — Segmentation
 - [ ] Phase 4 — ViT Integration
@@ -40,6 +40,14 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 - [ ] Phase 7 — Integration & Demo
 
 ## Completed Work
+### Phase 1 (in progress)
+- `models/backbone/linear_classifier.py` — `LinearClassifier`: flatten + single `nn.Linear`, forward pass ✅
+- `models/backbone/mlp.py` — `MLP`: 3-layer `nn.Sequential` with ReLU + Dropout, forward pass ✅
+- `models/backbone/resnet.py` — `ConvBlock`, `ResidualBlock` (with skip connection), `_make_stage`, `ResNetBackbone` (stem + 4 stages + classifier head + multi-scale C3/C4/C5 output) ✅
+- `training/trainer.py` — `Trainer` skeleton (P1-4, stubs remaining)
+- `training/scheduler.py` — `build_optimizer`, `build_scheduler`, `EarlyStopping` skeleton (P1-5, stubs remaining)
+- `training/train_backbone.py` — end-to-end training script (wires data → model → trainer)
+
 ### Phase 0 ✅
 - `requirements.txt` — curated project deps (torch, torchvision, albumentations, nuscenes-devkit, etc.)
 - Full folder structure: models/{backbone,detection,segmentation,bev,temporal}, data/, training/, evaluation/, utils/, notebooks/, demo/, configs/
