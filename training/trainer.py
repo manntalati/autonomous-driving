@@ -35,7 +35,7 @@ class Trainer:
         accuracy_meter = AverageMeter()
         for images, targets in self.train_loader:
             images = images.to(self.device)
-            labels = torch.cat([t['labels'] for t in targets]).to(self.device)
+            labels = torch.stack([t['labels'].mode().values for t in targets]).to(self.device)
             self.optimizer.zero_grad()
             if self.scaler:
                 with torch.autocast(device_type=self.device):
@@ -63,7 +63,7 @@ class Trainer:
         with torch.no_grad():
             for images, targets in self.val_loader:
                 images = images.to(self.device)
-                labels = torch.cat([t['labels'] for t in targets]).to(self.device)
+                labels = torch.stack([t['labels'].mode().values for t in targets]).to(self.device)
                 if self.scaler:
                     with torch.autocast(device_type=self.device):
                         logits = self.model(images)
@@ -102,3 +102,6 @@ class Trainer:
                 early_stopping(val_metrics['loss'], self.model)
                 if early_stopping.should_stop:
                     break
+
+        if early_stopping is not None:
+            early_stopping.load_best(self.model)

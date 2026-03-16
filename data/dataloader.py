@@ -4,18 +4,24 @@ from torch.utils.data import DataLoader
 from data.dataset import NuScenesDetectionDataset, collate_fn, CLASS_NAMES
 from utils.visualize import visualize_batch
 
-DATA_ROOT = Path("data/raw/v1.0-mini")
-BATCH_SIZE = 4
 NUM_WORKERS = 2
 
 
-def get_loaders(nusc: NuScenes, cameras=None):
-    train_ds = NuScenesDetectionDataset(nusc, DATA_ROOT, split="train", cameras=cameras)
-    val_ds   = NuScenesDetectionDataset(nusc, DATA_ROOT, split="val", cameras=cameras)
+def get_loaders(
+    nusc: NuScenes = None,
+    cameras=None,
+    data_root: str = "data/raw/v1.0-mini",
+    batch_size: int = 4,
+):
+    if nusc is None:
+        nusc = NuScenes(version="v1.0-mini", dataroot=str(data_root), verbose=False)
+    data_root = Path(data_root)
+    train_ds = NuScenesDetectionDataset(nusc, data_root, split="train", cameras=cameras)
+    val_ds   = NuScenesDetectionDataset(nusc, data_root, split="val", cameras=cameras)
 
     train_loader = DataLoader(
         train_ds,
-        batch_size=BATCH_SIZE,
+        batch_size=batch_size,
         shuffle=True,
         num_workers=NUM_WORKERS,
         collate_fn=collate_fn,
@@ -23,7 +29,7 @@ def get_loaders(nusc: NuScenes, cameras=None):
     )
     val_loader = DataLoader(
         val_ds,
-        batch_size=BATCH_SIZE,
+        batch_size=batch_size,
         shuffle=False,
         num_workers=NUM_WORKERS,
         collate_fn=collate_fn,

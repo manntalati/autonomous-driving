@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 import torch
 import torch.nn as nn
 
@@ -16,7 +16,7 @@ def build_optimizer(model: nn.Module, optimizer_type: Literal["sgd", "adamw"] = 
     else:
         return torch.optim.AdamW(parameter_groups, lr=lr)
 
-def build_scheduler(optimizer: torch.optim.Optimizer, scheduler_type: Literal["cosine", "plateau"] = "cosine", epochs: int = 30, min_lr: float = 1e-6, patience: int = 5) -> torch.optim.lr_scheduler._LRScheduler:
+def build_scheduler(optimizer: torch.optim.Optimizer, scheduler_type: Literal["cosine", "plateau"] = "cosine", epochs: int = 30, min_lr: float = 1e-6, patience: int = 5) -> Union[torch.optim.lr_scheduler.LRScheduler, torch.optim.lr_scheduler.ReduceLROnPlateau]:
     if scheduler_type == "cosine":
         return torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, epochs)
     else:
@@ -42,5 +42,5 @@ class EarlyStopping:
                 self.should_stop = True
 
     def load_best(self, model: nn.Module) -> nn.Module:
-        model.load_state_dict(torch.load(self.ckpt_path, map_location="cpu"))
+        model.load_state_dict(torch.load(self.ckpt_path, map_location="cpu", weights_only=True))
         return model
