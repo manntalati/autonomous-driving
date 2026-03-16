@@ -76,8 +76,8 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 | `P1-1` | Implement a simple linear classifier on image patches as a baseline | [✅] |
 | `P1-2` | Build a multi-layer network (MLP) baseline | [✅] |
 | `P1-3` | Build a CNN backbone from scratch (ResNet-style) — conv blocks, batch norm, skip connections | [✅] |
-| `P1-4` | Train the backbone on a traffic sign/object classification subtask | [ ] |
-| `P1-5` | Implement training best practices: LR scheduling, weight decay, augmentation, early stopping | [ ] |
+| `P1-4` | Train the backbone on a traffic sign/object classification subtask | [✅] |
+| `P1-5` | Implement training best practices: LR scheduling, weight decay, augmentation, early stopping | [✅] |
 
 ---
 

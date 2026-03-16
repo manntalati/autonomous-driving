@@ -1,23 +1,11 @@
-"""
-P1-4 — Training Loop
-======================
-CS 444 concept: mini-batch SGD, forward/backward/update cycle, metric tracking.
-
-Trainer wraps a model, optimizer, loss, and dataloaders into clean
-train_epoch / val_epoch methods. Called from a top-level train script.
-"""
-
 from __future__ import annotations
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 import time
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-
 class AverageMeter:
-    """Running mean for a scalar metric (loss, accuracy, etc.)."""
-
     def __init__(self) -> None:
         self.reset()
 
@@ -32,28 +20,7 @@ class AverageMeter:
 
 
 class Trainer:
-    """Manages training and validation for a classification backbone.
-
-    Args:
-        model:      The nn.Module to train.
-        optimizer:  Optimizer (SGD with momentum or AdamW).
-        criterion:  Loss function (nn.CrossEntropyLoss).
-        train_loader: DataLoader for training set.
-        val_loader:   DataLoader for validation set.
-        device:     'cuda', 'mps', or 'cpu'.
-        scaler:     Optional GradScaler for AMP (mixed precision, P1-5).
-    """
-
-    def __init__(
-        self,
-        model: nn.Module,
-        optimizer: torch.optim.Optimizer,
-        criterion: nn.Module,
-        train_loader: DataLoader,
-        val_loader: DataLoader,
-        device: str = "cpu",
-        scaler: Optional[torch.cuda.amp.GradScaler] = None,
-    ) -> None:
+    def __init__(self, model: nn.Module, optimizer: torch.optim.Optimizer, criterion: nn.Module, train_loader: DataLoader, val_loader: DataLoader, device: str = "cpu", scaler: Optional[torch.cuda.amp.GradScaler] = None) -> None:
         self.model = model.to(device)
         self.optimizer = optimizer
         self.criterion = criterion
@@ -62,106 +29,66 @@ class Trainer:
         self.device = device
         self.scaler = scaler
 
-    # ------------------------------------------------------------------ #
-    # Train one epoch                                                      #
-    # ------------------------------------------------------------------ #
-
     def train_epoch(self, epoch: int) -> Dict[str, float]:
-        """Run one full pass over the training set.
-
-        Steps per batch:
-          1. Move data to device.
-          2. Zero gradients.
-          3. Forward pass (with AMP context if scaler is set).
-          4. Compute loss.
-          5. Backward pass (scaler.scale if AMP).
-          6. Optimizer step (scaler.step + update if AMP).
-          7. Accumulate loss and top-1 accuracy.
-
-        Returns:
-            {'loss': avg_loss, 'acc': avg_top1_accuracy}
-        """
         self.model.train()
         loss_meter = AverageMeter()
-        acc_meter  = AverageMeter()
+        accuracy_meter = AverageMeter()
+        for images, targets in self.train_loader:
+            images = images.to(self.device)
+            labels = torch.cat([t['labels'] for t in targets]).to(self.device)
+            self.optimizer.zero_grad()
+            if self.scaler:
+                with torch.autocast(device_type=self.device):
+                    logits = self.model(images)
+                    loss = self.criterion(logits, labels)
+                self.scaler.scale(loss).backward()
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            else:
+                logits = self.model(images)
+                loss = self.criterion(logits, labels)
+                loss.backward()
+                self.optimizer.step()
 
-        for batch_idx, batch in enumerate(self.train_loader):
-            # TODO P1-4a: Unpack batch.
-            # The dataset returns dicts; for the backbone subtask we pass
-            # images + labels. Adjust key names to match your dataset's collate_fn.
-            # images: (B, C, H, W), labels: (B,) integer class indices
-            raise NotImplementedError
-
-            # TODO P1-4b: Zero gradients, forward, loss, backward, step.
-            # If self.scaler is not None, use AMP:
-            #   with torch.autocast(device_type=self.device):
-            #       logits = self.model(images)
-            #       loss = self.criterion(logits, labels)
-            #   self.scaler.scale(loss).backward()
-            #   self.scaler.step(self.optimizer)
-            #   self.scaler.update()
-            # Else:
-            #   logits = self.model(images)
-            #   loss   = self.criterion(logits, labels)
-            #   loss.backward()
-            #   self.optimizer.step()
-            raise NotImplementedError
-
-            # TODO P1-4c: Compute top-1 accuracy and update meters.
-            # top1 = (logits.argmax(dim=1) == labels).float().mean().item()
-            # loss_meter.update(loss.item(), images.size(0))
-            # acc_meter.update(top1, images.size(0))
-            raise NotImplementedError
-
-        return {"loss": loss_meter.avg, "acc": acc_meter.avg}
-
-    # ------------------------------------------------------------------ #
-    # Validation epoch                                                     #
-    # ------------------------------------------------------------------ #
+            accuracy = (logits.argmax(dim=1) == labels).float().mean().item()
+            loss_meter.update(loss.item(), images.size(0))
+            accuracy_meter.update(accuracy, images.size(0))
+            
+        return {'loss': loss_meter.avg, 'acc': accuracy_meter.avg}
 
     def val_epoch(self) -> Dict[str, float]:
-        """Run one full pass over the validation set (no gradients).
-
-        Returns:
-            {'loss': avg_loss, 'acc': avg_top1_accuracy}
-        """
         self.model.eval()
         loss_meter = AverageMeter()
-        acc_meter  = AverageMeter()
-
+        accuracy_meter = AverageMeter()
         with torch.no_grad():
-            for batch in self.val_loader:
-                # TODO P1-4d: Same as train_epoch but no backward.
-                # No AMP needed for inference (though it doesn't hurt).
-                raise NotImplementedError
+            for images, targets in self.val_loader:
+                images = images.to(self.device)
+                labels = torch.cat([t['labels'] for t in targets]).to(self.device)
+                if self.scaler:
+                    with torch.autocast(device_type=self.device):
+                        logits = self.model(images)
+                        loss = self.criterion(logits, labels)
+                else:
+                    logits = self.model(images)
+                    loss = self.criterion(logits, labels)
+                
+                accuracy = (logits.argmax(dim=1) == labels).float().mean().item()
+                loss_meter.update(loss.item(), images.size(0))
+                accuracy_meter.update(accuracy, images.size(0))
 
-        return {"loss": loss_meter.avg, "acc": acc_meter.avg}
+        return {'loss': loss_meter.avg, 'acc': accuracy_meter.avg}
 
-    # ------------------------------------------------------------------ #
-    # Full training run                                                    #
-    # ------------------------------------------------------------------ #
-
-    def fit(
-        self,
-        epochs: int,
-        scheduler=None,
-        early_stopping=None,
-    ) -> None:
-        """Run train_epoch + val_epoch for `epochs` iterations.
-
-        Args:
-            epochs:        Number of epochs.
-            scheduler:     Optional LR scheduler (from training/scheduler.py).
-            early_stopping: Optional EarlyStopping instance (from training/scheduler.py).
-        """
+    def fit(self, epochs: int, scheduler=None, early_stopping=None) -> None:
         for epoch in range(1, epochs + 1):
             t0 = time.time()
             train_metrics = self.train_epoch(epoch)
-            val_metrics   = self.val_epoch()
+            val_metrics = self.val_epoch()
 
-            # TODO P1-4e: Step the scheduler (after validation, not after each batch).
-            # For ReduceLROnPlateau: scheduler.step(val_metrics['loss'])
-            # For others:            scheduler.step()
+            if scheduler is not None:
+                if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    scheduler.step(val_metrics['loss'])
+                else:
+                    scheduler.step()
 
             elapsed = time.time() - t0
             print(
@@ -171,5 +98,7 @@ class Trainer:
                 f"{elapsed:.1f}s"
             )
 
-            # TODO P1-4f: Call early_stopping(val_metrics['loss'], self.model).
-            # If early_stopping.should_stop: break
+            if early_stopping is not None:
+                early_stopping(val_metrics['loss'], self.model)
+                if early_stopping.should_stop:
+                    break
