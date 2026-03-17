@@ -7,12 +7,18 @@ from torch.utils.data import DataLoader
 
 class AverageMeter:
     def __init__(self) -> None:
+        """Tracks a running average of a scalar metric (e.g. loss or accuracy)."""
         self.reset()
 
     def reset(self) -> None:
+        """Reset all accumulators to zero."""
         self.val = self.avg = self.sum = self.count = 0.0
 
     def update(self, val: float, n: int = 1) -> None:
+        """
+        Add n observations of value val and update running average.
+        Args: val — new value; n — number of samples this value represents.
+        """
         self.val = val
         self.sum += val * n
         self.count += n
@@ -21,6 +27,12 @@ class AverageMeter:
 
 class Trainer:
     def __init__(self, model: nn.Module, optimizer: torch.optim.Optimizer, criterion: nn.Module, train_loader: DataLoader, val_loader: DataLoader, device: str = "cpu", scaler: Optional[torch.cuda.amp.GradScaler] = None) -> None:
+        """
+        Wraps model, optimizer, loss, and data loaders for a standard train/val loop.
+        Args: model — nn.Module to train; optimizer — torch optimizer; criterion — loss function;
+              train_loader/val_loader — DataLoaders; device — "cpu"/"cuda"/"mps";
+              scaler — GradScaler for AMP (None disables mixed precision).
+        """
         self.model = model.to(device)
         self.optimizer = optimizer
         self.criterion = criterion
@@ -30,6 +42,11 @@ class Trainer:
         self.scaler = scaler
 
     def train_epoch(self, epoch: int) -> Dict[str, float]:
+        """
+        Run one training epoch with gradient updates. Supports AMP if scaler is set.
+        Args: epoch — current epoch number (used for logging).
+        Returns: dict with keys 'loss' (avg cross-entropy) and 'acc' (avg accuracy).
+        """
         self.model.train()
         loss_meter = AverageMeter()
         accuracy_meter = AverageMeter()
@@ -53,10 +70,14 @@ class Trainer:
             accuracy = (logits.argmax(dim=1) == labels).float().mean().item()
             loss_meter.update(loss.item(), images.size(0))
             accuracy_meter.update(accuracy, images.size(0))
-            
+
         return {'loss': loss_meter.avg, 'acc': accuracy_meter.avg}
 
     def val_epoch(self) -> Dict[str, float]:
+        """
+        Run one validation epoch under torch.no_grad(). Supports AMP if scaler is set.
+        Returns: dict with keys 'loss' (avg cross-entropy) and 'acc' (avg accuracy).
+        """
         self.model.eval()
         loss_meter = AverageMeter()
         accuracy_meter = AverageMeter()
@@ -71,7 +92,7 @@ class Trainer:
                 else:
                     logits = self.model(images)
                     loss = self.criterion(logits, labels)
-                
+
                 accuracy = (logits.argmax(dim=1) == labels).float().mean().item()
                 loss_meter.update(loss.item(), images.size(0))
                 accuracy_meter.update(accuracy, images.size(0))
@@ -79,6 +100,12 @@ class Trainer:
         return {'loss': loss_meter.avg, 'acc': accuracy_meter.avg}
 
     def fit(self, epochs: int, scheduler=None, early_stopping=None) -> None:
+        """
+        Full training loop: train_epoch → val_epoch → scheduler step → early stopping check.
+        Loads best checkpoint at the end if early_stopping is provided.
+        Args: epochs — max number of epochs; scheduler — LR scheduler (optional);
+              early_stopping — EarlyStopping instance (optional).
+        """
         for epoch in range(1, epochs + 1):
             t0 = time.time()
             train_metrics = self.train_epoch(epoch)

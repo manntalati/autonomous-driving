@@ -13,6 +13,12 @@ def get_loaders(
     data_root: str = "data/raw/v1.0-mini",
     batch_size: int = 4,
 ):
+    """
+    Build train and val DataLoaders for nuScenes detection.
+    Args: nusc — NuScenes instance (created internally if None); cameras — list of camera names;
+          data_root — path to v1.0-mini; batch_size — samples per batch.
+    Returns: (train_loader, val_loader) — shuffled train, ordered val, both with pin_memory=True.
+    """
     if nusc is None:
         nusc = NuScenes(version="v1.0-mini", dataroot=str(data_root), verbose=False)
     data_root = Path(data_root)

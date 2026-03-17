@@ -8,6 +8,12 @@ INPUT_H, INPUT_W = 448, 800
 
 
 def get_train_transforms(input_h=INPUT_H, input_w=INPUT_W):
+    """
+    Augmented transform pipeline for training: resize, flip, shift/scale/rotate, crop, color jitter, blur, noise, normalize, to tensor.
+    Bbox-aware: boxes are clipped and filtered by min_visibility=0.3.
+    Args: input_h/input_w — target image resolution (default 448×800).
+    Returns: albumentations Compose pipeline.
+    """
     return A.Compose(
         [
             A.Resize(input_h, input_w),
@@ -47,6 +53,12 @@ def get_train_transforms(input_h=INPUT_H, input_w=INPUT_W):
 
 
 def get_val_transforms(input_h=INPUT_H, input_w=INPUT_W):
+    """
+    Minimal transform pipeline for validation: resize, normalize, to tensor. No augmentation.
+    Bbox-aware: boxes are clipped and filtered by min_visibility=0.3.
+    Args: input_h/input_w — target image resolution (default 448×800).
+    Returns: albumentations Compose pipeline.
+    """
     return A.Compose(
         [
             A.Resize(input_h, input_w),

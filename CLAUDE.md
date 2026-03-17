@@ -32,7 +32,7 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 ## Phase Progress
 - [✅] Phase 0 — Setup & Data Pipeline
 - [✅] Phase 1 — CNN Backbone
-- [ ] Phase 2 — 2D Detection
+- [🔄] Phase 2 — 2D Detection (in progress)
 - [ ] Phase 3 — Segmentation
 - [ ] Phase 4 — ViT Integration
 - [ ] Phase 5 — BEV Transform
@@ -40,7 +40,22 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 - [ ] Phase 7 — Integration & Demo
 
 ## Completed Work
-### Phase 1 (in progress)
+### Phase 2 (in progress)
+- `models/detection/box_utils.py` — core detection utilities ✅
+  - `compute_iou` — pairwise (N, M) IoU matrix between two sets of boxes
+  - `match_anchors_to_gt` — assign each anchor its best GT match + fg/bg label
+  - `encode_boxes` — convert GT boxes to (dx, dy, dw, dh) deltas for training targets
+  - `decode_boxes` — inverse: apply predicted deltas to anchors → final [x1,y1,x2,y2] boxes
+  - `nms` — non-maximum suppression returning kept box indices
+- `models/detection/anchors.py` — `AnchorGenerator` skeleton (not yet implemented)
+- `models/detection/fpn.py` — `FPN` skeleton (not yet implemented)
+- `models/detection/head.py` — `DetectionHead` skeleton (not yet implemented)
+- `models/detection/losses.py` — `focal_loss`, `smooth_l1_loss`, `DetectionLoss` skeletons (not yet implemented)
+- `models/detection/detector.py` — `FPNDetector` skeleton (not yet implemented)
+- `models/detection/map.py` — `compute_ap`, `compute_map` skeletons (not yet implemented)
+- `models/detection/train_detector.py` — training script skeleton (not yet implemented)
+
+### Phase 1 ✅
 - `models/backbone/linear_classifier.py` — `LinearClassifier`: flatten + single `nn.Linear`, forward pass ✅
 - `models/backbone/mlp.py` — `MLP`: 3-layer `nn.Sequential` with ReLU + Dropout, forward pass ✅
 - `models/backbone/resnet.py` — `ConvBlock`, `ResidualBlock` (with skip connection), `_make_stage`, `ResNetBackbone` (stem + 4 stages + classifier head + multi-scale C3/C4/C5 output) ✅

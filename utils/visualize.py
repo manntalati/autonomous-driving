@@ -20,6 +20,12 @@ _STD  = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
 
 def draw_boxes(image, boxes, labels, scores=None) -> np.ndarray:
+    """
+    Draw colored bounding boxes and class labels onto an image.
+    Args: image — (H, W, 3) uint8 numpy array; boxes — list of [x1,y1,x2,y2];
+          labels — list of int class indices; scores — optional list of floats shown in label text.
+    Returns: annotated (H, W, 3) uint8 numpy array (copy of input).
+    """
     image_copy = image.copy()
     for i, (box, label) in enumerate(zip(boxes, labels)):
         x1, y1, x2, y2 = int(box[0]), int(box[1]), int(box[2]), int(box[3])
@@ -34,6 +40,12 @@ def draw_boxes(image, boxes, labels, scores=None) -> np.ndarray:
 
 
 def visualize_batch(images, targets, class_names) -> None:
+    """
+    Display a batch of images with their GT boxes in a matplotlib grid.
+    Args: images — (B, 3, H, W) float tensor (ImageNet-normalized);
+          targets — list of B target dicts with 'boxes', 'labels', 'meta' keys;
+          class_names — list of class name strings (unused directly, labels drive colors).
+    """
     B = images.shape[0]
     ncols = min(B, 4)
     nrows = (B + ncols - 1) // ncols
@@ -62,6 +74,10 @@ def visualize_batch(images, targets, class_names) -> None:
 
 
 def visualize_sample(dataset, idx) -> None:
+    """
+    Visualize a single dataset sample by index.
+    Args: dataset — NuScenesDetectionDataset instance; idx — sample index.
+    """
     image_tensor, targets = dataset[idx]
     images = image_tensor.unsqueeze(0)
     class_names = list(CLASS_NAME.values())
