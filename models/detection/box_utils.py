@@ -31,6 +31,8 @@ def match_anchors_to_gt(anchors: torch.Tensor, gt_boxes: torch.Tensor, iou_thres
     Returns: (matched_gt_indices, match_labels) — both length-N lists;
              matched_gt_indices[i] = index into gt_boxes of best match for anchor i.
     """
+    if len(gt_boxes) == 0:
+        return ([], [0] * len(anchors))
     matrix = compute_iou(anchors, gt_boxes)
     matched_gt_indices = []
     match_labels = []
@@ -87,8 +89,10 @@ def nms(boxes: torch.Tensor, scores: torch.Tensor, iou_threshold: float = 0.5) -
           iou_threshold — boxes with IoU >= threshold vs kept box are suppressed.
     Returns: 1D tensor of indices of kept boxes (sorted by score descending).
     """
-    kept = []
     order = torch.argsort(scores, descending=True)
+    if len(order) == 0:
+        return torch.tensor([], dtype=torch.long)
+    kept = []
     while len(order) > 0:
         i = order[0]
         kept.append(i)
