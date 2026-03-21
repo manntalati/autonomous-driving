@@ -47,7 +47,9 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
   - `encode_boxes` — convert GT boxes to (dx, dy, dw, dh) deltas for training targets
   - `decode_boxes` — inverse: apply predicted deltas to anchors → final [x1,y1,x2,y2] boxes
   - `nms` — non-maximum suppression returning kept box indices
-- `models/detection/anchors.py` — `AnchorGenerator` skeleton (not yet implemented)
+- `models/detection/anchors.py` — `AnchorGenerator` ✅
+  - `generate_for_level` — tiles anchors across one feature map level; returns `(H*W*num_ratios, 4)` in `[x1,y1,x2,y2]`
+  - `generate_all` — loops over all FPN levels, concatenates, clamps to image bounds; returns `(total_anchors, 4)`
 - `models/detection/fpn.py` — `FPN` skeleton (not yet implemented)
 - `models/detection/head.py` — `DetectionHead` skeleton (not yet implemented)
 - `models/detection/losses.py` — `focal_loss`, `smooth_l1_loss`, `DetectionLoss` skeletons (not yet implemented)
