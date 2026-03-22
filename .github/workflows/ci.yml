@@ -29,8 +29,8 @@ jobs:
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
           pip install pytest
-          # Install remaining deps excluding torch (already installed above)
-          grep -v "^torch" requirements.txt | pip install -r /dev/stdin || true
+          # Install remaining deps excluding torch/torchvision (already installed above)
+          grep -vE "^(torch|torchvision)" requirements.txt | pip install -r /dev/stdin
 
       - name: Run tests
         run: python -m pytest tests/ -v --tb=short
