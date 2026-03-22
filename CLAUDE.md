@@ -50,8 +50,12 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 - `models/detection/anchors.py` — `AnchorGenerator` ✅
   - `generate_for_level` — tiles anchors across one feature map level; returns `(H*W*num_ratios, 4)` in `[x1,y1,x2,y2]`
   - `generate_all` — loops over all FPN levels, concatenates, clamps to image bounds; returns `(total_anchors, 4)`
-- `models/detection/fpn.py` — `FPN` skeleton (not yet implemented)
-- `models/detection/head.py` — `DetectionHead` skeleton (not yet implemented)
+- `models/detection/fpn.py` — `FPN` ✅
+  - `__init__` — builds `lateral_convs` and `output_convs` as `nn.ModuleList` (one per FPN level)
+  - `forward` — takes `(C3, C4, C5)`, applies lateral convs, top-down upsample+add pathway, output convs; returns `(P5, P4, P3)`
+- `models/detection/head.py` — `DetectionHead` ✅
+  - `__init__` — shared 4-conv tower (`nn.Sequential`), `cls_head` (`num_anchors * num_classes` out), `reg_head` (`num_anchors * 4` out)
+  - `forward` — loops over FPN levels, runs tower then heads, reshapes to `(B, H*W*A, C)` and `(B, H*W*A, 4)`; returns `(cls_logits_list, bbox_deltas_list)`
 - `models/detection/losses.py` — `focal_loss`, `smooth_l1_loss`, `DetectionLoss` skeletons (not yet implemented)
 - `models/detection/detector.py` — `FPNDetector` skeleton (not yet implemented)
 - `models/detection/map.py` — `compute_ap`, `compute_map` skeletons (not yet implemented)
