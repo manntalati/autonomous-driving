@@ -1,19 +1,29 @@
 import torch
 import torch.nn as nn
+import torchvision
 from typing import List, Tuple
 
 def focal_loss(logits: torch.Tensor, targets: torch.Tensor, alpha: float = 0.25, gamma: float = 2.0) -> torch.Tensor:
     """
     Focal loss — down-weights easy negatives to handle class imbalance.
     The gamma term is the key: (1 - p_t)^gamma shrinks gradient for confident predictions.
+    Parameters:
+        - logits: (B, N, num_classes) raw output from the model
+        - targets: (B, N, num_classes) one-hot encoded GT labels
+        - alpha: weight for the rare class (default 0.25)
+        - gamma: focusing parameter to reduce loss for well-classified examples (default 2.0)
+    Returns:
+        - loss: scalar focal loss averaged over the batch
     """
-    pass
+    return torchvision.ops.sigmoid_focal_loss(logits, targets, alpha, gamma)
+    
 
 def smooth_l1_loss(pred: torch.Tensor, target: torch.Tensor, beta: float = 1.0) -> torch.Tensor:
     """
     Huber-style loss for box regression. Linear for large errors, quadratic for small.
     Robust to outlier boxes.
     """
+    
     pass
 
 class DetectionLoss(nn.Module):
