@@ -56,8 +56,15 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 - `models/detection/head.py` — `DetectionHead` ✅
   - `__init__` — shared 4-conv tower (`nn.Sequential`), `cls_head` (`num_anchors * num_classes` out), `reg_head` (`num_anchors * 4` out)
   - `forward` — loops over FPN levels, runs tower then heads, reshapes to `(B, H*W*A, C)` and `(B, H*W*A, 4)`; returns `(cls_logits_list, bbox_deltas_list)`
-- `models/detection/losses.py` — `focal_loss`, `smooth_l1_loss`, `DetectionLoss` skeletons (not yet implemented)
-- `models/detection/detector.py` — `FPNDetector` skeleton (not yet implemented)
+- `models/detection/losses.py` — `focal_loss`, `smooth_l1_loss`, `DetectionLoss` ✅
+  - `focal_loss` — thin wrapper around `torchvision.ops.sigmoid_focal_loss` with `reduction="none"`; returns per-element loss so the caller controls normalization
+  - `smooth_l1_loss` — manual Huber: `0.5 * x^2 / beta` for `|x| < beta`, `|x| - 0.5 * beta` otherwise; returns per-element tensor
+  - `DetectionLoss.__init__` — stores `num_classes`, `cls_weight`, `reg_weight`
+  - `DetectionLoss.forward` — concatenates all FPN levels into `(B, N, C)` / `(B, N, 4)`; per image: calls `match_anchors_to_gt` → builds sigmoid one-hot `cls_target` → `focal_loss` on all anchors; `encode_boxes` + `smooth_l1_loss` on positives only; normalizes totals by `max(num_pos, 1)` (RetinaNet convention); returns `(total_loss, log_dict)`
+- `models/detection/detector.py` — `FPNDetector` ✅
+  - `__init__` — stores `backbone`, `fpn`, `head`, `anchor_generator`, `num_classes`, and NMS/top-k hyperparams (`score_threshold`, `nms_threshold`, `max_detections`)
+  - `forward` — runs backbone → FPN → head, generates anchors on-the-fly from actual FPN feature-map sizes; training branch returns `(cls_logits, bbox_deltas, anchors)`, eval branch calls `postprocess`
+  - `postprocess` — concatenates FPN levels; per image: `sigmoid` scores → `decode_boxes` → clamp to image bounds → per-class score threshold → per-class `nms` (guarded against empty input) → global top-k by score; returns `(boxes_list, scores_list, labels_list)`
 - `models/detection/map.py` — `compute_ap`, `compute_map` skeletons (not yet implemented)
 - `models/detection/train_detector.py` — training script skeleton (not yet implemented)
 
