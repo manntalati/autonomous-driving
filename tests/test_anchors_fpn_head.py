@@ -122,18 +122,18 @@ class TestAnchorGeneratorForLevel:
         """The anchor in cell (row=0, col=1) for the first ratio must have
         center at (1.5*stride, 0.5*stride).
 
-        Loop order in generate_for_level is: ratio → row → col.
+        Loop order in generate_for_level is: row → col → ratio (matches head reshape).
         With feature_h=2, feature_w=3 and 3 ratios:
-          index 0: ratio=0.5, row=0, col=0  → cx=0.5s, cy=0.5s
-          index 1: ratio=0.5, row=0, col=1  → cx=1.5s, cy=0.5s   ← this one
-          index 2: ratio=0.5, row=0, col=2  → cx=2.5s, cy=0.5s
-          index 3: ratio=0.5, row=1, col=0  → cx=0.5s, cy=1.5s
+          indices 0-2: cell (0,0) ratios a=0,1,2 → cx=0.5s, cy=0.5s
+          indices 3-5: cell (0,1) ratios a=0,1,2 → cx=1.5s, cy=0.5s   ← index 3
+          indices 6-8: cell (0,2) → cx=2.5s, cy=0.5s
+          indices 9-11: cell (1,0) → cx=0.5s, cy=1.5s
           ...
         """
         stride = 16
         out = gen.generate_for_level(feature_h=2, feature_w=3, stride=stride, scale=128.0).float()
-        # Index 1: ratio=0.5, row=0, col=1 → cx=1.5*stride, cy=0.5*stride
-        anchor = out[1]
+        # Index 3: row=0, col=1, ratio=0.5 → cx=1.5*stride, cy=0.5*stride
+        anchor = out[3]
         cx = (anchor[0] + anchor[2]) / 2.0
         cy = (anchor[1] + anchor[3]) / 2.0
         assert abs(cx.item() - 1.5 * stride) < 1e-3, \

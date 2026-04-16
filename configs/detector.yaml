@@ -3,11 +3,13 @@ data_root: data/raw/v1.0-mini
 batch_size: 4
 
 # model
+# FPN returns features coarsest-first (P5, P4, P3) per fpn.py → anchors must match.
+# P5 stride 32 (coarse, large objects) → P3 stride 8 (fine, small objects).
 num_classes: 3
 num_anchors: 3
-scales: [32, 64, 128]
+scales: [96, 48, 16]
 aspect_ratios: [0.5, 1.0, 2.0]
-strides: [8, 16, 32]
+strides: [32, 16, 8]
 
 # training
 epochs: 20

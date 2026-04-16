@@ -15,8 +15,9 @@ class AnchorGenerator:
     def generate_for_level(self, feature_h: int, feature_w: int, stride: int, scale: float) -> torch.Tensor:
         """
         Tile anchors across a single feature map level — vectorized.
-        Ordering (preserved from original impl): ratio → row → col, so the
-        k-th anchor corresponds to (a = k // (H*W), h = (k // W) % H, w = k % W).
+        Ordering: row → col → ratio, matching DetectionHead.forward's reshape
+        (permute(0,2,3,1).reshape(B, H*W*A, C)). The k-th anchor corresponds to
+        (h = k // (W*A), w = (k // A) % W, a = k % A).
         Returns: (H*W*num_ratios, 4) float32 in [x1,y1,x2,y2].
         """
         ratios = torch.tensor(self.aspect_ratios, dtype=torch.float32)
@@ -27,19 +28,18 @@ class AnchorGenerator:
         shifts_y = (torch.arange(feature_h, dtype=torch.float32) + 0.5) * stride   # (H,)
         cy_grid, cx_grid = torch.meshgrid(shifts_y, shifts_x, indexing="ij")       # (H, W)
 
-        # Broadcast to (A, H, W). Order matters: stacking along dim 0 (ratios) first
-        # gives reshape(-1, 4) iteration order: ratio → row → col.
+        # Layout (H, W, A): stacking so A varies fastest after reshape.
         A = ratios.shape[0]
-        cx = cx_grid[None, :, :].expand(A, feature_h, feature_w)
-        cy = cy_grid[None, :, :].expand(A, feature_h, feature_w)
-        half_w = (w * 0.5)[:, None, None].expand(A, feature_h, feature_w)
-        half_h = (h * 0.5)[:, None, None].expand(A, feature_h, feature_w)
+        cx = cx_grid[:, :, None].expand(feature_h, feature_w, A)
+        cy = cy_grid[:, :, None].expand(feature_h, feature_w, A)
+        half_w = (w * 0.5)[None, None, :].expand(feature_h, feature_w, A)
+        half_h = (h * 0.5)[None, None, :].expand(feature_h, feature_w, A)
 
         x1 = cx - half_w
         y1 = cy - half_h
         x2 = cx + half_w
         y2 = cy + half_h
-        anchors = torch.stack([x1, y1, x2, y2], dim=-1)   # (A, H, W, 4)
+        anchors = torch.stack([x1, y1, x2, y2], dim=-1)   # (H, W, A, 4)
         return anchors.reshape(-1, 4).contiguous()
 
     def generate_all(self, feature_map_sizes: List[Tuple[int, int]], image_size: Tuple[int, int], device: Optional[torch.device] = None) -> torch.Tensor:

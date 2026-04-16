@@ -1,6 +1,6 @@
 import numpy as np
 from typing import List, Tuple
-from box_utils import compute_iou
+from models.detection.box_utils import compute_iou
 import torch
 
 def compute_ap(precision: np.ndarray, recall: np.ndarray) -> float:
