@@ -34,7 +34,7 @@ class FPNDetector(nn.Module):
 
         feature_map_sizes = [(f.shape[-2], f.shape[-1]) for f in fpn_features]
         image_size = (images.shape[-2], images.shape[-1])
-        anchors = self.anchor_generator.generate_all(feature_map_sizes, image_size).to(images.device)
+        anchors = self.anchor_generator.generate_all(feature_map_sizes, image_size, device=images.device)
 
         if self.training or return_raw:
             return cls_logits, bbox_deltas, anchors

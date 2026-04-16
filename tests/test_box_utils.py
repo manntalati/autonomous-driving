@@ -197,19 +197,14 @@ class TestMatchAnchorsToGt:
         assert len(labels) == 2
         assert all(l == 0 for l in labels), f"All labels should be bg (0), got {labels}"
 
-    def test_return_type_annotation_vs_reality(self):
-        """Documents bug #2: declared Tuple[Tensor, Tensor] but returns (list, list).
-        This test will FAIL if the implementation is corrected to return tensors —
-        at that point update the assertion to check isinstance(..., torch.Tensor)."""
+    def test_return_type_is_tensor(self):
+        """Vectorized impl returns (LongTensor, LongTensor), matching the annotation."""
         from models.detection.box_utils import match_anchors_to_gt
         anchors = _boxes((0, 0, 10, 10))
         gt = _boxes((0, 0, 10, 10))
         indices, labels = match_anchors_to_gt(anchors, gt)
-        # Currently both are plain Python lists — documenting current behavior
-        assert isinstance(indices, list), \
-            "indices is now a Tensor — update this test and downstream callers"
-        assert isinstance(labels, list), \
-            "labels is now a Tensor — update this test and downstream callers"
+        assert isinstance(indices, torch.Tensor) and indices.dtype == torch.long
+        assert isinstance(labels, torch.Tensor) and labels.dtype == torch.long
 
 
 # ---------------------------------------------------------------------------

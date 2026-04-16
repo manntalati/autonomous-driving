@@ -69,13 +69,8 @@ class DetectionLoss(nn.Module):
             gt_b = gt_boxes[b].to(device) if gt_boxes[b].numel() > 0 else gt_boxes[b]
             labels_b = gt_labels[b].to(device) if gt_labels[b].numel() > 0 else gt_labels[b]
 
-            matched_gt_idx, match_labels = match_anchors_to_gt(anchors, gt_b)
-            # match_anchors_to_gt returns python lists; convert to tensors on correct device.
-            match_labels_t = torch.as_tensor(match_labels, dtype=torch.long, device=device)
-            if len(matched_gt_idx) > 0:
-                matched_gt_idx_t = torch.as_tensor(matched_gt_idx, dtype=torch.long, device=device)
-            else:
-                matched_gt_idx_t = torch.zeros(N, dtype=torch.long, device=device)
+            # Vectorized match — returns (N,) long tensors on device.
+            matched_gt_idx_t, match_labels_t = match_anchors_to_gt(anchors, gt_b)
 
             pos_mask = match_labels_t == 1
             num_pos = int(pos_mask.sum().item())

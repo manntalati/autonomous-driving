@@ -1,101 +1,98 @@
 import torch
 from typing import Tuple
-import numpy as np
+from torchvision.ops import nms as tv_nms
+
 
 def compute_iou(boxes_a: torch.Tensor, boxes_b: torch.Tensor) -> torch.Tensor:
     """
-    Compute pairwise IoU between two sets of boxes.
+    Pairwise IoU between two sets of boxes — fully vectorized, device-agnostic.
     Args: boxes_a — (N, 4) in [x1,y1,x2,y2]; boxes_b — (M, 4) in [x1,y1,x2,y2].
-    Returns: (N, M) float32 tensor where entry [i,j] = IoU(boxes_a[i], boxes_b[j]).
+    Returns: (N, M) float32 tensor on boxes_a.device.
     """
-    matrix = np.zeros((len(boxes_a), len(boxes_b)))
-    for i in range(len(boxes_a)):
-        for j in range(len(boxes_b)):
-            x1_inter = max(boxes_a[i][0], boxes_b[j][0])
-            y1_inter = max(boxes_a[i][1], boxes_b[j][1])
-            x2_inter = min(boxes_a[i][2], boxes_b[j][2])
-            y2_inter = min(boxes_a[i][3], boxes_b[j][3])
-            inter_area = max(0, x2_inter - x1_inter) * max(0, y2_inter - y1_inter)
-            area_a = (boxes_a[i][2] - boxes_a[i][0]) * (boxes_a[i][3] - boxes_a[i][1])
-            area_b = (boxes_b[j][2] - boxes_b[j][0]) * (boxes_b[j][3] - boxes_b[j][1])
-            union_area = area_a + area_b - inter_area
-            matrix[i][j] = inter_area / union_area if union_area > 0 else 0.0
+    boxes_a = boxes_a.float()
+    boxes_b = boxes_b.float()
+    N, M = boxes_a.shape[0], boxes_b.shape[0]
+    if N == 0 or M == 0:
+        return torch.zeros((N, M), dtype=torch.float32, device=boxes_a.device)
+    # (N, 1, 2) vs (1, M, 2) → (N, M, 2)
+    lt = torch.max(boxes_a[:, None, :2], boxes_b[None, :, :2])
+    rb = torch.min(boxes_a[:, None, 2:], boxes_b[None, :, 2:])
+    wh = (rb - lt).clamp_min(0)
+    inter = wh[..., 0] * wh[..., 1]
+    area_a = (boxes_a[:, 2] - boxes_a[:, 0]) * (boxes_a[:, 3] - boxes_a[:, 1])
+    area_b = (boxes_b[:, 2] - boxes_b[:, 0]) * (boxes_b[:, 3] - boxes_b[:, 1])
+    union = area_a[:, None] + area_b[None, :] - inter
+    return inter / union.clamp_min(1e-6)
 
-    return torch.tensor(matrix, dtype=torch.float32)
 
 def match_anchors_to_gt(anchors: torch.Tensor, gt_boxes: torch.Tensor, iou_threshold: float = 0.5) -> Tuple[torch.Tensor, torch.Tensor]:
     """
-    For each anchor, find the best matching GT box by IoU and assign fg/bg label.
-    Args: anchors — (N, 4) anchor boxes; gt_boxes — (M, 4) ground truth boxes;
-          iou_threshold — IoU >= threshold → label 1 (fg), else label 0 (bg).
-    Returns: (matched_gt_indices, match_labels) — both length-N lists;
-             matched_gt_indices[i] = index into gt_boxes of best match for anchor i.
+    Vectorized best-GT matching. For each anchor returns the index of its best-IoU GT box
+    and a 0/1 label (fg if IoU >= threshold else bg).
+    Args: anchors — (N, 4); gt_boxes — (M, 4); iou_threshold — foreground cutoff.
+    Returns: (matched_gt_indices (N,) long, match_labels (N,) long) on anchors.device.
     """
-    if len(gt_boxes) == 0:
-        return ([], [0] * len(anchors))
-    matrix = compute_iou(anchors, gt_boxes)
-    matched_gt_indices = []
-    match_labels = []
-    for i in range(len(matrix)):
-        best_match = torch.argmax(matrix[i]).item()
-        best_iou = matrix[i][best_match]
-        matched_gt_indices.append(best_match)
-        if best_iou >= iou_threshold: match_labels.append(1)
-        else: match_labels.append(0)
+    N = anchors.shape[0]
+    device = anchors.device
+    if gt_boxes.numel() == 0:
+        return (
+            torch.zeros(N, dtype=torch.long, device=device),
+            torch.zeros(N, dtype=torch.long, device=device),
+        )
+    ious = compute_iou(anchors, gt_boxes)          # (N, M)
+    best_iou, best_idx = ious.max(dim=1)           # (N,), (N,)
+    labels = (best_iou >= iou_threshold).long()
+    return best_idx.long(), labels
 
-    return (matched_gt_indices, match_labels)
 
 def encode_boxes(anchors: torch.Tensor, gt_boxes: torch.Tensor) -> torch.Tensor:
     """
-    Convert absolute GT boxes into (dx, dy, dw, dh) deltas relative to anchors.
-    Both inputs are in [x1,y1,x2,y2]; internally converted to center format for encoding.
-    Args: anchors — (N, 4); gt_boxes — (N, 4) matched GT box for each anchor.
-    Returns: (N, 4) float32 tensor of deltas [dx, dy, dw, dh] — what the network learns to predict.
+    Vectorized GT → (dx, dy, dw, dh) delta encoding.
+    Args: anchors — (N, 4); gt_boxes — (N, 4) matched GT box per anchor, both in [x1,y1,x2,y2].
+    Returns: (N, 4) float32 deltas on anchors.device.
     """
-    deltas = []
-    for i in range(len(anchors)):
-        cx_a, cy_a = (anchors[i][0] + anchors[i][2]) / 2, (anchors[i][1] + anchors[i][3]) / 2
-        cx_g, cy_g = (gt_boxes[i][0] + gt_boxes[i][2]) / 2, (gt_boxes[i][1] + gt_boxes[i][3]) / 2
-        w_a, h_a = anchors[i][2] - anchors[i][0], anchors[i][3] - anchors[i][1]
-        w_g, h_g = gt_boxes[i][2] - gt_boxes[i][0], gt_boxes[i][3] - gt_boxes[i][1]
-        dx = (cx_g - cx_a) / w_a
-        dy = (cy_g - cy_a) / h_a
-        dw = torch.log(w_g / w_a)
-        dh = torch.log(h_g / h_a)
-        deltas.append((dx,dy,dw,dh))
-    return torch.stack([torch.stack([dx, dy, dw, dh]) for dx, dy, dw, dh in deltas])
+    anchors = anchors.float()
+    gt_boxes = gt_boxes.float()
+    cx_a = (anchors[:, 0] + anchors[:, 2]) * 0.5
+    cy_a = (anchors[:, 1] + anchors[:, 3]) * 0.5
+    w_a  = (anchors[:, 2] - anchors[:, 0]).clamp_min(1e-6)
+    h_a  = (anchors[:, 3] - anchors[:, 1]).clamp_min(1e-6)
+    cx_g = (gt_boxes[:, 0] + gt_boxes[:, 2]) * 0.5
+    cy_g = (gt_boxes[:, 1] + gt_boxes[:, 3]) * 0.5
+    w_g  = (gt_boxes[:, 2] - gt_boxes[:, 0]).clamp_min(1e-6)
+    h_g  = (gt_boxes[:, 3] - gt_boxes[:, 1]).clamp_min(1e-6)
+    dx = (cx_g - cx_a) / w_a
+    dy = (cy_g - cy_a) / h_a
+    dw = torch.log(w_g / w_a)
+    dh = torch.log(h_g / h_a)
+    return torch.stack([dx, dy, dw, dh], dim=1)
+
 
 def decode_boxes(anchors: torch.Tensor, deltas: torch.Tensor) -> torch.Tensor:
     """
-    Inverse of encode_boxes. Apply predicted deltas to anchors to get final boxes.
-    Args: anchors — (N, 4) in [x1,y1,x2,y2]; deltas — (N, 4) predicted [dx,dy,dw,dh].
-    Returns: (N, 4) float32 tensor of decoded boxes in [x1,y1,x2,y2].
+    Vectorized inverse of encode_boxes. Applies predicted deltas to anchors.
+    Args: anchors — (N, 4); deltas — (N, 4) predicted [dx,dy,dw,dh].
+    Returns: (N, 4) float32 decoded [x1,y1,x2,y2] boxes.
     """
-    boxes = []
-    for i in range(len(anchors)):
-        dx,dy,dw,dh = deltas[i]
-        cx_a, cy_a = (anchors[i][0] + anchors[i][2]) / 2, (anchors[i][1] + anchors[i][3]) / 2
-        w_a, h_a = anchors[i][2] - anchors[i][0], anchors[i][3] - anchors[i][1]
-        cx_g, cy_g = dx * w_a + cx_a, dy * h_a + cy_a
-        w_g, h_g = w_a * torch.exp(dw), h_a * torch.exp(dh)
-        x1,y1,x2,y2 = cx_g - w_g / 2, cy_g - h_g / 2, cx_g + w_g / 2, cy_g + h_g / 2
-        boxes.append((x1,y1,x2,y2))
-    return torch.stack([torch.stack([x1, y1, x2, y2]) for x1, y1, x2, y2 in boxes])
+    anchors = anchors.float()
+    deltas = deltas.float()
+    cx_a = (anchors[:, 0] + anchors[:, 2]) * 0.5
+    cy_a = (anchors[:, 1] + anchors[:, 3]) * 0.5
+    w_a  = anchors[:, 2] - anchors[:, 0]
+    h_a  = anchors[:, 3] - anchors[:, 1]
+    cx = deltas[:, 0] * w_a + cx_a
+    cy = deltas[:, 1] * h_a + cy_a
+    w  = w_a * torch.exp(deltas[:, 2])
+    h  = h_a * torch.exp(deltas[:, 3])
+    return torch.stack([cx - w * 0.5, cy - h * 0.5, cx + w * 0.5, cy + h * 0.5], dim=1)
+
 
 def nms(boxes: torch.Tensor, scores: torch.Tensor, iou_threshold: float = 0.5) -> torch.Tensor:
     """
-    Non-maximum suppression. Iteratively keep the highest-scored box and remove overlapping duplicates.
-    Args: boxes — (N, 4) in [x1,y1,x2,y2]; scores — (N,) confidence scores;
-          iou_threshold — boxes with IoU >= threshold vs kept box are suppressed.
-    Returns: 1D tensor of indices of kept boxes (sorted by score descending).
+    Non-maximum suppression via torchvision's fused kernel (CUDA/CPU/MPS-fallback).
+    Args: boxes — (N, 4); scores — (N,); iou_threshold — suppression cutoff.
+    Returns: 1D LongTensor of kept indices, sorted by score descending.
     """
-    order = torch.argsort(scores, descending=True)
-    if len(order) == 0:
-        return torch.tensor([], dtype=torch.long)
-    kept = []
-    while len(order) > 0:
-        i = order[0]
-        kept.append(i)
-        iou = compute_iou(boxes[i].unsqueeze(0), boxes[order[1:]])[0]
-        order = order[1:][iou < iou_threshold]
-    return torch.stack(kept)
+    if boxes.numel() == 0:
+        return torch.empty((0,), dtype=torch.long, device=boxes.device)
+    return tv_nms(boxes.float(), scores.float(), iou_threshold).long()
