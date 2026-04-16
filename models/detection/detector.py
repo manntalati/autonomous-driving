@@ -20,10 +20,11 @@ class FPNDetector(nn.Module):
         self.nms_threshold = nms_threshold
         self.max_detections = max_detections
 
-    def forward(self, images: torch.Tensor) -> Tuple[List[torch.Tensor], List[torch.Tensor], List[torch.Tensor]]:
+    def forward(self, images: torch.Tensor, return_raw: bool = False) -> Tuple[List[torch.Tensor], List[torch.Tensor], List[torch.Tensor]]:
         """
-        Training mode: returns (cls_logits, bbox_deltas, anchors)
-        Eval mode: calls postprocess() and returns (boxes, scores, labels) per image
+        Training mode (or return_raw=True): returns (cls_logits, bbox_deltas, anchors)
+        Eval mode: calls postprocess() and returns (boxes, scores, labels) per image.
+        return_raw lets callers compute val loss under model.eval() without BN stat drift.
         """
         # Backbone yields (C3, C4, C5) multi-scale features.
         features = self.backbone(images)
@@ -35,7 +36,7 @@ class FPNDetector(nn.Module):
         image_size = (images.shape[-2], images.shape[-1])
         anchors = self.anchor_generator.generate_all(feature_map_sizes, image_size).to(images.device)
 
-        if self.training:
+        if self.training or return_raw:
             return cls_logits, bbox_deltas, anchors
         return self.postprocess(cls_logits, bbox_deltas, anchors, image_size)
 
