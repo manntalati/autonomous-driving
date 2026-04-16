@@ -10,6 +10,7 @@ from torch.cuda.amp import GradScaler
 import torch
 import numpy as np
 import yaml
+from training.scheduler import EarlyStopping
 
 def build_detector(cfg: dict) -> FPNDetector:
     """
@@ -73,7 +74,17 @@ def main(cfg_path: str) -> None:
     scheduler = build_scheduler(optimizer, scheduler_type=cfg.get("scheduler", "cosine"), epochs=cfg["epochs"])
     loss = DetectionLoss(cfg["num_classes"])
     scaler = GradScaler()
+    early_stop = EarlyStopping(patience=5, ckpt_path="checkpoints/detector_best.pt")
     for epoch in range(cfg["epochs"]):
-        train_one_epoch(model, train_loader, optimizer, loss, device, scaler)
-        val_one_epoch(model, val_loader, loss, device)
+        train_log = train_one_epoch(model, train_loader, optimizer, loss, device, scaler)
+        val_log = val_one_epoch(model, val_loader, loss, device)
         scheduler.step()
+        print(f"Epoch {epoch+1}/{cfg['epochs']} | train: {train_log['loss']:.4f} | val: {val_log['loss']:.4f}")
+        early_stop(val_log["loss"], model)
+        if early_stop.should_stop:
+            print("Early stopping triggered.")
+            break
+
+if __name__ == "__main__":
+    import sys
+    main(sys.argv[1])

@@ -1,6 +1,6 @@
 # data
-data_root: data/row/v1.0-mini
-batch-size: 4
+data_root: data/raw/v1.0-mini
+batch_size: 4
 
 # model
 num_classes: 3
