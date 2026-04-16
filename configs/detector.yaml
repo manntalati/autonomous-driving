@@ -1,0 +1,17 @@
+# data
+data_root: data/row/v1.0-mini
+batch-size: 4
+
+# model
+num_classes: 3
+num_anchors: 3
+scales: [32, 64, 128]
+aspect_ratios: [0.5, 1.0, 2.0]
+strides: [8, 16, 32]
+
+# training
+epochs: 20
+lr: 1e-4
+weight_decay: 1e-4
+optimizer: adamw
+scheduler: cosine

@@ -32,7 +32,7 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 ## Phase Progress
 - [✅] Phase 0 — Setup & Data Pipeline
 - [✅] Phase 1 — CNN Backbone
-- [🔄] Phase 2 — 2D Detection (in progress)
+- [🔄] Phase 2 — 2D Detection (all files implemented; training run pending)
 - [ ] Phase 3 — Segmentation
 - [ ] Phase 4 — ViT Integration
 - [ ] Phase 5 — BEV Transform
@@ -65,8 +65,14 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
   - `__init__` — stores `backbone`, `fpn`, `head`, `anchor_generator`, `num_classes`, and NMS/top-k hyperparams (`score_threshold`, `nms_threshold`, `max_detections`)
   - `forward` — runs backbone → FPN → head, generates anchors on-the-fly from actual FPN feature-map sizes; training branch returns `(cls_logits, bbox_deltas, anchors)`, eval branch calls `postprocess`
   - `postprocess` — concatenates FPN levels; per image: `sigmoid` scores → `decode_boxes` → clamp to image bounds → per-class score threshold → per-class `nms` (guarded against empty input) → global top-k by score; returns `(boxes_list, scores_list, labels_list)`
-- `models/detection/map.py` — `compute_ap`, `compute_map` skeletons (not yet implemented)
-- `models/detection/train_detector.py` — training script skeleton (not yet implemented)
+- `models/detection/map.py` — `compute_ap`, `compute_map` ✅
+  - `compute_ap` — 11-point interpolation: samples max precision at 11 recall thresholds `[0.0..1.0]`, averages; handles empty recall buckets
+  - `compute_map` — per class: filters preds/GT by label, matches via IoU (greedy, each GT matched once), accumulates TP/FP across dataset, sorts by score descending, builds cumulative PR curve, calls `compute_ap`; returns `(mAP, [AP per class])`
+- `models/detection/train_detector.py` — full training script ✅
+  - `build_detector` — instantiates `ResNetBackbone` → `FPN` → `DetectionHead` → `AnchorGenerator` → `FPNDetector` from cfg dict
+  - `train_one_epoch` — AMP loop: unpack batch, `.to(device)`, `autocast`, forward in train mode → `DetectionLoss` → `scaler` backward/step; returns avg loss dict
+  - `val_one_epoch` — `torch.no_grad()` loop in train mode (to get raw logits); computes val loss via `DetectionLoss`; returns avg loss dict
+  - `main` — loads yaml cfg, builds model/optimizer/scheduler/loss/scaler, runs epoch loop calling train + val each epoch
 
 ### Phase 1 ✅
 - `models/backbone/linear_classifier.py` — `LinearClassifier`: flatten + single `nn.Linear`, forward pass ✅

@@ -9,17 +9,7 @@ from typing import Tuple, List
 
 
 class FPNDetector(nn.Module):
-    def __init__(
-        self,
-        backbone: ResNetBackbone,
-        fpn: FPN,
-        head: DetectionHead,
-        anchor_generator: AnchorGenerator,
-        num_classes: int,
-        score_threshold: float = 0.05,
-        nms_threshold: float = 0.5,
-        max_detections: int = 100,
-    ) -> None:
+    def __init__(self, backbone: ResNetBackbone, fpn: FPN, head: DetectionHead, anchor_generator: AnchorGenerator, num_classes: int, score_threshold: float = 0.05, nms_threshold: float = 0.5, max_detections: int = 100) -> None:
         super().__init__()
         self.backbone = backbone
         self.fpn = fpn
@@ -30,9 +20,7 @@ class FPNDetector(nn.Module):
         self.nms_threshold = nms_threshold
         self.max_detections = max_detections
 
-    def forward(
-        self, images: torch.Tensor
-    ) -> Tuple[List[torch.Tensor], List[torch.Tensor], List[torch.Tensor]]:
+    def forward(self, images: torch.Tensor) -> Tuple[List[torch.Tensor], List[torch.Tensor], List[torch.Tensor]]:
         """
         Training mode: returns (cls_logits, bbox_deltas, anchors)
         Eval mode: calls postprocess() and returns (boxes, scores, labels) per image
@@ -51,13 +39,7 @@ class FPNDetector(nn.Module):
             return cls_logits, bbox_deltas, anchors
         return self.postprocess(cls_logits, bbox_deltas, anchors, image_size)
 
-    def postprocess(
-        self,
-        cls_logits: List[torch.Tensor],
-        bbox_deltas: List[torch.Tensor],
-        anchors: torch.Tensor,
-        image_size: Tuple[int, int],
-    ) -> Tuple[List[torch.Tensor], List[torch.Tensor], List[torch.Tensor]]:
+    def postprocess(self, cls_logits: List[torch.Tensor], bbox_deltas: List[torch.Tensor], anchors: torch.Tensor, image_size: Tuple[int, int]) -> Tuple[List[torch.Tensor], List[torch.Tensor], List[torch.Tensor]]:
         """
         1. Decode deltas → absolute boxes
         2. Sigmoid scores, threshold

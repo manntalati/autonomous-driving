@@ -89,9 +89,9 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 |---|---|---|
 | `P2-1` | Implement anchor box generation and IoU computation from scratch | [✅] |
 | `P2-2` | Build a single-stage detector head (SSD/YOLO-style) on top of the CNN backbone | [✅] |
-| `P2-3` | Implement the detection loss (classification + bbox regression + NMS) | [ ] |
+| `P2-3` | Implement the detection loss (classification + bbox regression + NMS) | [✅] |
 | `P2-4` | Train on nuScenes 2D detection (cars, pedestrians, cyclists) | [ ] |
-| `P2-5` | Evaluate with mAP, visualize predictions vs ground truth | [ ] |
+| `P2-5` | Evaluate with mAP, visualize predictions vs ground truth | [✅] |
 
 ---
 
