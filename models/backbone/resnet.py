@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import List, Optional, Tuple
 import torch
 import torch.nn as nn
+import torchvision
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 3, stride: int = 1, padding: int = 1, bias: bool = False) -> None:
@@ -85,6 +86,35 @@ class ResNetBackbone(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
+
+    def load_pretrained(self) -> None:
+        """
+        Load ImageNet-pretrained ResNet-18 weights from torchvision into this backbone.
+        Maps torchvision key names to our naming convention. Skips the fc classifier head.
+        """
+        tv_state = torchvision.models.resnet18(weights="IMAGENET1K_V1").state_dict()
+        mapped = {}
+        for tv_key, tensor in tv_state.items():
+            if tv_key.startswith("fc."):
+                continue
+            if tv_key.startswith("conv1."):
+                new_key = tv_key.replace("conv1.", "stem.0.conv.")
+            elif tv_key.startswith("bn1."):
+                new_key = tv_key.replace("bn1.", "stem.0.bn.")
+            else:
+                new_key = tv_key
+                for i in range(1, 5):
+                    new_key = new_key.replace(f"layer{i}.", f"stage{i}.")
+                new_key = new_key.replace("downsample.", "shortcut.")
+                for k in ["1", "2"]:
+                    new_key = new_key.replace(f".conv{k}.weight", f".conv{k}.conv.weight")
+                    new_key = new_key.replace(f".bn{k}.", f".conv{k}.bn.")
+            mapped[new_key] = tensor
+        missing, unexpected = self.load_state_dict(mapped, strict=False)
+        for key in missing:
+            assert key.startswith(("avgpool", "classifier")), f"Unexpected missing key: {key}"
+        assert len(unexpected) == 0, f"Unexpected keys: {unexpected}"
+        print(f"Loaded ImageNet-pretrained ResNet-18 weights ({len(mapped)} params mapped)")
 
     def forward(self, x: torch.Tensor) -> torch.Tensor | Tuple[torch.Tensor, ...]:
         """

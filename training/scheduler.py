@@ -36,26 +36,34 @@ def build_scheduler(optimizer: torch.optim.Optimizer, scheduler_type: Literal["c
         return torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=patience, min_lr=min_lr)
 
 class EarlyStopping:
-    def __init__(self, patience: int = 7, min_delta: float = 1e-4, ckpt_path: str = "best_model.pt") -> None:
+    def __init__(self, patience: int = 7, min_delta: float = 1e-4, ckpt_path: str = "best_model.pt", mode: str = "min") -> None:
         """
-        Stops training when val_loss hasn't improved by min_delta for patience epochs; saves best checkpoint.
-        Args: patience — epochs to wait; min_delta — minimum improvement threshold; ckpt_path — where to save weights.
+        Stops training when the tracked metric hasn't improved for patience epochs; saves best checkpoint.
+        Args: patience — epochs to wait; min_delta — minimum improvement threshold;
+              ckpt_path — where to save weights; mode — "min" (lower is better, e.g. loss)
+              or "max" (higher is better, e.g. mAP).
         """
         self.patience = patience
         self.min_delta = min_delta
         self.ckpt_path = Path(ckpt_path)
-        self.best_loss: float = float("inf")
+        self.mode = mode
+        self.best: float = float("inf") if mode == "min" else float("-inf")
         self.counter: int = 0
         self.should_stop: bool = False
 
-    def __call__(self, val_loss: float, model: nn.Module) -> None:
+    def _is_improvement(self, current: float) -> bool:
+        if self.mode == "min":
+            return current < self.best - self.min_delta
+        return current > self.best + self.min_delta
+
+    def __call__(self, metric: float, model: nn.Module) -> None:
         """
-        Check val_loss against best; save checkpoint on improvement or increment counter.
+        Check metric against best; save checkpoint on improvement or increment counter.
         Sets should_stop=True when counter reaches patience.
-        Args: val_loss — current epoch validation loss; model — model to checkpoint.
+        Args: metric — current epoch metric value; model — model to checkpoint.
         """
-        if val_loss < self.best_loss - self.min_delta:
-            self.best_loss = val_loss
+        if self._is_improvement(metric):
+            self.best = metric
             torch.save(model.state_dict(), self.ckpt_path)
             self.counter = 0
         else:

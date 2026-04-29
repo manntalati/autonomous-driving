@@ -90,7 +90,7 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 | `P2-1` | Implement anchor box generation and IoU computation from scratch | [✅] |
 | `P2-2` | Build a single-stage detector head (SSD/YOLO-style) on top of the CNN backbone | [✅] |
 | `P2-3` | Implement the detection loss (classification + bbox regression + NMS) | [✅] |
-| `P2-4` | Train on nuScenes 2D detection (cars, pedestrians, cyclists) | [ ] |
+| `P2-4` | Train on nuScenes 2D detection (cars, pedestrians, cyclists) | [🔄] |
 | `P2-5` | Evaluate with mAP, visualize predictions vs ground truth | [✅] |
 
 ---
@@ -157,6 +157,31 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 | `P7-2` | Run inference on a dashcam video clip, produce annotated output video | [ ] |
 | `P7-3` | Build a simple demo UI or CLI that processes video and renders all outputs | [ ] |
 | `P7-4` | Write up results: architecture diagrams, benchmarks, ablation studies | [ ] |
+
+---
+
+### Phase 2 Training Log
+
+Training the FPN-based RetinaNet detector on nuScenes mini (320 train images, 80 val images) required debugging several critical issues before the model could learn:
+
+**Bugs fixed before first successful run:**
+- Batch unpacking mismatch (`collate_fn` returns dict targets, not separate tensors)
+- FPN channel mismatch (ResNet-50 channels hardcoded; our ResNet-18 uses 128/256/512)
+- Stride/scale ↔ FPN level misalignment (anchors assigned to wrong feature pyramid levels)
+- Anchor ↔ prediction index ordering (anchors tiled in different order than head's reshape)
+- Pure-Python loops in box utilities vectorized for ~100–1000× speedup
+
+**From-scratch backbone results (scales=[128,64,32]):**
+| Metric | Best Value | Epoch |
+|---|---|---|
+| Car AP | 0.126 | 12 |
+| Pedestrian AP | 0.000 | — |
+| Cyclist AP | 0.000 | — |
+| mAP | 0.042 | 12 |
+
+**Analysis:** Training loss dropped steadily (0.68 → 0.51) but val loss plateaued at ~0.84 with a small train-val gap — classic underfitting. The backbone couldn't learn discriminative visual features from only 320 images. Car detection worked marginally because cars are large and frequent. Pedestrians (median 19px wide, 869 instances) and cyclists (178 instances) produced zero AP despite anchor scales that geometrically covered them.
+
+**Solution:** ImageNet-pretrained ResNet-18 backbone via `load_pretrained()`. The Phase 1 architecture (`ConvBlock`, `ResidualBlock`, `_make_stage`, `ResNetBackbone`) is unchanged — only the initial weight values differ. This gives the detector head pre-learned low/mid-level features (edges, textures, object parts) from 1.2M ImageNet images, allowing the detection head to focus on *where* objects are rather than *what visual features matter*.
 
 ---
 

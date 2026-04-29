@@ -5,7 +5,7 @@ from models.detection.anchors import AnchorGenerator
 from models.detection.head import DetectionHead
 from models.detection.losses import DetectionLoss
 from models.detection.map import compute_map
-from training.scheduler import build_optimizer, build_scheduler, EarlyStopping
+from training.scheduler import build_scheduler, EarlyStopping
 from data.dataloader import get_loaders
 from torch.amp import GradScaler
 from contextlib import nullcontext
@@ -20,6 +20,8 @@ def build_detector(cfg: dict) -> FPNDetector:
     Backbone produces C3/C4/C5 at 128/256/512 channels (see models/backbone/resnet.py).
     """
     resnet = ResNetBackbone()
+    if cfg.get("pretrained", False):
+        resnet.load_pretrained()
     fpn = FPN(in_channels=[128, 256, 512], out_channels=256)
     anchor = AnchorGenerator(cfg["scales"], cfg["aspect_ratios"], cfg["strides"])
     detection = DetectionHead(256, cfg["num_anchors"], cfg["num_classes"])
@@ -34,7 +36,7 @@ def _unpack_batch(batch, device):
     return images, gt_boxes, gt_labels
 
 
-def train_one_epoch(model, loader, optimizer, loss_fn, device, scaler) -> dict:
+def train_one_epoch(model, loader, optimizer, loss_fn, device, scaler, grad_clip: float = 1.0) -> dict:
     model.train()
     total_loss = 0.0
     total_pos = 0
@@ -49,6 +51,8 @@ def train_one_epoch(model, loader, optimizer, loss_fn, device, scaler) -> dict:
             cls_logits, bbox_deltas, anchors = model(images)
             loss, log = loss_fn(cls_logits, bbox_deltas, anchors, gt_boxes, gt_labels)
         scaler.scale(loss).backward()
+        scaler.unscale_(optimizer)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         scaler.step(optimizer)
         scaler.update()
         total_loss += log["loss"]
@@ -114,6 +118,24 @@ def _pick_device() -> torch.device:
     return torch.device("cpu")
 
 
+def _build_optimizer(model, cfg):
+    """
+    Differential LR: backbone gets backbone_lr_scale × lr (default 0.1×),
+    everything else (FPN, head) gets the full lr.
+    """
+    lr = cfg["lr"]
+    backbone_scale = cfg.get("backbone_lr_scale", 0.1)
+    wd = cfg.get("weight_decay", 1e-4)
+    backbone_params = list(model.backbone.parameters())
+    backbone_ids = {id(p) for p in backbone_params}
+    other_params = [p for p in model.parameters() if id(p) not in backbone_ids]
+    param_groups = [
+        {"params": backbone_params, "lr": lr * backbone_scale},
+        {"params": other_params, "lr": lr},
+    ]
+    return torch.optim.AdamW(param_groups, weight_decay=wd)
+
+
 def main(cfg_path: str) -> None:
     """
     Load config → build model → get_loaders() → train loop with mAP eval each epoch.
@@ -123,14 +145,20 @@ def main(cfg_path: str) -> None:
     device = _pick_device()
     train_loader, val_loader = get_loaders(data_root=cfg["data_root"], batch_size=cfg["batch_size"])
     model = build_detector(cfg).to(device)
-    optimizer = build_optimizer(model, optimizer_type=cfg.get("optimizer", "adamw"), lr=cfg["lr"], weight_decay=cfg.get("weight_decay", 1e-4))
+    optimizer = _build_optimizer(model, cfg)
     scheduler = build_scheduler(optimizer, scheduler_type=cfg.get("scheduler", "cosine"), epochs=cfg["epochs"])
     loss = DetectionLoss(cfg["num_classes"])
     scaler = GradScaler("cuda", enabled=(device.type == "cuda"))
+    grad_clip = cfg.get("grad_clip", 1.0)
     Path("checkpoints").mkdir(parents=True, exist_ok=True)
-    early_stop = EarlyStopping(patience=5, ckpt_path="checkpoints/detector_best.pt")
+    early_stop = EarlyStopping(
+        patience=cfg.get("patience", 10),
+        ckpt_path="checkpoints/detector_best.pt",
+        mode="max",
+        min_delta=1e-3,
+    )
     for epoch in range(cfg["epochs"]):
-        train_log = train_one_epoch(model, train_loader, optimizer, loss, device, scaler)
+        train_log = train_one_epoch(model, train_loader, optimizer, loss, device, scaler, grad_clip)
         val_log = val_one_epoch(model, val_loader, loss, device, cfg["num_classes"])
         scheduler.step()
         per_cls = " ".join(f"{ap:.3f}" for ap in val_log["AP"])
@@ -140,9 +168,9 @@ def main(cfg_path: str) -> None:
             f"val: {val_log['loss']:.4f} (pos/img {val_log['pos_per_img']:.1f}) | "
             f"mAP: {val_log['mAP']:.3f} [{per_cls}]"
         )
-        early_stop(val_log["loss"], model)
+        early_stop(val_log["mAP"], model)
         if early_stop.should_stop:
-            print("Early stopping triggered.")
+            print(f"Early stopping triggered. Best mAP: {early_stop.best:.3f}")
             break
 
 if __name__ == "__main__":
