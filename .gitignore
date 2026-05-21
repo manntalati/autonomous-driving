@@ -1,5 +1,6 @@
 data/raw/v1.0-mini
 .venv
+data/v1.0-mini.tgz
 
 # Python bytecode
 __pycache__/

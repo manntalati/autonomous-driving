@@ -296,7 +296,7 @@ class TestEarlyStopping:
         model = _tiny_model()
         es = EarlyStopping(patience=3, min_delta=1e-4, ckpt_path=tmpdir_path)
         es(0.5, model)
-        assert es.best_loss == pytest.approx(0.5)
+        assert es.best == pytest.approx(0.5)
 
     def test_min_delta_prevents_trivial_improvement(self, tmpdir_path):
         """An improvement smaller than min_delta must not reset the counter."""

@@ -1,0 +1,19 @@
+# data
+data_root: data/raw/v1.0-mini
+mask_dir: data/raw/v1.0-mini/seg_masks
+batch_size: 4
+
+# model
+num_classes: 5  # background, drivable, lane, ped_crossing, walkway
+
+# backbone
+pretrained: true
+
+# training
+epochs: 40
+lr: 0.001
+backbone_lr_scale: 0.1
+weight_decay: 0.0001
+scheduler: cosine
+patience: 10
+grad_clip: 1.0

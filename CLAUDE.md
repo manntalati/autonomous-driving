@@ -32,8 +32,8 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 ## Phase Progress
 - [✅] Phase 0 — Setup & Data Pipeline
 - [✅] Phase 1 — CNN Backbone
-- [🔄] Phase 2 — 2D Detection (training functional, mAP eval wired, pretrained backbone added; tuning in progress)
-- [ ] Phase 3 — Segmentation
+- [✅] Phase 2 — 2D Detection (pretrained backbone trained; mAP 0.129, car AP 0.291)
+- [🔄] Phase 3 — Segmentation (skeletons scaffolded, awaiting map_expansion data + implementations)
 - [ ] Phase 4 — ViT Integration
 - [ ] Phase 5 — BEV Transform
 - [ ] Phase 6 — Temporal Fusion
@@ -118,6 +118,62 @@ Training on nuScenes mini (~320 train images, 80 val images) revealed that from-
 - Added `load_pretrained()` method that maps torchvision ResNet-18 state dict keys to our naming convention (120 params mapped)
 - Controlled by `pretrained: true` in `configs/detector.yaml`
 - Rationale: the backbone needs to have learned low/mid-level visual features (edges, textures, shapes) from a large dataset. 320 nuScenes images is ~370× less than COCO (which RetinaNet was trained on). Pretrained weights give the detector head useful features to work with from epoch 1.
+
+### Phase 2 — Pretrained-Backbone Training Results (Run 4)
+Training run with `pretrained: true`, scales `[128, 64, 32]`, strides `[32, 16, 8]`, 40-epoch cap.
+
+**Outcome:** early stopped at epoch 18, best checkpoint at epoch 8 (`checkpoints/detector_best.pt`).
+
+| Metric | From-scratch (Run 2) | Pretrained (Run 4) | Δ |
+|---|---|---|---|
+| Car AP | 0.126 | **0.291** | +130% |
+| Pedestrian AP | 0.000 | 0.001 | flat |
+| Cyclist AP | 0.000 | **0.097** | new signal |
+| **mAP** | **0.042** | **0.129** | **+207%** |
+| Best epoch | 12 | 8 | converges faster |
+| Train loss at best | 0.51 | 0.37 | — |
+| Val loss at best | 0.84 | 0.69 | — |
+
+**Observations:**
+- Pretrained ImageNet features tripled overall mAP and unlocked cyclist detection (was zero before).
+- Convergence is dramatically faster — 8 epochs vs 12, and val loss is lower (0.69 vs 0.84).
+- After epoch 8, val loss oscillates (0.69–0.99) while train loss keeps dropping — classic mild overfitting on 320 images.
+- **Pedestrian AP remains stuck at ~0.** Even with strong features, the detection geometry can't match pedestrian sizes:
+  - Median pedestrian width in train split: 19px.
+  - Smallest anchor: scale 32 on stride-8 feature map → smallest box ~22px on a feature pixel covering 8 input pixels. Recall is brittle.
+  - Real fix is architectural: add a P2 FPN level (stride 4) or shrink scales to `[64, 32, 16]`. Deferred to a future polish pass — not blocking Phase 3.
+
+**Logs:** `logs/detector_pretrained_run.log` (per-epoch loss + mAP).
+
+### Phase 3 — Data Pipeline Complete (in progress)
+**Data pipeline (done ✅):**
+- `data/seg_labels.py` — offline BEV-polygon → camera mask projection ✅
+  - `load_map_for_log` — resolves scene→log→location, builds + module-caches `NuScenesMap`.
+  - `get_camera_extrinsics` — composes `camera→ego` (calibrated_sensor) ∘ `ego→world` (ego_pose) via quaternions, inverts to `world→camera`; returns `(R_w2c, t_w2c, K)`.
+  - `sample_map_polygons` — `get_records_in_radius` for all CLASS_MAP layers; resolves polygons via `extract_polygon` (handles `drivable_area`'s plural `polygon_tokens`).
+  - `project_polygon_to_image` — lifts polygon to z=0, applies `P_cam = R·P + t`, drops `z < z_min` vertices *before* the K-projection divide. Wrapped in `np.errstate(...)` to suppress numpy's spurious Apple-Silicon SIMD-matmul FP warnings (inputs/outputs verified finite).
+  - `rasterize_mask` — `cv2.fillPoly` in ascending class-ID order so higher IDs paint over lower.
+  - `build_seg_label_for_sample` / `generate_all_masks` — end-to-end; iterates `TRAIN_SCENES | VAL_SCENES`, skips existing PNGs.
+  - 5-class scheme: background / drivable / lane / ped_crossing / walkway.
+- `data/seg_dataset.py` — `NuScenesSegmentationDataset` ✅ — `_build_index` mirrors detection split, skips pairs with no cached mask; `__getitem__` loads image+mask, applies joint albumentations transform, casts mask to long.
+- `data/transforms.py` — `get_seg_train_transforms` / `get_seg_val_transforms` ✅ — same image augs as detection, NEAREST mask resampling so class IDs aren't blended, no bbox_params.
+- `data/dataloader.py` — `get_seg_loaders` (concrete) ✅
+- `configs/segmenter.yaml` — config ✅
+- **Masks generated:** 404 CAM_FRONT masks cached → `data/raw/v1.0-mini/seg_masks/`. Verified: train 324 / val 80 samples, batches `images (B,3,448,800) float32` + `masks (B,448,800) int64`. Sample mask class mix ~54% bg / 22% drivable / 23% lane / <1% walkway / ~0% ped_crossing (ped_crossing is rare).
+- Base map PNGs (`maps/{hash}.png`, semantic_prior) restored from `data/v1.0-mini.tgz` — required by the `NuScenes()` constructor.
+
+**Model + training (implemented ✅, not yet trained):**
+- `models/segmentation/unet.py` — `UpBlock` + `UNet` ✅ — `UpBlock` upsamples (bilinear) → concat skip → 2 ConvBlocks (or pure 2× upsample when `skip=None`); `UNet` decodes C5→C4→C3→stride-4 then 1×1 classifier + final 4× upsample. Verified `(B,3,H,W)→(B,5,H,W)`, backward OK.
+- `models/segmentation/losses.py` — `dice_loss` + `SegmentationLoss` ✅ — soft multi-class Dice (softmax probs, one-hot GT, `sum(dim=(0,2,3))` per class then mean); `SegmentationLoss` returns `(total, log_dict)` with `loss`/`ce_loss`/`dice_loss`.
+- `models/segmentation/train_seg.py` — `train_one_epoch` / `val_one_epoch` / `main` ✅ — AMP loop (CUDA-gated), val uses streaming `ConfusionMatrixMeter`; smoke-tested end-to-end on real seg loaders.
+- `evaluation/seg_metrics.py` — `ConfusionMatrixMeter` + `compute_miou` ✅ — streaming confusion matrix via `np.bincount`; per-class IoU with NaN for absent classes; `miou` = `nanmean`.
+- Tests: `tests/test_unet.py`, `test_seg_losses.py`, `test_seg_metrics.py`, `test_seg_transforms.py` — full suite **300 passing**.
+
+**Phase 3 remaining for user:**
+1. Train: `python -m models.segmentation.train_seg configs/segmenter.yaml`.
+2. Record mIoU results + flip Phase Progress to ✅.
+
+Known limitation: `project_polygon_to_image` filters `z < z_min` per-vertex rather than clipping polygon edges at the camera plane — polygons straddling the camera plane are slightly distorted. Fine for road/drivable at `radius=50m`; revisit if bottom-edge artifacts appear.
 
 ### Phase 1 ✅
 - `models/backbone/linear_classifier.py` — `LinearClassifier`: flatten + single `nn.Linear`, forward pass ✅

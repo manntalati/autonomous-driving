@@ -1,0 +1,24 @@
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/core/validation.py:114: UserWarning: ShiftScaleRotate is a special case of Affine transform. Please use Affine transform instead.
+  original_init(self, **validated_kwargs)
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+Epoch 1/40 | train: 5.7155 (pos/img 42.8) | val: 0.8175 (pos/img 37.9) | mAP: 0.021 [0.059 0.001 0.002]
+Epoch 2/40 | train: 0.5858 (pos/img 43.1) | val: 0.8898 (pos/img 37.9) | mAP: 0.031 [0.090 0.000 0.004]
+Epoch 3/40 | train: 0.5537 (pos/img 43.8) | val: 0.8847 (pos/img 37.9) | mAP: 0.034 [0.095 0.000 0.006]
+Epoch 4/40 | train: 0.5130 (pos/img 43.4) | val: 0.7213 (pos/img 37.9) | mAP: 0.048 [0.095 0.001 0.047]
+Epoch 5/40 | train: 0.4635 (pos/img 42.8) | val: 0.7038 (pos/img 37.9) | mAP: 0.044 [0.090 0.002 0.040]
+Epoch 6/40 | train: 0.4230 (pos/img 43.1) | val: 0.9857 (pos/img 37.9) | mAP: 0.040 [0.117 0.000 0.002]
+Epoch 7/40 | train: 0.3970 (pos/img 43.1) | val: 0.6960 (pos/img 37.9) | mAP: 0.118 [0.253 0.000 0.101]
+Epoch 8/40 | train: 0.3656 (pos/img 43.6) | val: 0.6948 (pos/img 37.9) | mAP: 0.129 [0.291 0.001 0.097]
+Epoch 9/40 | train: 0.3577 (pos/img 43.0) | val: 0.7677 (pos/img 37.9) | mAP: 0.089 [0.231 0.015 0.020]
+Epoch 10/40 | train: 0.3579 (pos/img 43.1) | val: 0.7353 (pos/img 37.9) | mAP: 0.108 [0.242 0.030 0.053]
+Epoch 11/40 | train: 0.3324 (pos/img 42.8) | val: 0.6888 (pos/img 37.9) | mAP: 0.108 [0.247 0.018 0.059]
+Epoch 12/40 | train: 0.3060 (pos/img 42.7) | val: 0.9018 (pos/img 37.9) | mAP: 0.073 [0.172 0.045 0.002]
+Epoch 13/40 | train: 0.3084 (pos/img 43.4) | val: 0.8091 (pos/img 37.9) | mAP: 0.101 [0.269 0.030 0.003]
+Epoch 14/40 | train: 0.2964 (pos/img 43.7) | val: 0.8311 (pos/img 37.9) | mAP: 0.097 [0.195 0.091 0.005]
+Epoch 15/40 | train: 0.2762 (pos/img 43.8) | val: 0.8571 (pos/img 37.9) | mAP: 0.110 [0.231 0.091 0.007]
+Epoch 16/40 | train: 0.2692 (pos/img 43.1) | val: 0.7551 (pos/img 37.9) | mAP: 0.126 [0.251 0.091 0.037]
+Epoch 17/40 | train: 0.2608 (pos/img 43.4) | val: 0.7897 (pos/img 37.9) | mAP: 0.128 [0.250 0.093 0.041]
+Epoch 18/40 | train: 0.2524 (pos/img 43.2) | val: 0.8485 (pos/img 37.9) | mAP: 0.114 [0.226 0.091 0.024]
+Early stopping triggered. Best mAP: 0.129

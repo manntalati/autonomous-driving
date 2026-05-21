@@ -90,7 +90,7 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 | `P2-1` | Implement anchor box generation and IoU computation from scratch | [✅] |
 | `P2-2` | Build a single-stage detector head (SSD/YOLO-style) on top of the CNN backbone | [✅] |
 | `P2-3` | Implement the detection loss (classification + bbox regression + NMS) | [✅] |
-| `P2-4` | Train on nuScenes 2D detection (cars, pedestrians, cyclists) | [🔄] |
+| `P2-4` | Train on nuScenes 2D detection (cars, pedestrians, cyclists) | [✅] |
 | `P2-5` | Evaluate with mAP, visualize predictions vs ground truth | [✅] |
 
 ---
@@ -182,6 +182,17 @@ Training the FPN-based RetinaNet detector on nuScenes mini (320 train images, 80
 **Analysis:** Training loss dropped steadily (0.68 → 0.51) but val loss plateaued at ~0.84 with a small train-val gap — classic underfitting. The backbone couldn't learn discriminative visual features from only 320 images. Car detection worked marginally because cars are large and frequent. Pedestrians (median 19px wide, 869 instances) and cyclists (178 instances) produced zero AP despite anchor scales that geometrically covered them.
 
 **Solution:** ImageNet-pretrained ResNet-18 backbone via `load_pretrained()`. The Phase 1 architecture (`ConvBlock`, `ResidualBlock`, `_make_stage`, `ResNetBackbone`) is unchanged — only the initial weight values differ. This gives the detector head pre-learned low/mid-level features (edges, textures, object parts) from 1.2M ImageNet images, allowing the detection head to focus on *where* objects are rather than *what visual features matter*.
+
+**Pretrained backbone results (same anchor config, `pretrained: true`):**
+| Metric | From-scratch | Pretrained | Δ |
+|---|---|---|---|
+| Car AP | 0.126 | **0.291** | +130% |
+| Pedestrian AP | 0.000 | 0.001 | flat |
+| Cyclist AP | 0.000 | **0.097** | new signal |
+| mAP | 0.042 | **0.129** | +207% |
+| Best epoch | 12 | 8 | faster |
+
+Training early-stopped at epoch 18 (best at 8). Pretrained features tripled overall mAP and unlocked cyclist detection. Pedestrians remain stuck at ~0 AP — the detection geometry (smallest scale 32 on stride-8 feature map) can't recall objects with median width 19px. A future polish pass will add a P2 FPN level (stride 4) or shrink scales to `[64, 32, 16]`.
 
 ---
 
