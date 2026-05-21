@@ -34,7 +34,7 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 - [✅] Phase 1 — CNN Backbone
 - [✅] Phase 2 — 2D Detection (pretrained backbone trained; mAP 0.129, car AP 0.291)
 - [✅] Phase 3 — Segmentation (U-Net trained; mIoU 0.327, drivable IoU 0.587)
-- [ ] Phase 4 — ViT Integration
+- [✅] Phase 4 — ViT Integration (hybrid CNN-ViT trained; mIoU 0.320, ≈ ResNet 0.327)
 - [ ] Phase 5 — BEV Transform
 - [ ] Phase 6 — Temporal Fusion
 - [ ] Phase 7 — Integration & Demo
@@ -192,6 +192,35 @@ Trained `python -m models.segmentation.train_seg configs/segmenter.yaml` — pre
 **Logs:** `logs/segmenter_run.log` (per-epoch loss + mIoU).
 
 Known limitation: `project_polygon_to_image` filters `z < z_min` per-vertex rather than clipping polygon edges at the camera plane — polygons straddling the camera plane are slightly distorted. Fine for road/drivable at `radius=50m`; revisit if bottom-edge artifacts appear.
+
+### Phase 4 — Complete ✅ (hybrid CNN-ViT trained, mIoU 0.320)
+Built a Vision Transformer from scratch and a hybrid CNN-ViT backbone, then compared segmentation mIoU against the Phase 3 ResNet U-Net.
+
+**Design:** `HybridCNNViT` returns `(C3@128/s8, C4@256/s16, C5@512/s32)` — identical to `ResNetBackbone` — so it is a drop-in backbone for the existing `UNet`. The comparison reuses the Phase 3 decoder, loss, and `train_seg.py` unchanged; only `cfg["backbone"]` differs.
+
+- `models/backbone/vit.py` — `PatchEmbedding`, `PositionalEncoding`, `MultiHeadSelfAttention`, `TransformerEncoderBlock`, `ViT` ✅ — from-scratch ViT; classifier-head or feature-map output.
+- `models/backbone/hybrid.py` — `HybridCNNViT` ✅ — CNN front reuses `ResNetBackbone` (stem + stages 1-3, ImageNet-pretrained); ViT encoder over patch-embedded C4 produces C5 (trained from scratch).
+- `configs/segmenter_hybrid.yaml` — config ✅ (`backbone: hybrid`, ViT hyperparams; `embed_dim` must be 512).
+- `models/segmentation/train_seg.py` — `build_segmenter` branches on `cfg["backbone"]` ("resnet" | "hybrid") ✅.
+- Tests: `tests/test_vit.py`, `test_hybrid.py` — full suite **325 passing**.
+
+### Phase 4 — Training Results
+Trained `python -m models.segmentation.train_seg configs/segmenter_hybrid.yaml` — identical setup to Phase 3 (U-Net decoder, Dice+CE loss, 40-epoch cap, cosine LR, patience 10); only the backbone differs. Early stopped at epoch 20, best at epoch 10.
+
+| Class | ResNet U-Net (Phase 3) | Hybrid CNN-ViT (Phase 4) |
+|---|---|---|
+| background | 0.861 | 0.862 |
+| drivable | 0.587 | 0.567 |
+| lane | 0.177 | 0.168 |
+| ped_crossing | 0.000 | 0.005 |
+| walkway | 0.011 | 0.000 |
+| **mIoU** | **0.327** | **0.320** |
+
+**Conclusion:** the hybrid landed essentially tied with the pure ResNet (0.320 vs 0.327 — within run-to-run noise), not ahead of it. This is the textbook ViT-vs-CNN result at small data scale: the ViT stage trains from scratch on only 324 images, with none of the CNN's locality / translation-equivariance inductive bias, so attention's global reasoning doesn't pay off — the fully-pretrained ResNet stage4 is simply a better C5 extractor in this regime. ViT advantages appear at large data scale (original ViT needed JFT-300M). The CNN front (pretrained C3/C4) carries most of the load in both models. **Logs:** `logs/segmenter_hybrid_run.log`.
+
+Note: checkpoint paths are now config-driven via `cfg["ckpt_path"]` — `segmenter.yaml` → `checkpoints/segmenter_resnet_best.pt`, `segmenter_hybrid.yaml` → `checkpoints/segmenter_hybrid_best.pt`, so the two runs no longer collide. (The old `checkpoints/segmenter_best.pt` on disk is the last hybrid run under the pre-fix name — safe to delete; `.pt` files are gitignored.)
+
+Recommended order: bottom-up — `PatchEmbedding` and `MultiHeadSelfAttention` first (independently testable), then `TransformerEncoderBlock`, then `ViT`, then `HybridCNNViT`.
 
 ### Phase 1 ✅
 - `models/backbone/linear_classifier.py` — `LinearClassifier`: flatten + single `nn.Linear`, forward pass ✅

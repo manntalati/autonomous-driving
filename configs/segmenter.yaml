@@ -5,6 +5,7 @@ batch_size: 4
 
 # model
 num_classes: 5  # background, drivable, lane, ped_crossing, walkway
+ckpt_path: checkpoints/segmenter_resnet_best.pt
 
 # backbone
 pretrained: true

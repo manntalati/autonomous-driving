@@ -6,6 +6,7 @@ from contextlib import nullcontext
 from torch.amp import GradScaler
 from evaluation.seg_metrics import ConfusionMatrixMeter
 from models.backbone.resnet import ResNetBackbone
+from models.backbone.hybrid import HybridCNNViT
 from models.segmentation.unet import UNet
 from models.segmentation.losses import SegmentationLoss
 from training.scheduler import build_scheduler, EarlyStopping
@@ -14,10 +15,22 @@ from data.dataloader import get_seg_loaders
 
 def build_segmenter(cfg: dict) -> UNet:
     """
-    Build the U-Net segmenter: pretrained ResNet-18 backbone + U-Net decoder.
-    Mirrors models/detection/train_detector.build_detector.
+    Build the U-Net segmenter. The backbone is selected by cfg["backbone"]:
+      "resnet" (default) — Phase 3 ResNet-18 backbone.
+      "hybrid"           — Phase 4 CNN-ViT backbone.
+    Both return (C3, C4, C5), so the U-Net decoder is identical either way.
     """
-    backbone = ResNetBackbone()
+    backbone_type = cfg.get("backbone", "resnet")
+    if backbone_type == "hybrid":
+        backbone = HybridCNNViT(
+            embed_dim=cfg.get("embed_dim", 512),
+            depth=cfg.get("vit_depth", 4),
+            num_heads=cfg.get("vit_heads", 8),
+            mlp_ratio=cfg.get("mlp_ratio", 4.0),
+            image_size=tuple(cfg.get("image_size", [448, 800])),
+        )
+    else:
+        backbone = ResNetBackbone()
     if cfg.get("pretrained", False):
         backbone.load_pretrained()
     return UNet(backbone, num_classes=cfg["num_classes"])
@@ -137,7 +150,7 @@ def main(cfg_path: str) -> None:
     Path("checkpoints").mkdir(parents=True, exist_ok=True)
     early_stop = EarlyStopping(
         patience=cfg.get("patience", 10),
-        ckpt_path="checkpoints/segmenter_best.pt",
+        ckpt_path=cfg.get("ckpt_path", "checkpoints/segmenter_best.pt"),
         mode="max",
         min_delta=1e-3,
     )

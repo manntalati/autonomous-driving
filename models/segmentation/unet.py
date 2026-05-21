@@ -81,13 +81,6 @@ class UNet(nn.Module):
         """
         Args: x — (B, 3, H, W) image.
         Returns: (B, num_classes, H, W) per-pixel logits at input resolution.
-        Pipeline:
-          1. (c3, c4, c5) = self.backbone(x).
-          2. d3 = self.up3(c5, c4).
-          3. d2 = self.up2(d3, c3).
-          4. d1 = self.up1(d2, skip=zeros_like at 2× resolution)   # or: handle skip=None in UpBlock.
-          5. logits = self.classifier(d1).
-          6. F.interpolate(logits, size=x.shape[-2:], mode="bilinear", align_corners=False) — final 4× upsample.
         """
         c3, c4, c5 = self.backbone(x)
         d3 = self.up3(c5, c4)

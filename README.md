@@ -114,10 +114,10 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 
 | Ticket | Task | Status |
 |---|---|---|
-| `P4-1` | Implement patch embedding + positional encoding from scratch | [ ] |
-| `P4-2` | Build multi-head self-attention and a full ViT encoder block | [ ] |
-| `P4-3` | Replace or augment CNN backbone with ViT — compare performance | [ ] |
-| `P4-4` | Implement a hybrid CNN-ViT architecture (CNN early features -> ViT for global reasoning) | [ ] |
+| `P4-1` | Implement patch embedding + positional encoding from scratch | [✅] |
+| `P4-2` | Build multi-head self-attention and a full ViT encoder block | [✅] |
+| `P4-3` | Augment CNN backbone with ViT — compare segmentation mIoU | [✅] |
+| `P4-4` | Implement a hybrid CNN-ViT architecture (CNN early features -> ViT for global reasoning) | [✅] |
 
 ---
 
@@ -211,6 +211,24 @@ Segmentation labels are generated offline by projecting nuScenes map-expansion p
 | **mIoU** | **0.327** |
 
 **Analysis:** Training early-stopped at epoch 20 (best at 10). Background and drivable surface — large, frequent classes — segment well. `lane` is modest (~0.18): lane polygons are thin and the decoder's single 4× final upsample softens fine boundaries. `ped_crossing` (~0% of pixels) and `walkway` (<1%) stay near zero — severe class imbalance means the rare classes never get enough signal, even with the Dice term. Train loss fell steadily (1.39 → 0.52) while validation loss rose (1.23 → 1.46) from ~epoch 5 — the same overfitting pattern seen in Phase 2, driven by the 324-image training set. A future polish pass could add a P2-level skip (stride 4) for sharper lanes or oversample rare-class crops.
+
+---
+
+### Phase 4 Training Log
+
+A Vision Transformer is built from scratch — patch embedding, learned positional encoding, multi-head self-attention, pre-norm encoder blocks — and combined into a hybrid backbone: a ResNet CNN front extracts local features C3/C4 (strides 8/16), then a ViT encoder applies global self-attention over the patch-embedded C4 to produce C5 (stride 32). Because the hybrid returns `(C3, C4, C5)` with the same channels/strides as `ResNetBackbone`, it drops straight into the Phase 3 U-Net — the mIoU comparison holds the decoder, loss, and training loop fixed and varies only the backbone.
+
+**Hybrid CNN-ViT vs ResNet backbone (U-Net segmentation, same setup):**
+| Class | ResNet U-Net | Hybrid CNN-ViT |
+|---|---|---|
+| background | 0.861 | 0.862 |
+| drivable | 0.587 | 0.567 |
+| lane | 0.177 | 0.168 |
+| ped_crossing | 0.000 | 0.005 |
+| walkway | 0.011 | 0.000 |
+| **mIoU** | **0.327** | **0.320** |
+
+**Analysis:** The hybrid finished essentially tied with the pure ResNet (0.320 vs 0.327 — within run-to-run noise), not ahead of it. This is the expected ViT-vs-CNN outcome at small data scale. The ViT stage trains from scratch on only 324 images and has none of the convolutional inductive biases (locality, translation equivariance) that let CNNs generalize from little data; meanwhile the ResNet's deep stage is ImageNet-pretrained. Self-attention's global reasoning is a real advantage — but it shows up at large data scale (the original ViT needed JFT-300M to beat CNNs). Here the pretrained CNN front does most of the work in both models. The honest takeaway: a hybrid is only worth its extra cost when there is enough data, or a pretrained ViT, to train the attention stack properly.
 
 ---
 

@@ -1,0 +1,32 @@
+# Phase 4 — U-Net segmentation with the hybrid CNN-ViT backbone.
+# Same decoder / loss / training as configs/segmenter.yaml; only `backbone` differs,
+# so mIoU is directly comparable to the Phase 3 ResNet result (0.327).
+
+# data
+data_root: data/raw/v1.0-mini
+mask_dir: data/raw/v1.0-mini/seg_masks
+batch_size: 4
+
+# model
+num_classes: 5  # background, drivable, lane, ped_crossing, walkway
+ckpt_path: checkpoints/segmenter_hybrid_best.pt
+backbone: hybrid  # "resnet" (Phase 3) or "hybrid" (Phase 4 CNN-ViT)
+image_size: [448, 800]
+
+# backbone — CNN front is ImageNet-pretrained; ViT stage trains from scratch
+pretrained: true
+
+# vit stage (embed_dim must be 512 to match the U-Net decoder's C5 channels)
+embed_dim: 512
+vit_depth: 4
+vit_heads: 8
+mlp_ratio: 4.0
+
+# training
+epochs: 40
+lr: 0.001
+backbone_lr_scale: 0.1
+weight_decay: 0.0001
+scheduler: cosine
+patience: 10
+grad_clip: 1.0
