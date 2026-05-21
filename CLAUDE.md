@@ -33,7 +33,7 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 - [✅] Phase 0 — Setup & Data Pipeline
 - [✅] Phase 1 — CNN Backbone
 - [✅] Phase 2 — 2D Detection (pretrained backbone trained; mAP 0.129, car AP 0.291)
-- [🔄] Phase 3 — Segmentation (skeletons scaffolded, awaiting map_expansion data + implementations)
+- [✅] Phase 3 — Segmentation (U-Net trained; mIoU 0.327, drivable IoU 0.587)
 - [ ] Phase 4 — ViT Integration
 - [ ] Phase 5 — BEV Transform
 - [ ] Phase 6 — Temporal Fusion
@@ -145,7 +145,7 @@ Training run with `pretrained: true`, scales `[128, 64, 32]`, strides `[32, 16, 
 
 **Logs:** `logs/detector_pretrained_run.log` (per-epoch loss + mAP).
 
-### Phase 3 — Data Pipeline Complete (in progress)
+### Phase 3 — Complete ✅ (U-Net trained, mIoU 0.327)
 **Data pipeline (done ✅):**
 - `data/seg_labels.py` — offline BEV-polygon → camera mask projection ✅
   - `load_map_for_log` — resolves scene→log→location, builds + module-caches `NuScenesMap`.
@@ -162,16 +162,34 @@ Training run with `pretrained: true`, scales `[128, 64, 32]`, strides `[32, 16, 
 - **Masks generated:** 404 CAM_FRONT masks cached → `data/raw/v1.0-mini/seg_masks/`. Verified: train 324 / val 80 samples, batches `images (B,3,448,800) float32` + `masks (B,448,800) int64`. Sample mask class mix ~54% bg / 22% drivable / 23% lane / <1% walkway / ~0% ped_crossing (ped_crossing is rare).
 - Base map PNGs (`maps/{hash}.png`, semantic_prior) restored from `data/v1.0-mini.tgz` — required by the `NuScenes()` constructor.
 
-**Model + training (implemented ✅, not yet trained):**
+**Model + training (implemented ✅, trained ✅):**
 - `models/segmentation/unet.py` — `UpBlock` + `UNet` ✅ — `UpBlock` upsamples (bilinear) → concat skip → 2 ConvBlocks (or pure 2× upsample when `skip=None`); `UNet` decodes C5→C4→C3→stride-4 then 1×1 classifier + final 4× upsample. Verified `(B,3,H,W)→(B,5,H,W)`, backward OK.
 - `models/segmentation/losses.py` — `dice_loss` + `SegmentationLoss` ✅ — soft multi-class Dice (softmax probs, one-hot GT, `sum(dim=(0,2,3))` per class then mean); `SegmentationLoss` returns `(total, log_dict)` with `loss`/`ce_loss`/`dice_loss`.
 - `models/segmentation/train_seg.py` — `train_one_epoch` / `val_one_epoch` / `main` ✅ — AMP loop (CUDA-gated), val uses streaming `ConfusionMatrixMeter`; smoke-tested end-to-end on real seg loaders.
 - `evaluation/seg_metrics.py` — `ConfusionMatrixMeter` + `compute_miou` ✅ — streaming confusion matrix via `np.bincount`; per-class IoU with NaN for absent classes; `miou` = `nanmean`.
 - Tests: `tests/test_unet.py`, `test_seg_losses.py`, `test_seg_metrics.py`, `test_seg_transforms.py` — full suite **300 passing**.
 
-**Phase 3 remaining for user:**
-1. Train: `python -m models.segmentation.train_seg configs/segmenter.yaml`.
-2. Record mIoU results + flip Phase Progress to ✅.
+### Phase 3 — Training Results
+Trained `python -m models.segmentation.train_seg configs/segmenter.yaml` — pretrained ResNet-18 backbone, 40-epoch cap, cosine LR, early-stop patience 10 on mIoU.
+
+**Outcome:** early stopped at epoch 20, best checkpoint at epoch 10 (`checkpoints/segmenter_best.pt`). **mIoU 0.327.**
+
+| Class | IoU @ best (epoch 10) |
+|---|---|
+| background | 0.861 |
+| drivable | 0.587 |
+| lane | 0.177 |
+| ped_crossing | 0.000 |
+| walkway | 0.011 |
+| **mIoU** | **0.327** |
+
+**Observations:**
+- background + drivable dominate — large, frequent classes the model learns well.
+- `lane` modest (~0.18): thin structures, softened by the decoder's single 4× final upsample from stride-4.
+- `ped_crossing` (~0% of pixels) and `walkway` (<1%) stuck near 0 — severe class imbalance; even with the Dice term, classes that barely appear can't be learned from 324 images.
+- Overfitting from ~epoch 5: train loss fell steadily 1.39→0.52 while val loss rose 1.23→1.46 and mIoU oscillated 0.24–0.33 — same small-dataset pattern as Phase 2 detection.
+
+**Logs:** `logs/segmenter_run.log` (per-epoch loss + mIoU).
 
 Known limitation: `project_polygon_to_image` filters `z < z_min` per-vertex rather than clipping polygon edges at the camera plane — polygons straddling the camera plane are slightly distorted. Fine for road/drivable at `radius=50m`; revisit if bottom-edge artifacts appear.
 

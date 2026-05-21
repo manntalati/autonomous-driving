@@ -1,0 +1,26 @@
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/core/validation.py:114: UserWarning: ShiftScaleRotate is a special case of Affine transform. Please use Affine transform instead.
+  original_init(self, **validated_kwargs)
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+Epoch 1/40 | train: 1.3901 | val: 1.2301 | mIoU: 0.302 [0.881 0.531 0.096 0.000 0.000]
+Epoch 2/40 | train: 1.0980 | val: 1.2764 | mIoU: 0.296 [0.862 0.423 0.175 0.000 0.019]
+Epoch 3/40 | train: 0.9943 | val: 1.2735 | mIoU: 0.297 [0.875 0.458 0.114 0.000 0.040]
+Epoch 4/40 | train: 0.9320 | val: 1.2070 | mIoU: 0.320 [0.885 0.542 0.142 0.000 0.031]
+Epoch 5/40 | train: 0.8731 | val: 1.4420 | mIoU: 0.245 [0.870 0.201 0.137 0.000 0.019]
+Epoch 6/40 | train: 0.8437 | val: 1.3338 | mIoU: 0.314 [0.869 0.497 0.172 0.001 0.032]
+Epoch 7/40 | train: 0.8007 | val: 1.3428 | mIoU: 0.310 [0.874 0.486 0.175 0.007 0.011]
+Epoch 8/40 | train: 0.7653 | val: 1.4686 | mIoU: 0.239 [0.860 0.153 0.168 0.000 0.014]
+Epoch 9/40 | train: 0.7450 | val: 1.4320 | mIoU: 0.282 [0.868 0.364 0.171 0.001 0.005]
+Epoch 10/40 | train: 0.6967 | val: 1.2949 | mIoU: 0.327 [0.861 0.587 0.177 0.000 0.011]
+Epoch 11/40 | train: 0.7211 | val: 1.3527 | mIoU: 0.317 [0.873 0.471 0.205 0.000 0.035]
+Epoch 12/40 | train: 0.6729 | val: 1.4326 | mIoU: 0.278 [0.874 0.344 0.150 0.000 0.024]
+Epoch 13/40 | train: 0.6427 | val: 1.4781 | mIoU: 0.277 [0.854 0.340 0.180 0.000 0.010]
+Epoch 14/40 | train: 0.6044 | val: 1.5619 | mIoU: 0.267 [0.848 0.272 0.179 0.000 0.035]
+Epoch 15/40 | train: 0.6239 | val: 1.4100 | mIoU: 0.300 [0.854 0.436 0.200 0.000 0.008]
+Epoch 16/40 | train: 0.5955 | val: 1.4384 | mIoU: 0.299 [0.853 0.457 0.179 0.000 0.007]
+Epoch 17/40 | train: 0.5890 | val: 1.3790 | mIoU: 0.312 [0.879 0.463 0.202 0.000 0.015]
+Epoch 18/40 | train: 0.5468 | val: 1.3716 | mIoU: 0.312 [0.877 0.445 0.215 0.004 0.020]
+Epoch 19/40 | train: 0.5350 | val: 1.3385 | mIoU: 0.313 [0.875 0.484 0.197 0.003 0.007]
+Epoch 20/40 | train: 0.5207 | val: 1.4646 | mIoU: 0.293 [0.861 0.416 0.172 0.000 0.016]
+Early stopping triggered. Best mIoU: 0.327
