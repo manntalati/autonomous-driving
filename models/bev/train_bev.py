@@ -61,9 +61,14 @@ def _build_optimizer(model: BEVDetector, cfg: dict) -> torch.optim.Optimizer:
 def get_bev_loaders(cfg: dict) -> tuple[DataLoader, DataLoader]:
     """Build train/val DataLoaders for the BEV dataset."""
     nusc = NuScenes(version="v1.0-mini", dataroot=cfg["data_root"], verbose=False)
-    image_size = tuple(cfg.get("image_size", [448, 800]))
-    train_ds = NuScenesBEVDataset(nusc, cfg["data_root"], split="train", image_size=image_size)
-    val_ds = NuScenesBEVDataset(nusc, cfg["data_root"], split="val", image_size=image_size)
+    ds_kw = dict(
+        image_size=tuple(cfg.get("image_size", [448, 800])),
+        xbound=tuple(cfg["xbound"]),
+        ybound=tuple(cfg["ybound"]),
+        cameras=cfg.get("cameras"),   # None → dataset defaults to CAM_FRONT only
+    )
+    train_ds = NuScenesBEVDataset(nusc, cfg["data_root"], split="train", **ds_kw)
+    val_ds = NuScenesBEVDataset(nusc, cfg["data_root"], split="val", **ds_kw)
     train_loader = DataLoader(train_ds, batch_size=cfg["batch_size"], shuffle=True,
                               num_workers=NUM_WORKERS, collate_fn=bev_collate_fn, pin_memory=True)
     val_loader = DataLoader(val_ds, batch_size=cfg["batch_size"], shuffle=False,

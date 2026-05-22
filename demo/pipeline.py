@@ -73,11 +73,11 @@ class PerceptionPipeline:
         # ── segmentation ──
         seg_mask = self.segmenter(current).argmax(dim=1)[0].cpu()
 
-        # ── BEV detection ──
+        # ── BEV detection (single CAM_FRONT camera → N=1) ──
         heatmap, regression = self.bev(
-            current,
-            intrinsic.unsqueeze(0).to(device),
-            cam_to_ego.unsqueeze(0).to(device),
+            current.unsqueeze(1),                       # (1, 1, 3, H, W)
+            intrinsic.to(device).view(1, 1, 3, 3),
+            cam_to_ego.to(device).view(1, 1, 4, 4),
         )
         bev_boxes, bev_scores, bev_labels = decode_bev_detections(
             heatmap[0].cpu(), regression[0].cpu(),

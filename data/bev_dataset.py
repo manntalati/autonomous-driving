@@ -36,7 +36,7 @@ class NuScenesBEVDataset(Dataset):
     intrinsics are also transformed.
     """
 
-    def __init__(self, nusc: NuScenes, data_root: str | Path, split: str = "train", image_size: Tuple[int, int] = (448, 800), xbound: Tuple[float, float, float] = (0.0, 51.2, 0.8), ybound: Tuple[float, float, float] = (-25.6, 25.6, 0.8)) -> None:
+    def __init__(self, nusc: NuScenes, data_root: str | Path, split: str = "train", image_size: Tuple[int, int] = (448, 800), xbound: Tuple[float, float, float] = (0.0, 51.2, 0.8), ybound: Tuple[float, float, float] = (-25.6, 25.6, 0.8), cameras: Optional[List[str]] = None) -> None:
         """
         Args:
           nusc — NuScenes instance.
@@ -44,6 +44,8 @@ class NuScenesBEVDataset(Dataset):
           split — "train" or "val".
           image_size — (H, W) the image is resized to; intrinsics are scaled to match.
           xbound/ybound — BEV grid extent; GT boxes outside it are dropped.
+          cameras — camera channels to load (default ["CAM_FRONT"]); pass all 6 for
+                    surround BEV. Every camera splats into the same ego-frame grid.
         """
         self.nusc = nusc
         self.data_root = Path(data_root)
@@ -51,6 +53,7 @@ class NuScenesBEVDataset(Dataset):
         self.image_size = image_size
         self.xbound = xbound
         self.ybound = ybound
+        self.cameras = cameras if cameras is not None else [CAM]
         self.index = self._build_index()
 
     def _build_index(self) -> List[str]:
@@ -76,33 +79,37 @@ class NuScenesBEVDataset(Dataset):
 
     def __getitem__(self, idx: int):
         """
-        Returns: (image, target) where
-          image  — (3, H, W) float tensor, resized + ImageNet-normalised.
+        Returns: (images, target) where
+          images — (N_cam, 3, H, W) float, each camera resized + ImageNet-normalised.
           target — dict with:
-            'boxes'     (N, 5) float — [x, y, length, width, yaw] BEV boxes, ego frame.
-            'labels'    (N,)   long  — class ids (car/ped/cyclist).
-            'intrinsic' (3, 3) float — K, scaled to image_size.
-            'cam_to_ego' (4, 4) float — homogeneous camera→ego transform.
+            'boxes'      (M, 5) float — [x, y, length, width, yaw] BEV boxes, ego frame.
+            'labels'     (M,)   long  — class ids (car/ped/cyclist).
+            'intrinsic'  (N_cam, 3, 3) float — per-camera K, scaled to image_size.
+            'cam_to_ego' (N_cam, 4, 4) float — per-camera camera→ego transform.
         """
         sample = self.nusc.get("sample", self.index[idx])
-        cam_sd_token = sample["data"][CAM]
-        sd = self.nusc.get("sample_data", cam_sd_token)
+        images, intrinsics, cam_to_egos = [], [], []
+        for cam in self.cameras:
+            cam_sd_token = sample["data"][cam]
+            sd = self.nusc.get("sample_data", cam_sd_token)
+            img = Image.open(self.data_root / sd["filename"]).convert("RGB")
+            img = img.resize((self.image_size[1], self.image_size[0]), Image.BILINEAR)
+            img = np.asarray(img, dtype=np.float32) / 255.0
+            img = (img - _MEAN) / _STD
+            images.append(torch.from_numpy(img).permute(2, 0, 1).contiguous().float())
+            K, cam_to_ego = self._get_calibration(cam_sd_token)
+            intrinsics.append(torch.from_numpy(K).float())
+            cam_to_egos.append(torch.from_numpy(cam_to_ego).float())
 
-        img = Image.open(self.data_root / sd["filename"]).convert("RGB")
-        img = img.resize((self.image_size[1], self.image_size[0]), Image.BILINEAR)
-        img = np.asarray(img, dtype=np.float32) / 255.0
-        img = (img - _MEAN) / _STD
-        image = torch.from_numpy(img).permute(2, 0, 1).contiguous().float()
-
-        K, cam_to_ego = self._get_calibration(cam_sd_token)
-        boxes, labels = self._get_bev_boxes(cam_sd_token)
+        # GT boxes in the reference (first camera) ego frame
+        boxes, labels = self._get_bev_boxes(sample["data"][self.cameras[0]])
         target = {
             "boxes": torch.from_numpy(boxes).float(),
             "labels": torch.from_numpy(labels).long(),
-            "intrinsic": torch.from_numpy(K).float(),
-            "cam_to_ego": torch.from_numpy(cam_to_ego).float(),
+            "intrinsic": torch.stack(intrinsics),       # (N_cam, 3, 3)
+            "cam_to_ego": torch.stack(cam_to_egos),     # (N_cam, 4, 4)
         }
-        return image, target
+        return torch.stack(images), target             # (N_cam, 3, H, W)
 
     def _get_calibration(self, cam_sd_token: str) -> Tuple[np.ndarray, np.ndarray]:
         """

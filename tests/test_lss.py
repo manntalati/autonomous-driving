@@ -82,13 +82,22 @@ class TestLiftSplatShoot:
         bev = lss.splat(torch.randn(2, 4, 3, 4, 4), torch.randn(2, 3, 4, 4, 3))
         assert bev.shape == (2, 4, 4, 4)
 
-    def test_forward_shape(self):
+    def test_forward_shape_single_camera(self):
+        """N=1: one camera → one BEV grid."""
         lss = _lss()
-        bev = lss(torch.randn(2, 8, 4, 4), torch.eye(3).repeat(2, 1, 1), torch.eye(4).repeat(2, 1, 1))
+        bev = lss(torch.randn(2, 1, 8, 4, 4),
+                  torch.eye(3).repeat(2, 1, 1, 1), torch.eye(4).repeat(2, 1, 1, 1))
+        assert bev.shape == (2, 4, 4, 4)
+
+    def test_forward_shape_multi_camera(self):
+        """N=3 cameras all splat into the SAME (B, bev_channels, X, Y) grid."""
+        lss = _lss()
+        bev = lss(torch.randn(2, 3, 8, 4, 4),
+                  torch.eye(3).repeat(2, 3, 1, 1), torch.eye(4).repeat(2, 3, 1, 1))
         assert bev.shape == (2, 4, 4, 4)
 
     def test_differentiable(self):
         lss = _lss()
-        feats = torch.randn(1, 8, 4, 4, requires_grad=True)
-        lss(feats, torch.eye(3).repeat(1, 1, 1), torch.eye(4).repeat(1, 1, 1)).sum().backward()
+        feats = torch.randn(1, 2, 8, 4, 4, requires_grad=True)   # B=1, N=2 cameras
+        lss(feats, torch.eye(3).repeat(1, 2, 1, 1), torch.eye(4).repeat(1, 2, 1, 1)).sum().backward()
         assert feats.grad is not None and torch.isfinite(feats.grad).all()

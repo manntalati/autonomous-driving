@@ -39,16 +39,16 @@ class TestBEVDetector:
         return BEVDetector(num_classes=3, image_size=(64, 64))
 
     def test_forward_shapes(self, model):
-        """forward → heatmap (B,3,X,Y) + regression (B,6,X,Y) on the BEV grid."""
-        B = 2
-        hm, reg = model(torch.randn(B, 3, 64, 64),
-                        torch.eye(3).repeat(B, 1, 1), torch.eye(4).repeat(B, 1, 1))
+        """Surround input (B, N, 3, H, W) → heatmap (B,3,X,Y) + regression (B,6,X,Y)."""
+        B, N = 2, 2
+        hm, reg = model(torch.randn(B, N, 3, 64, 64),
+                        torch.eye(3).repeat(B, N, 1, 1), torch.eye(4).repeat(B, N, 1, 1))
         assert hm.shape == (B, 3, 64, 64)
         assert reg.shape == (B, 6, 64, 64)
 
     def test_backward(self, model):
-        hm, reg = model(torch.randn(1, 3, 64, 64),
-                        torch.eye(3).repeat(1, 1, 1), torch.eye(4).repeat(1, 1, 1))
+        hm, reg = model(torch.randn(1, 1, 3, 64, 64),
+                        torch.eye(3).repeat(1, 1, 1, 1), torch.eye(4).repeat(1, 1, 1, 1))
         (hm.sum() + reg.sum()).backward()
         assert all(p.grad is not None for p in model.head.parameters())
 

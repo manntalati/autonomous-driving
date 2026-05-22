@@ -249,6 +249,8 @@ Trained `python -m models.bev.train_bev configs/bev.yaml` — pretrained ResNet 
 
 **P5-4 (BEV visualization):** delivered in Phase 7 — `decode_bev_detections` (heatmap peaks → BEV boxes) + `utils.visualize.draw_bev` (top-down rotated-box render), shown as the BEV panel in the demo.
 
+**Surround-BEV upgrade (post-Phase-7, infrastructure for the full retrain):** the LSS stack is now multi-camera. `LiftSplatShoot`/`BEVDetector` take `(B, N, …)` — N cameras per sample — and splat all N frustums into one shared 360° ego-frame BEV grid; N=1 is the original single-camera case (no checkpoint break). `NuScenesBEVDataset` loads any camera set; `configs/bev_surround.yaml` uses all 6 cameras with a symmetric `[-51.2, 51.2]` 128×128 grid. Verified end-to-end (`(6,3,448,800)` input → loss + backward); not yet trained — that is the planned full retrain.
+
 ### Phase 6 — Complete ✅ (temporal detector trained, mAP 0.135)
 3-frame temporal fusion via cross-attention, enhancing the Phase 2 FPN detector. Scope: target = detection; window = 3 frames (current + 2 past).
 
