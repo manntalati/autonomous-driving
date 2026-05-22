@@ -1,0 +1,29 @@
+# Phase 6 — 3-frame temporal-fusion detector (cross-attention → FPN detector).
+
+# data
+data_root: data/raw/v1.0-mini
+batch_size: 2        # each item is 3 frames → 3× the backbone passes; keep batch small
+seq_len: 3           # current frame + 2 past frames
+
+# detector (same anchor config as configs/detector.yaml)
+num_classes: 3
+num_anchors: 3
+scales: [128, 64, 32]
+aspect_ratios: [0.5, 1.0, 2.0]
+strides: [32, 16, 8]
+
+# temporal cross-attention — operates on the backbone's C5 (512 channels)
+temporal_heads: 8
+
+# backbone
+pretrained: true
+
+# training
+epochs: 40
+lr: 0.001
+backbone_lr_scale: 0.1
+weight_decay: 0.0001
+scheduler: cosine
+patience: 10
+grad_clip: 1.0
+ckpt_path: checkpoints/temporal_best.pt

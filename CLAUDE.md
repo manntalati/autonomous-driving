@@ -36,7 +36,7 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 - [✅] Phase 3 — Segmentation (U-Net trained; mIoU 0.327, drivable IoU 0.587)
 - [✅] Phase 4 — ViT Integration (hybrid CNN-ViT trained; mIoU 0.320, ≈ ResNet 0.327)
 - [✅] Phase 5 — BEV Transform (LSS BEV detector trained; best val loss 7.74)
-- [ ] Phase 6 — Temporal Fusion
+- [🔄] Phase 6 — Temporal Fusion (skeletons scaffolded, awaiting cross-attention + forward implementations)
 - [ ] Phase 7 — Integration & Demo
 
 ## Completed Work
@@ -248,6 +248,22 @@ Trained `python -m models.bev.train_bev configs/bev.yaml` — pretrained ResNet 
 **Observations:** the pipeline trains end-to-end — train loss fell 8× (heatmap focal collapsed fast as the centre heatmap learned). But validation loss never meaningfully improved (7.88 → 7.74 best) while train kept dropping — strong overfitting, the same 324-image small-dataset ceiling seen in every phase. No detection metric (mAP) is computed; BEV detection quality is judged by P5-4 visualization. **Logs:** `logs/bev_run.log`.
 
 **Phase 5 remaining:** P5-4 — top-down BEV visualization (predicted heatmap peaks → decoded boxes overlaid on a BEV grid). Not yet built; best done as a small `utils` function or folded into the Phase 7 demo.
+
+### Phase 6 — Skeletons Scaffolded (in progress)
+Goal: 3-frame temporal fusion via cross-attention, enhancing the Phase 2 FPN detector. Scope (chosen with user): target = detection (matches "tracking objects" / "flickering" wording and has a real mAP metric); window = 3 frames (current + 2 past).
+
+**Design:** a shared backbone runs on all 3 frames; `TemporalCrossAttention` fuses the past frames' deepest features (C5, 512-ch) into the current frame's C5 (current = query, past frames = key/value memory, with a learned per-frame temporal embedding). The Phase 2 FPN + detection head + anchors + postprocess run on `(C3_current, C4_current, fused_C5)` — reused unchanged. Only the C5 feeding the FPN is temporally enriched.
+
+- `data/sequence_dataset.py` — `NuScenesSequenceDataset` 🔄 — `_build_index` concrete (consecutive-frame windows); `__getitem__` stub. Wraps `NuScenesDetectionDataset` with a deterministic transform so a window stays temporally coherent.
+- `models/temporal/temporal_attention.py` — `TemporalCrossAttention` 🔄 — `__init__` concrete; `forward` (cross-attention) stub.
+- `models/temporal/temporal_detector.py` — `TemporalDetector` 🔄 — `__init__` concrete (composes a Phase 2 `FPNDetector` + `TemporalCrossAttention`); `forward` stub.
+- `evaluation/temporal_metrics.py` — `compute_flicker_rate` 🔄 — stub; flicker = GT object detected at t-1 & t+1 but missed at t.
+- `configs/temporal.yaml` — config ✅. `models/temporal/train_temporal.py` — `build_temporal_detector` / optimizer / loaders / `main` concrete; `train_one_epoch` / `val_one_epoch` stubs 🔄.
+
+**Phase 6 remaining for user:**
+1. Implement the stubs — recommended order: `TemporalCrossAttention.forward` (cross-attention) → `TemporalDetector.forward` (3-frame backbone loop + fuse + FPN/head) → `sequence_dataset.__getitem__` → train loops → `compute_flicker_rate`.
+2. Train: `python -m models.temporal.train_temporal configs/temporal.yaml`.
+3. Evaluate: mAP (accuracy) + flicker rate (consistency) vs the Phase 2 single-frame detector (mAP 0.129).
 
 ### Phase 1 ✅
 - `models/backbone/linear_classifier.py` — `LinearClassifier`: flatten + single `nn.Linear`, forward pass ✅
