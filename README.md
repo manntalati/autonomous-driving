@@ -127,10 +127,10 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 
 | Ticket | Task | Status |
 |---|---|---|
-| `P5-1` | Implement camera intrinsic/extrinsic projection math | [ ] |
-| `P5-2` | Build a learned BEV transform module (lift-splat-shoot style or cross-attention based) | [ ] |
-| `P5-3` | Project front-view detections + segmentation into a top-down BEV grid | [ ] |
-| `P5-4` | Visualize BEV outputs (detected objects from above, road layout) | [ ] |
+| `P5-1` | Implement camera intrinsic/extrinsic projection math | [✅] |
+| `P5-2` | Build a learned BEV transform module (Lift-Splat-Shoot style) | [✅] |
+| `P5-3` | Project front-view features into a top-down BEV grid + BEV detection head | [✅] |
+| `P5-4` | Visualize BEV outputs (detected objects from above) | [ ] |
 
 ---
 
@@ -229,6 +229,20 @@ A Vision Transformer is built from scratch — patch embedding, learned position
 | **mIoU** | **0.327** | **0.320** |
 
 **Analysis:** The hybrid finished essentially tied with the pure ResNet (0.320 vs 0.327 — within run-to-run noise), not ahead of it. This is the expected ViT-vs-CNN outcome at small data scale. The ViT stage trains from scratch on only 324 images and has none of the convolutional inductive biases (locality, translation equivariance) that let CNNs generalize from little data; meanwhile the ResNet's deep stage is ImageNet-pretrained. Self-attention's global reasoning is a real advantage — but it shows up at large data scale (the original ViT needed JFT-300M to beat CNNs). Here the pretrained CNN front does most of the work in both models. The honest takeaway: a hybrid is only worth its extra cost when there is enough data, or a pretrained ViT, to train the attention stack properly.
+
+---
+
+### Phase 5 Training Log
+
+The bird's-eye-view stage implements Lift-Splat-Shoot from scratch. Every CAM_FRONT feature-map pixel predicts a categorical distribution over discrete depths; its context feature is "lifted" into a 3D frustum (one weighted copy per depth bin), each frustum point is placed in the ego frame using the camera intrinsics + extrinsics, and all points are "splatted" — sum-pooled — into a 64×64 top-down BEV grid. A centre-based detection head then predicts a per-class object-centre heatmap and box regression (offset, size, heading) in BEV space, supervised against nuScenes 3D boxes projected to the ego frame.
+
+**BEV detector results (CAM_FRONT, 40-epoch cap):**
+| | epoch 1 | best (epoch 12) | epoch 22 |
+|---|---|---|---|
+| train loss | 27.77 | 4.20 | 3.44 |
+| val loss | 7.88 | **7.74** | 8.52 |
+
+**Analysis:** Training early-stopped at epoch 22 (best at 12). The pipeline trains end-to-end — train loss fell ~8× as the CenterNet-style heatmap focal loss collapsed and the depth/splat learned to place features in the right BEV cells. But validation loss barely moved (7.88 → 7.74) while train kept dropping: strong overfitting, the recurring consequence of a 324-image training set. The model learns the geometry and the train distribution but doesn't generalise — the same data ceiling seen across detection, segmentation, and the hybrid backbone. A top-down visualization of decoded BEV detections (ticket P5-4) is the qualitative check and remains to be built.
 
 ---
 

@@ -1,3 +1,26 @@
 /Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
   warnings.warn(warn_msg)
 Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+Epoch 1/40 | train: 27.7656 (hm 22.665 reg 5.101) | val: 7.8833
+Epoch 2/40 | train: 6.3378 (hm 2.511 reg 3.827) | val: 8.6756
+Epoch 3/40 | train: 5.7196 (hm 2.351 reg 3.369) | val: 7.7545
+Epoch 4/40 | train: 5.4238 (hm 2.247 reg 3.177) | val: 8.2354
+Epoch 5/40 | train: 5.1438 (hm 2.130 reg 3.013) | val: 7.9563
+Epoch 6/40 | train: 4.9853 (hm 2.053 reg 2.932) | val: 7.8332
+Epoch 7/40 | train: 4.7936 (hm 1.960 reg 2.834) | val: 7.8968
+Epoch 8/40 | train: 4.6478 (hm 1.884 reg 2.763) | val: 8.0180
+Epoch 9/40 | train: 4.5563 (hm 1.853 reg 2.703) | val: 8.1886
+Epoch 10/40 | train: 4.4616 (hm 1.808 reg 2.653) | val: 8.0516
+Epoch 11/40 | train: 4.2909 (hm 1.728 reg 2.563) | val: 8.1399
+Epoch 12/40 | train: 4.1964 (hm 1.676 reg 2.521) | val: 7.7423
+Epoch 13/40 | train: 4.1625 (hm 1.631 reg 2.531) | val: 8.0450
+Epoch 14/40 | train: 4.0378 (hm 1.588 reg 2.450) | val: 8.2610
+Epoch 15/40 | train: 3.9605 (hm 1.538 reg 2.422) | val: 8.2428
+Epoch 16/40 | train: 3.8153 (hm 1.493 reg 2.322) | val: 8.1997
+Epoch 17/40 | train: 3.7494 (hm 1.463 reg 2.287) | val: 8.2706
+Epoch 18/40 | train: 3.7215 (hm 1.442 reg 2.280) | val: 8.2640
+Epoch 19/40 | train: 3.6487 (hm 1.411 reg 2.238) | val: 8.4808
+Epoch 20/40 | train: 3.5815 (hm 1.401 reg 2.180) | val: 8.4013
+Epoch 21/40 | train: 3.4943 (hm 1.353 reg 2.141) | val: 8.3487
+Epoch 22/40 | train: 3.4440 (hm 1.326 reg 2.118) | val: 8.5245
+Early stopping triggered. Best val loss: 7.7423
