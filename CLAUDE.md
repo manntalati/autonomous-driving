@@ -35,7 +35,7 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 - [✅] Phase 2 — 2D Detection (pretrained backbone trained; mAP 0.129, car AP 0.291)
 - [✅] Phase 3 — Segmentation (U-Net trained; mIoU 0.327, drivable IoU 0.587)
 - [✅] Phase 4 — ViT Integration (hybrid CNN-ViT trained; mIoU 0.320, ≈ ResNet 0.327)
-- [ ] Phase 5 — BEV Transform
+- [🔄] Phase 5 — BEV Transform (skeletons scaffolded, awaiting LSS geometry + forward implementations)
 - [ ] Phase 6 — Temporal Fusion
 - [ ] Phase 7 — Integration & Demo
 
@@ -221,6 +221,23 @@ Trained `python -m models.segmentation.train_seg configs/segmenter_hybrid.yaml` 
 Note: checkpoint paths are now config-driven via `cfg["ckpt_path"]` — `segmenter.yaml` → `checkpoints/segmenter_resnet_best.pt`, `segmenter_hybrid.yaml` → `checkpoints/segmenter_hybrid_best.pt`, so the two runs no longer collide. (The old `checkpoints/segmenter_best.pt` on disk is the last hybrid run under the pre-fix name — safe to delete; `.pt` files are gitignored.)
 
 Recommended order: bottom-up — `PatchEmbedding` and `MultiHeadSelfAttention` first (independently testable), then `TransformerEncoderBlock`, then `ViT`, then `HybridCNNViT`.
+
+### Phase 5 — Skeletons Scaffolded (in progress)
+Goal: CAM_FRONT Lift-Splat-Shoot BEV transform feeding a centre-based BEV object detector. Scope (chosen with user): single camera (CAM_FRONT), BEV detection supervised against 3D GT boxes projected to the ego-frame BEV grid.
+
+**Pipeline:** image → ResNet backbone (C4, stride 16) → `DepthNet` (per-pixel depth distribution + context) → lift (feature ⊗ depth → 3D frustum) → splat (frustum points scattered into a 64×64 BEV grid via camera intrinsics/extrinsics) → `BEVEncoder` → centre-based `BEVDetectionHead` (per-class heatmap + box regression).
+
+- `data/bev_dataset.py` — `NuScenesBEVDataset` 🔄 — `_build_index` concrete; `__getitem__`, `_get_calibration`, `_get_bev_boxes` stubs. Yields image + camera calibration (K, cam→ego) + ego-frame BEV boxes `[x,y,length,width,yaw]`.
+- `models/bev/lss.py` — `create_frustum` (concrete) + `DepthNet`, `LiftSplatShoot` 🔄 — stubs: `DepthNet.forward`, `LSS.get_geometry` / `lift` / `splat` / `forward`. `__init__` and BEV-grid geometry concrete.
+- `models/bev/bev_detector.py` — `BEVEncoder`, `BEVDetectionHead`, `BEVDetector` ✅ — all concrete (glue); lifts the backbone's C4.
+- `models/bev/losses.py` — `encode_bev_targets` + `BEVDetectionLoss` 🔄 — stubs; CenterNet-style Gaussian heatmap + masked L1 box regression.
+- `configs/bev.yaml` — config ✅ (BEV grid bounds, depth bins).
+- `models/bev/train_bev.py` — `build_bev_detector` / optimizer / loaders / `main` concrete; `train_one_epoch` / `val_one_epoch` stubs 🔄.
+
+**Phase 5 remaining for user:**
+1. Implement the stubs — recommended order: `LSS.get_geometry` (the projection math, riskiest) → `DepthNet.forward` → `lift` → `splat` → dataset (`_get_calibration`, `_get_bev_boxes`, `__getitem__`) → `encode_bev_targets` → `BEVDetectionLoss.forward` → train loops.
+2. Train: `python -m models.bev.train_bev configs/bev.yaml`.
+3. P5-4: visualize BEV detections (top-down) — not yet scaffolded.
 
 ### Phase 1 ✅
 - `models/backbone/linear_classifier.py` — `LinearClassifier`: flatten + single `nn.Linear`, forward pass ✅

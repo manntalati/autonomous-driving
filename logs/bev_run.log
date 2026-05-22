@@ -1,0 +1,3 @@
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)

@@ -1,0 +1,32 @@
+# Phase 5 — CAM_FRONT Lift-Splat-Shoot BEV detection.
+
+# data
+data_root: data/raw/v1.0-mini
+batch_size: 4
+num_classes: 3  # car, pedestrian, cyclist (same classes as Phase 2 detection)
+
+# input image
+image_size: [448, 800]
+
+# backbone
+pretrained: true
+
+# BEV grid — ego frame, metres. CAM_FRONT only → forward half-plane.
+# Each bound is [lower, upper, cell_size]; grid cells = (upper - lower) / cell_size.
+xbound: [0.0, 51.2, 0.8]      # forward axis  → 64 cells
+ybound: [-25.6, 25.6, 0.8]    # lateral axis  → 64 cells
+zbound: [-10.0, 10.0, 20.0]   # height — single slab (BEV collapses height)
+dbound: [4.0, 50.0, 1.0]      # depth bins for the lift → 46 bins
+
+# feature dims
+bev_channels: 64              # context-feature width carried through lift→splat
+
+# training
+epochs: 40
+lr: 0.001
+backbone_lr_scale: 0.1
+weight_decay: 0.0001
+scheduler: cosine
+patience: 10
+grad_clip: 1.0
+ckpt_path: checkpoints/bev_best.pt
