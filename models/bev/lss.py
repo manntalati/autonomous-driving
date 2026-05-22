@@ -182,7 +182,7 @@ class LiftSplatShoot(nn.Module):
         Returns: (B, bev_channels, nx_x, nx_y) — all N cameras of a sample
         splatted into one shared BEV grid.
         """
-        B, N = features.shape[:2]
+        _, N = features.shape[:2]
         # flatten cameras into the batch — get_geometry / lift are per-image ops
         geometry = self.get_geometry(intrinsics.flatten(0, 1), cam_to_ego.flatten(0, 1))
         lifted = self.lift(features.flatten(0, 1))

@@ -90,12 +90,14 @@ class BEVDetector(nn.Module):
                 cam_to_ego: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
-          images — (B, 3, H, W).
-          intrinsics — (B, 3, 3) camera K.
-          cam_to_ego — (B, 4, 4) camera→ego transform.
+          images — (B, N, 3, H, W) — N surround cameras (N=1 for single-camera).
+          intrinsics — (B, N, 3, 3) camera K.
+          cam_to_ego — (B, N, 4, 4) camera→ego transform.
         Returns: (heatmap (B,num_classes,X,Y), regression (B,6,X,Y)).
         """
-        _, c4, _ = self.backbone(images)
+        B, N = images.shape[:2]
+        _, c4, _ = self.backbone(images.flatten(0, 1))   # (B·N, 256, Hf, Wf)
+        c4 = c4.reshape(B, N, *c4.shape[1:])             # (B, N, 256, Hf, Wf)
         bev = self.lss(c4, intrinsics, cam_to_ego)
         bev = self.encoder(bev)
         return self.head(bev)
