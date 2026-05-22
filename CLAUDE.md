@@ -37,7 +37,7 @@ Build a full autonomous driving perception pipeline from scratch in PyTorch, cov
 - [✅] Phase 4 — ViT Integration (hybrid CNN-ViT trained; mIoU 0.320, ≈ ResNet 0.327)
 - [✅] Phase 5 — BEV Transform (LSS BEV detector trained; best val loss 7.74)
 - [✅] Phase 6 — Temporal Fusion (3-frame cross-attention detector trained; mAP 0.135 vs single-frame 0.129)
-- [ ] Phase 7 — Integration & Demo
+- [✅] Phase 7 — Integration & Demo (unified det+seg+BEV pipeline + Streamlit demo; 17.5 FPS, 56.2M params)
 
 ## Completed Work
 ### Phase 2 (in progress)
@@ -247,7 +247,7 @@ Trained `python -m models.bev.train_bev configs/bev.yaml` — pretrained ResNet 
 
 **Observations:** the pipeline trains end-to-end — train loss fell 8× (heatmap focal collapsed fast as the centre heatmap learned). But validation loss never meaningfully improved (7.88 → 7.74 best) while train kept dropping — strong overfitting, the same 324-image small-dataset ceiling seen in every phase. No detection metric (mAP) is computed; BEV detection quality is judged by P5-4 visualization. **Logs:** `logs/bev_run.log`.
 
-**Phase 5 remaining:** P5-4 — top-down BEV visualization (predicted heatmap peaks → decoded boxes overlaid on a BEV grid). Not yet built; best done as a small `utils` function or folded into the Phase 7 demo.
+**P5-4 (BEV visualization):** delivered in Phase 7 — `decode_bev_detections` (heatmap peaks → BEV boxes) + `utils.visualize.draw_bev` (top-down rotated-box render), shown as the BEV panel in the demo.
 
 ### Phase 6 — Complete ✅ (temporal detector trained, mAP 0.135)
 3-frame temporal fusion via cross-attention, enhancing the Phase 2 FPN detector. Scope: target = detection; window = 3 frames (current + 2 past).
@@ -273,7 +273,32 @@ Trained `python -m models.temporal.train_temporal configs/temporal.yaml` — pre
 
 **Observations:** temporal fusion landed marginally above the single-frame baseline (mAP 0.135 vs 0.129, ~5% relative) — a real but modest gain, driven by cyclist AP; car AP actually dipped slightly. The temporal model has more parameters and overfit hard (val loss climbed 1.4 → 6.0 while train fell to ~0.01) on only 308 training windows — the recurring small-dataset ceiling. Honest read: at nuScenes-mini scale temporal cross-attention is roughly neutral-to-slightly-positive; the mechanism works but needs more data to clearly pay off. **Logs:** `logs/temporal_run.log`.
 
-Note: `compute_flicker_rate` (P6-4 temporal-consistency metric) is implemented and unit-tested but not wired into the training loop — measuring it needs an eval pass that tracks GT instance ids across a scene's frames. A standalone flicker-eval script is a future addition.
+**P6-4 (flicker eval):** `evaluation/eval_flicker.py` runs the trained temporal detector frame-by-frame over the validation scenes, tracks GT objects by nuScenes `instance_token`, and reports the flicker rate via `compute_flicker_rate`. Predictions and GT are matched in native pixels (GT projected at native res, detections scaled back). **Result: mean flicker rate 0.135** — ~14% of objects detected in both neighbouring frames are dropped in the middle one.
+
+### Phase 7 — Complete ✅ (unified pipeline + interactive demo)
+The trained phases unified into one perception pipeline with an interactive demo. Pipeline = detection + segmentation + BEV; demo = Streamlit UI. Delivers the deferred P5-4 (BEV visualization).
+
+**Models used:** Phase 6 temporal detector (`temporal_best.pt`), Phase 4 hybrid U-Net segmenter (`segmenter_best.pt` on disk is the hybrid model), Phase 5 BEV detector (`bev_best.pt`).
+
+- `configs/demo.yaml` — per-model config+checkpoint paths, thresholds ✅.
+- `models/bev/bev_detector.py` — `decode_bev_detections` ✅ — heatmap 3×3-max-pool peaks → BEV boxes (P5-4).
+- `utils/visualize.py` — `overlay_segmentation` (mask blend), `draw_bev` (top-down rotated-box render) ✅.
+- `demo/pipeline.py` — `PerceptionPipeline` ✅ — loads all 3 checkpoints; `process_frame` runs detector + segmenter + BEV.
+- `demo/app.py` — Streamlit UI ✅ — scene picker, frame slider, camera (det+seg) + BEV panel. Run `streamlit run demo/app.py` (needs `pip install streamlit`).
+- `demo/benchmark.py` — P7-4 params + FPS benchmark ✅.
+- Tests: `tests/test_demo.py` — full suite **369 passing**.
+
+### Phase 7 — Benchmark (P7-4)
+End-to-end pipeline on MPS, 448×800 input, 3-frame window:
+
+| Model | Parameters |
+|---|---|
+| Temporal detector | 16.6M |
+| Hybrid U-Net segmenter | 27.6M |
+| BEV detector | 12.0M |
+| **Total** | **56.2M** |
+
+**Throughput: 57 ms/frame → 17.5 FPS** (detection + segmentation + BEV, all three per frame). Ablation studies (pretrained vs scratch, ViT vs CNN, temporal vs single-frame, mIoU/mAP/flicker) are in the README per-phase training logs.
 
 ### Phase 1 ✅
 - `models/backbone/linear_classifier.py` — `LinearClassifier`: flatten + single `nn.Linear`, forward pass ✅

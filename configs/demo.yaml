@@ -1,0 +1,21 @@
+# Phase 7 — unified perception demo (detection + segmentation + BEV).
+
+data_root: data/raw/v1.0-mini
+scene: scene-1100          # nuScenes scene the demo runs on
+seq_len: 3                 # temporal detector window
+
+# trained models — each entry is (its training config, its checkpoint)
+detector:
+  config: configs/temporal.yaml
+  checkpoint: checkpoints/temporal_best.pt
+segmenter:
+  config: configs/segmenter_hybrid.yaml   # segmenter_best.pt on disk IS the hybrid model
+  checkpoint: checkpoints/segmenter_best.pt
+bev:
+  config: configs/bev.yaml
+  checkpoint: checkpoints/bev_best.pt
+
+# display / decode thresholds
+det_score_threshold: 0.3
+bev_score_threshold: 0.3
+bev_max_detections: 50

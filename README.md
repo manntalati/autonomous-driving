@@ -130,7 +130,7 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 | `P5-1` | Implement camera intrinsic/extrinsic projection math | [✅] |
 | `P5-2` | Build a learned BEV transform module (Lift-Splat-Shoot style) | [✅] |
 | `P5-3` | Project front-view features into a top-down BEV grid + BEV detection head | [✅] |
-| `P5-4` | Visualize BEV outputs (detected objects from above) | [ ] |
+| `P5-4` | Visualize BEV outputs (detected objects from above) | [✅] |
 
 ---
 
@@ -143,7 +143,7 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 | `P6-1` | Build a sequence data loader that serves consecutive frames | [✅] |
 | `P6-2` | Implement temporal attention (cross-attention between current and past frame features) | [✅] |
 | `P6-3` | Temporal-fusion module enriching the detector with past-frame features | [✅] |
-| `P6-4` | Temporal-consistency (flicker) metric — implemented; standalone eval pending | [🔄] |
+| `P6-4` | Temporal-consistency (flicker) metric + frame-by-frame evaluation | [✅] |
 
 ---
 
@@ -153,10 +153,10 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 
 | Ticket | Task | Status |
 |---|---|---|
-| `P7-1` | Unify all modules into one end-to-end pipeline (image -> detections + segmentation + BEV) | [ ] |
-| `P7-2` | Run inference on a dashcam video clip, produce annotated output video | [ ] |
-| `P7-3` | Build a simple demo UI or CLI that processes video and renders all outputs | [ ] |
-| `P7-4` | Write up results: architecture diagrams, benchmarks, ablation studies | [ ] |
+| `P7-1` | Unify all modules into one end-to-end pipeline (image -> detections + segmentation + BEV) | [✅] |
+| `P7-2` | Run inference over a scene's frames, render annotated detection + segmentation outputs | [✅] |
+| `P7-3` | Interactive Streamlit demo — scene picker, frame scrubber, all outputs | [✅] |
+| `P7-4` | Write up results: architecture diagram, benchmarks, ablation studies | [✅] |
 
 ---
 
@@ -258,27 +258,36 @@ The temporal stage fuses information across consecutive video frames. A sequence
 | Cyclist AP | 0.097 | 0.143 |
 | **mAP** | **0.129** | **0.135** |
 
-**Analysis:** Training early-stopped at epoch 34 (best at 24). Temporal fusion finished marginally above the single-frame detector (mAP 0.135 vs 0.129, ~5% relative) — a real but modest gain, carried by cyclist AP while car AP slipped slightly. The temporal model carries extra parameters (the cross-attention stack) and overfit hard — validation loss climbed from 1.4 to 6.0 while training loss fell toward 0.01 — on only 308 three-frame windows. The honest takeaway matches the rest of the project: the mechanism is sound and implemented from scratch, but a 300-sample regime can't show temporal attention's full value; it would pay off more clearly with longer sequences and far more data. A flicker metric (detections that vanish for a single frame) is implemented to quantify temporal consistency directly, with a standalone evaluation script still to come.
+**Analysis:** Training early-stopped at epoch 34 (best at 24). Temporal fusion finished marginally above the single-frame detector (mAP 0.135 vs 0.129, ~5% relative) — a real but modest gain, carried by cyclist AP while car AP slipped slightly. The temporal model carries extra parameters (the cross-attention stack) and overfit hard — validation loss climbed from 1.4 to 6.0 while training loss fell toward 0.01 — on only 308 three-frame windows. The honest takeaway matches the rest of the project: the mechanism is sound and implemented from scratch, but a 300-sample regime can't show temporal attention's full value; it would pay off more clearly with longer sequences and far more data.
+
+**Temporal consistency (P6-4):** beyond mAP, `evaluation/eval_flicker.py` runs the detector frame-by-frame over the validation scenes and measures *flicker* — objects detected at t-1 and t+1 but dropped in the middle frame, tracked by nuScenes instance id. The temporal detector's mean flicker rate is **0.135**: about 1 in 7 consistently-visible objects still blinks out for a single frame — a concrete handle on the stability that mAP alone can't see.
 
 ---
 
-## CS 444 Topics Covered
+### Phase 7 Integration & Demo
 
-| Topic | Where It's Applied |
+The final phase unifies the trained phases into one perception system. `PerceptionPipeline` loads three models — the Phase 6 temporal detector, the Phase 4 hybrid CNN-ViT U-Net segmenter, and the Phase 5 Lift-Splat-Shoot BEV detector — and runs all of them on each frame: 2D detections, a semantic segmentation mask, and top-down BEV detections (the deferred P5-4 visualization, decoded from the BEV heatmap). An interactive Streamlit app lets you pick a scene, scrub through its frames, and view the camera image with boxes + segmentation overlaid alongside a bird's-eye-view panel.
+
+**End-to-end benchmark** (MPS, 448×800 input, 3-frame temporal window):
+| Model | Parameters |
 |---|---|
-| Linear classifiers | Phase 1 — baseline classifier |
-| Multi-class classification | Phase 1 — traffic sign classification |
-| Multi-layer networks | Phase 1 — MLP with manual backprop |
-| Backpropagation | Phase 1 — gradient computation from scratch |
-| Convolutional networks | Phase 1 — ResNet-style backbone |
-| Convolutional architectures | Phases 1-3 — backbone + detection + segmentation heads |
-| Training in detail | Phase 1 — LR scheduling, weight decay, augmentation |
-| Dense prediction | Phase 3 — semantic segmentation (U-Net decoder) |
-| Object detection | Phase 2 — SSD/YOLO-style single-stage detector |
-| Recurrent networks | Phase 6 — temporal fusion across video frames |
-| Attention models | Phases 4, 5, 6 — self-attention, cross-attention, temporal attention |
-| Transformers | Phase 4 — full ViT encoder from scratch |
-| Vision Transformers | Phase 4 — hybrid CNN-ViT architecture |
+| Temporal detector | 16.6M |
+| Hybrid U-Net segmenter | 27.6M |
+| BEV detector | 12.0M |
+| **Total** | **56.2M** |
+
+The full pipeline runs all three models in **57 ms/frame (17.5 FPS)** — interactive speed for the demo.
+
+**Ablation summary** (experiments run across phases):
+| Comparison | Result |
+|---|---|
+| Detection backbone: from-scratch → ImageNet-pretrained | mAP 0.042 → 0.129 |
+| Segmentation backbone: ResNet vs hybrid CNN-ViT | mIoU 0.327 vs 0.320 (≈ tie) |
+| Detection: single-frame vs 3-frame temporal | mAP 0.129 → 0.135; flicker 0.135 |
+
+The consistent thread across every phase: each module works and is built from scratch, but nuScenes mini (~400 samples) is small enough that pretrained features help enormously while extra capacity (ViT, temporal attention) mostly overfits. The architecture is sound; the data is the ceiling.
+
+Run the demo with `streamlit run demo/app.py` (after `pip install streamlit`).
 
 ---
 

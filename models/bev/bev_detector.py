@@ -7,9 +7,11 @@ BEV detector (Phase 5): CAM_FRONT image → Lift-Splat-Shoot → BEV detection.
         → BEVDetectionHead → per-class centre heatmap + box regression
 """
 from __future__ import annotations
+import math
 from typing import Tuple
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from models.backbone.resnet import ConvBlock, ResNetBackbone
 from models.bev.lss import LiftSplatShoot
@@ -97,3 +99,57 @@ class BEVDetector(nn.Module):
         bev = self.lss(c4, intrinsics, cam_to_ego)
         bev = self.encoder(bev)
         return self.head(bev)
+
+
+def decode_bev_detections(
+    heatmap: torch.Tensor,
+    regression: torch.Tensor,
+    xbound,
+    ybound,
+    score_threshold: float = 0.3,
+    max_detections: int = 50,
+):
+    """
+    Decode the BEV head outputs into BEV boxes — the inverse of encode_bev_targets,
+    used for the Phase 7 / P5-4 top-down visualization.
+    Args:
+      heatmap — (num_classes, X, Y) per-class centre probabilities (already sigmoid).
+      regression — (6, X, Y) [offset_x, offset_y, length, width, sin yaw, cos yaw].
+      xbound/ybound — BEV grid [lower, upper, cell_size] per axis.
+      score_threshold — discard peaks below this.
+      max_detections — keep at most this many, by score.
+    Returns: (boxes (N,5)=[x,y,length,width,yaw], scores (N,), labels (N,)).
+    Pipeline:
+      1. find peak cells — local maxima of the heatmap (e.g. 3×3 max-pool == heatmap)
+         above score_threshold.
+      2. at each peak (class c, cell ix,iy): read regression →
+         x = (ix + offset_x)·x_cell + x_lower ; y likewise ; yaw = atan2(sin, cos).
+      3. sort by score, keep the top max_detections.
+    """
+    # peaks = cells equal to their 3×3 local max and above the score threshold
+    pooled = F.max_pool2d(heatmap.unsqueeze(0), kernel_size=3, stride=1, padding=1).squeeze(0)
+    peaks = (heatmap == pooled) & (heatmap >= score_threshold)
+    idx = peaks.nonzero(as_tuple=False)  # (P, 3) — (class, ix, iy)
+
+    if idx.shape[0] == 0:
+        return (torch.zeros(0, 5), torch.zeros(0), torch.zeros(0, dtype=torch.long))
+
+    x_lo, _, x_cell = xbound
+    y_lo, _, y_cell = ybound
+    boxes, scores, labels = [], [], []
+    for c, ix, iy in idx.tolist():
+        offx, offy, length, width, sin, cos = regression[:, ix, iy].tolist()
+        x = (ix + offx) * x_cell + x_lo
+        y = (iy + offy) * y_cell + y_lo
+        boxes.append([x, y, length, width, math.atan2(sin, cos)])
+        scores.append(float(heatmap[c, ix, iy]))
+        labels.append(int(c))
+
+    boxes = torch.tensor(boxes, dtype=torch.float32)
+    scores = torch.tensor(scores, dtype=torch.float32)
+    labels = torch.tensor(labels, dtype=torch.long)
+
+    if scores.numel() > max_detections:
+        topk = torch.topk(scores, max_detections)
+        boxes, scores, labels = boxes[topk.indices], topk.values, labels[topk.indices]
+    return boxes, scores, labels

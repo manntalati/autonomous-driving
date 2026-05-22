@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -17,6 +18,65 @@ CLASS_NAME = {
 
 _MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 _STD  = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+
+# Segmentation class colours (BGR) — background / drivable / lane / ped_crossing / walkway.
+SEG_COLORS = np.array([
+    (0,   0,   0  ),   # background  — black (not drawn)
+    (128, 64,  128),   # drivable    — purple
+    (0,   255, 255),   # lane        — yellow
+    (60,  20,  220),   # ped_crossing— crimson
+    (232, 35,  244),   # walkway     — magenta
+], dtype=np.uint8)
+
+
+def overlay_segmentation(image: np.ndarray, mask: np.ndarray, alpha: float = 0.5) -> np.ndarray:
+    """
+    Blend a per-pixel segmentation mask over an image.
+    Args: image — (H, W, 3) uint8; mask — (H, W) int class IDs; alpha — blend weight.
+    Returns: (H, W, 3) uint8 — image with non-background classes colour-blended.
+    """
+    mask = np.asarray(mask)
+    out = image.astype(np.float32).copy()
+    colours = SEG_COLORS[mask].astype(np.float32)   # (H, W, 3)
+    fg = mask > 0                                    # leave background untouched
+    out[fg] = (1.0 - alpha) * out[fg] + alpha * colours[fg]
+    return out.astype(np.uint8)
+
+
+def draw_bev(bev_boxes, scores, labels, xbound, ybound, canvas_px: int = 400) -> np.ndarray:
+    """
+    Render BEV detections as a top-down image (P5-4 visualization).
+    Args:
+      bev_boxes — (N, 5) [x, y, length, width, yaw] ego-frame BEV boxes.
+      scores / labels — (N,) detection scores and class ids.
+      xbound/ybound — BEV grid extent the canvas spans.
+      canvas_px — output square size in pixels.
+    Returns: (canvas_px, canvas_px, 3) uint8 top-down view — ego forward = up,
+      each box a rotated rectangle coloured by class.
+    """
+    canvas = np.zeros((canvas_px, canvas_px, 3), dtype=np.uint8)
+    x_lo, x_hi, _ = xbound
+    y_lo, y_hi, _ = ybound
+
+    def to_px(x, y):
+        col = int((y - y_lo) / (y_hi - y_lo) * canvas_px)
+        row = int(canvas_px - (x - x_lo) / (x_hi - x_lo) * canvas_px)  # forward → up
+        return col, row
+
+    # ego marker
+    cv2.circle(canvas, to_px(0.0, 0.0), 4, (255, 255, 255), -1)
+
+    for i in range(len(bev_boxes)):
+        x, y, length, width, yaw = [float(v) for v in bev_boxes[i]]
+        local = np.array([[ length / 2,  width / 2], [ length / 2, -width / 2],
+                          [-length / 2, -width / 2], [-length / 2,  width / 2]])
+        c, s = math.cos(yaw), math.sin(yaw)
+        rot = np.array([[c, -s], [s, c]])
+        world = local @ rot.T + np.array([x, y])
+        pts = np.array([to_px(wx, wy) for wx, wy in world], dtype=np.int32)
+        color = tuple(int(v) for v in CLASS_COLORS[int(labels[i])])
+        cv2.polylines(canvas, [pts], isClosed=True, color=color, thickness=2)
+    return canvas
 
 
 def draw_boxes(image, boxes, labels, scores=None) -> np.ndarray:
