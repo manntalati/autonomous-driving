@@ -29,3 +29,7 @@ notebooks/.ipynb_checkpoints/
 # Editor
 .vscode/
 .idea/
+
+# claude
+CLAUDE.MD
+.claude/

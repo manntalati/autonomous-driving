@@ -1,6 +1,0 @@
-# Memory Index
-
-- [user_profile.md](user_profile.md) — User is a CS 444 deep learning student building an autonomous driving capstone; wants bugs pointed out not silently fixed
-- [project_phase1.md](project_phase1.md) — Phase 1 status: P1-1/2/3 complete, P1-4/5 are intentional NotImplementedError stubs for student to fill in
-- [project_conventions.md](project_conventions.md) — Tensor shape conventions, bbox format, known API mismatch between dataloader.py and train_backbone.py, CI setup notes, .gitignore gaps
-- [project_phase2.md](project_phase2.md) — Phase 2 status: anchors/fpn/head implemented + 53 tests; transforms 23 tests; dataset 39 tests (skip in CI); 222 total passing; known dtype bug in anchors.py and FPN docstring inversion
