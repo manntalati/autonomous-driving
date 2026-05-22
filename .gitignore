@@ -1,3 +1,4 @@
+# Data
 data/raw/v1.0-mini
 .venv
 data/v1.0-mini.tgz
@@ -33,3 +34,6 @@ notebooks/.ipynb_checkpoints/
 # claude
 CLAUDE.MD
 .claude/
+
+# docs
+docs/phase8_plan.md

@@ -91,3 +91,11 @@ class TestDrawBEV:
         canvas = draw_bev(torch.zeros(0, 5), torch.zeros(0), torch.zeros(0, dtype=torch.long),
                           XB, YB, canvas_px=300)
         assert canvas.shape == (300, 300, 3)
+
+    def test_seg_background(self):
+        """A BEV semantic map renders as a (non-black) coloured background."""
+        seg = np.random.randint(0, 5, (64, 64))   # 64×64 grid matches XB/YB
+        canvas = draw_bev(torch.zeros(0, 5), torch.zeros(0), torch.zeros(0, dtype=torch.long),
+                          XB, YB, seg=seg, canvas_px=300)
+        assert canvas.shape == (300, 300, 3)
+        assert canvas.sum() > 0                   # the seg map filled the panel

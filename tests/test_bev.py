@@ -39,18 +39,21 @@ class TestBEVDetector:
         return BEVDetector(num_classes=3, image_size=(64, 64))
 
     def test_forward_shapes(self, model):
-        """Surround input (B, N, 3, H, W) → heatmap (B,3,X,Y) + regression (B,6,X,Y)."""
+        """Surround input (B, N, 3, H, W) → detection + BEV-segmentation outputs."""
         B, N = 2, 2
-        hm, reg = model(torch.randn(B, N, 3, 64, 64),
-                        torch.eye(3).repeat(B, N, 1, 1), torch.eye(4).repeat(B, N, 1, 1))
-        assert hm.shape == (B, 3, 64, 64)
-        assert reg.shape == (B, 6, 64, 64)
+        out = model(torch.randn(B, N, 3, 64, 64),
+                    torch.eye(3).repeat(B, N, 1, 1), torch.eye(4).repeat(B, N, 1, 1))
+        assert out["heatmap"].shape == (B, 3, 64, 64)
+        assert out["regression"].shape == (B, 6, 64, 64)
+        assert out["seg"].shape == (B, 5, 64, 64)        # 5-class BEV semantic map
+        assert out["depth"].shape[0] == B and out["depth"].dim() == 4   # (B, D, Hf, Wf)
 
     def test_backward(self, model):
-        hm, reg = model(torch.randn(1, 1, 3, 64, 64),
-                        torch.eye(3).repeat(1, 1, 1, 1), torch.eye(4).repeat(1, 1, 1, 1))
-        (hm.sum() + reg.sum()).backward()
+        out = model(torch.randn(1, 1, 3, 64, 64),
+                    torch.eye(3).repeat(1, 1, 1, 1), torch.eye(4).repeat(1, 1, 1, 1))
+        (out["heatmap"].sum() + out["regression"].sum() + out["seg"].sum()).backward()
         assert all(p.grad is not None for p in model.head.parameters())
+        assert all(p.grad is not None for p in model.seg_head.parameters())
 
 
 class TestEncodeBEVTargets:

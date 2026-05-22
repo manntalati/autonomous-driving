@@ -43,28 +43,41 @@ def overlay_segmentation(image: np.ndarray, mask: np.ndarray, alpha: float = 0.5
     return out.astype(np.uint8)
 
 
-def draw_bev(bev_boxes, scores, labels, xbound, ybound, canvas_px: int = 400) -> np.ndarray:
+def draw_bev(bev_boxes, scores, labels, xbound, ybound, seg=None, canvas_px: int = 400) -> np.ndarray:
     """
-    Render BEV detections as a top-down image (P5-4 visualization).
+    Render the BEV scene as a top-down image (P5-4 / P8-5).
     Args:
       bev_boxes — (N, 5) [x, y, length, width, yaw] ego-frame BEV boxes.
       scores / labels — (N,) detection scores and class ids.
       xbound/ybound — BEV grid extent the canvas spans.
+      seg — optional (X, Y) BEV semantic-map class grid; drawn as a coloured
+            (dimmed) background — drivable / lane / walkway road layout.
       canvas_px — output square size in pixels.
     Returns: (canvas_px, canvas_px, 3) uint8 top-down view — ego forward = up,
-      each box a rotated rectangle coloured by class.
+      with the road map underneath, range rings, ego marker, and detection boxes.
     """
-    canvas = np.zeros((canvas_px, canvas_px, 3), dtype=np.uint8)
     x_lo, x_hi, _ = xbound
     y_lo, y_hi, _ = ybound
+
+    if seg is not None:
+        seg = np.asarray(seg)
+        bg = SEG_COLORS[seg][::-1, :, :]                       # flip x so forward = up
+        canvas = cv2.resize(bg, (canvas_px, canvas_px), interpolation=cv2.INTER_NEAREST)
+        canvas = (canvas.astype(np.float32) * 0.55).astype(np.uint8)   # dim so boxes pop
+    else:
+        canvas = np.zeros((canvas_px, canvas_px, 3), dtype=np.uint8)
 
     def to_px(x, y):
         col = int((y - y_lo) / (y_hi - y_lo) * canvas_px)
         row = int(canvas_px - (x - x_lo) / (x_hi - x_lo) * canvas_px)  # forward → up
         return col, row
 
-    # ego marker
-    cv2.circle(canvas, to_px(0.0, 0.0), 4, (255, 255, 255), -1)
+    # range rings every 10 m + ego-vehicle marker
+    ego = to_px(0.0, 0.0)
+    metres_per_px = (x_hi - x_lo) / canvas_px
+    for r in range(10, int(max(x_hi, y_hi)) + 1, 10):
+        cv2.circle(canvas, ego, int(r / metres_per_px), (110, 110, 110), 1)
+    cv2.circle(canvas, ego, 5, (255, 255, 255), -1)
 
     for i in range(len(bev_boxes)):
         x, y, length, width, yaw = [float(v) for v in bev_boxes[i]]

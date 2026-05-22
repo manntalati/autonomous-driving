@@ -123,7 +123,8 @@ def main() -> None:
     vis = overlay_segmentation(image, out["seg_mask"].numpy(), alpha=0.45)
     vis = draw_boxes(vis, out["boxes"].tolist(), out["labels"].tolist(), out["scores"].tolist())
     bev_img = draw_bev(out["bev_boxes"], out["bev_scores"], out["bev_labels"],
-                       tuple(pipeline.bev_cfg["xbound"]), tuple(pipeline.bev_cfg["ybound"]))
+                       tuple(pipeline.bev_cfg["xbound"]), tuple(pipeline.bev_cfg["ybound"]),
+                       seg=out["bev_seg"].numpy())
 
     left, right = st.columns([2, 1])
     left.subheader("Camera — detection + segmentation")

@@ -14,8 +14,10 @@ from torch.utils.data import DataLoader
 from nuscenes.nuscenes import NuScenes
 
 from data.bev_dataset import NuScenesBEVDataset, bev_collate_fn
+from data.dataset import version_from_data_root
 from models.bev.bev_detector import BEVDetector
-from models.bev.losses import BEVDetectionLoss
+from models.bev.losses import BEVLoss
+from evaluation.seg_metrics import ConfusionMatrixMeter
 from training.scheduler import build_scheduler, EarlyStopping
 
 NUM_WORKERS = 2
@@ -30,6 +32,7 @@ def build_bev_detector(cfg: dict) -> BEVDetector:
         zbound=tuple(cfg["zbound"]),
         dbound=tuple(cfg["dbound"]),
         bev_channels=cfg.get("bev_channels", 64),
+        num_seg_classes=cfg.get("num_seg_classes", 5),
     )
     if cfg.get("pretrained", False):
         model.load_pretrained()
@@ -60,11 +63,12 @@ def _build_optimizer(model: BEVDetector, cfg: dict) -> torch.optim.Optimizer:
 
 def get_bev_loaders(cfg: dict) -> tuple[DataLoader, DataLoader]:
     """Build train/val DataLoaders for the BEV dataset."""
-    nusc = NuScenes(version="v1.0-mini", dataroot=cfg["data_root"], verbose=False)
+    nusc = NuScenes(version=version_from_data_root(cfg["data_root"]), dataroot=cfg["data_root"], verbose=False)
     ds_kw = dict(
         image_size=tuple(cfg.get("image_size", [448, 800])),
         xbound=tuple(cfg["xbound"]),
         ybound=tuple(cfg["ybound"]),
+        dbound=tuple(cfg["dbound"]),
         cameras=cfg.get("cameras"),   # None → dataset defaults to CAM_FRONT only
     )
     train_ds = NuScenesBEVDataset(nusc, cfg["data_root"], split="train", **ds_kw)
@@ -85,16 +89,17 @@ def _stack_calibration(targets: list, device: torch.device) -> tuple[torch.Tenso
     cam_to_ego = torch.stack([t["cam_to_ego"] for t in targets]).to(device)
     return intrinsics, cam_to_ego
 
+_KEYS = ("loss", "hm_loss", "reg_loss", "seg_loss", "depth_loss")
+
+
 def train_one_epoch(model, loader, optimizer, loss_fn, device, scaler, grad_clip: float = 1.0) -> dict:
     """
-    One AMP training epoch. For each batch:
-      1. images → device; _stack_calibration(targets) → intrinsics, cam_to_ego.
-      2. heatmap, reg = model(images, intrinsics, cam_to_ego).
-      3. loss, log = loss_fn(heatmap, reg, targets); backward; step (with grad clip).
-    Returns: dict of averaged 'loss', 'hm_loss', 'reg_loss'.
+    One AMP training epoch: forward the BEV detector, compute the combined
+    detection + BEV-segmentation loss, backward, step (with grad clip).
+    Returns: dict of averaged 'loss', 'hm_loss', 'reg_loss', 'seg_loss'.
     """
     model.train()
-    total_loss = total_hm = total_reg = 0.0
+    total = {k: 0.0 for k in _KEYS}
     num_batches = 0
     amp_enabled = device.type == "cuda"
     for images, targets in loader:
@@ -103,41 +108,45 @@ def train_one_epoch(model, loader, optimizer, loss_fn, device, scaler, grad_clip
         optimizer.zero_grad()
         amp_ctx = torch.autocast(device_type="cuda") if amp_enabled else nullcontext()
         with amp_ctx:
-            heatmap, reg = model(images, intrinsics, cam_to_ego)
-            loss, log = loss_fn(heatmap, reg, targets)
+            outputs = model(images, intrinsics, cam_to_ego)
+            loss, log = loss_fn(outputs, targets)
         scaler.scale(loss).backward()
         scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         scaler.step(optimizer)
         scaler.update()
-        total_loss += log["loss"]
-        total_hm += log["hm_loss"]
-        total_reg += log["reg_loss"]
+        for k in _KEYS:
+            total[k] += log[k]
         num_batches += 1
     n = max(num_batches, 1)
-    return {"loss": total_loss / n, "hm_loss": total_hm / n, "reg_loss": total_reg / n}
+    return {k: total[k] / n for k in _KEYS}
 
-def val_one_epoch(model, loader, loss_fn, device) -> dict:
+def val_one_epoch(model, loader, loss_fn, device, num_seg_classes: int) -> dict:
     """
-    One eval epoch: model.eval(), no_grad, accumulate loss components.
-    Returns: dict of averaged 'loss', 'hm_loss', 'reg_loss'.
-    (BEV detection metric + visualisation is ticket P5-4, kept separate.)
+    One eval epoch: accumulate loss components and the BEV-segmentation mIoU
+    (argmax of the BEV seg head vs the rasterized map target).
+    Returns: dict of averaged loss components plus 'mIoU'.
     """
     model.eval()
-    total_loss = total_hm = total_reg = 0.0
+    total = {k: 0.0 for k in _KEYS}
     num_batches = 0
+    meter = ConfusionMatrixMeter(num_seg_classes)
     with torch.no_grad():
         for images, targets in loader:
             images = images.to(device)
             intrinsics, cam_to_ego = _stack_calibration(targets, device)
-            heatmap, reg = model(images, intrinsics, cam_to_ego)
-            _, log = loss_fn(heatmap, reg, targets)
-            total_loss += log["loss"]
-            total_hm += log["hm_loss"]
-            total_reg += log["reg_loss"]
+            outputs = model(images, intrinsics, cam_to_ego)
+            _, log = loss_fn(outputs, targets)
+            for k in _KEYS:
+                total[k] += log[k]
             num_batches += 1
+            preds = outputs["seg"].argmax(dim=1)
+            seg_tgt = torch.stack([t["bev_seg"] for t in targets]).to(device)
+            meter.update(preds, seg_tgt)
     n = max(num_batches, 1)
-    return {"loss": total_loss / n, "hm_loss": total_hm / n, "reg_loss": total_reg / n}
+    out = {k: total[k] / n for k in _KEYS}
+    out["mIoU"] = meter.miou()
+    return out
 
 def main(cfg_path: str) -> None:
     """Load config → build model/optimizer/scheduler/loss → epoch loop with early stopping."""
@@ -148,33 +157,42 @@ def main(cfg_path: str) -> None:
     model = build_bev_detector(cfg).to(device)
     optimizer = _build_optimizer(model, cfg)
     scheduler = build_scheduler(optimizer, scheduler_type=cfg.get("scheduler", "cosine"), epochs=cfg["epochs"])
-    loss_fn = BEVDetectionLoss(
+    num_seg_classes = cfg.get("num_seg_classes", 5)
+    loss_fn = BEVLoss(
         num_classes=cfg["num_classes"],
         xbound=tuple(cfg["xbound"]),
         ybound=tuple(cfg["ybound"]),
+        num_seg_classes=num_seg_classes,
+        seg_weight=cfg.get("seg_weight", 1.0),
+        depth_weight=cfg.get("depth_weight", 1.0),
     )
     scaler = GradScaler("cuda", enabled=(device.type == "cuda"))
     grad_clip = cfg.get("grad_clip", 1.0)
     Path("checkpoints").mkdir(parents=True, exist_ok=True)
+    # early-stop on BEV mIoU (max): the combined val loss is dominated by the
+    # CenterNet heatmap term, which overfits immediately — mIoU is the signal
+    # that actually tracks BEV scene-understanding quality.
     early_stop = EarlyStopping(
         patience=cfg.get("patience", 10),
         ckpt_path=cfg.get("ckpt_path", "checkpoints/bev_best.pt"),
-        mode="min",
+        mode="max",
         min_delta=1e-3,
     )
 
     for epoch in range(cfg["epochs"]):
         train_log = train_one_epoch(model, train_loader, optimizer, loss_fn, device, scaler, grad_clip)
-        val_log = val_one_epoch(model, val_loader, loss_fn, device)
+        val_log = val_one_epoch(model, val_loader, loss_fn, device, num_seg_classes)
         scheduler.step()
         print(
             f"Epoch {epoch+1}/{cfg['epochs']} | "
-            f"train: {train_log['loss']:.4f} (hm {train_log['hm_loss']:.3f} reg {train_log['reg_loss']:.3f}) | "
-            f"val: {val_log['loss']:.4f}"
+            f"train {train_log['loss']:.3f} (hm {train_log['hm_loss']:.2f} "
+            f"reg {train_log['reg_loss']:.2f} seg {train_log['seg_loss']:.3f} "
+            f"depth {train_log['depth_loss']:.3f}) | "
+            f"val {val_log['loss']:.3f} | BEV mIoU {val_log['mIoU']:.3f}"
         )
-        early_stop(val_log["loss"], model)
+        early_stop(val_log["mIoU"], model)
         if early_stop.should_stop:
-            print(f"Early stopping triggered. Best val loss: {early_stop.best:.4f}")
+            print(f"Early stopping triggered. Best BEV mIoU: {early_stop.best:.4f}")
             break
 
 if __name__ == "__main__":

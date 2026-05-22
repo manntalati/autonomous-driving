@@ -4,7 +4,8 @@
 # data
 data_root: data/raw/v1.0-mini
 batch_size: 1            # 6 cameras/sample → 6× backbone passes; keep batch tiny
-num_classes: 3
+num_classes: 3           # detection classes — car / pedestrian / cyclist
+num_seg_classes: 5       # BEV map classes — background / drivable / lane / ped_crossing / walkway
 
 # input
 image_size: [448, 800]
@@ -23,6 +24,11 @@ dbound: [4.0, 50.0, 1.0]
 
 # feature dim
 bev_channels: 64
+
+# loss weights — the CenterNet detection heatmap loss is large, so the
+# segmentation and depth terms are up-weighted to influence the shared features.
+seg_weight: 20.0
+depth_weight: 10.0
 
 # training
 epochs: 40

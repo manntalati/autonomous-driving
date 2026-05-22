@@ -1,0 +1,15 @@
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+Epoch 1/40 | train 72.018 (hm 10.13 reg 4.32 seg 1.814 depth 2.129) | val 78.093 | BEV mIoU 0.144
+Epoch 2/40 | train 52.984 (hm 2.51 reg 3.12 seg 1.539 depth 1.657) | val 89.512 | BEV mIoU 0.107
+Epoch 3/40 | train 45.377 (hm 2.38 reg 2.74 seg 1.266 depth 1.494) | val 86.691 | BEV mIoU 0.106
+Epoch 4/40 | train 39.922 (hm 2.27 reg 2.57 seg 1.065 depth 1.378) | val 94.812 | BEV mIoU 0.108
+Epoch 5/40 | train 36.043 (hm 2.19 reg 2.42 seg 0.934 depth 1.276) | val 109.493 | BEV mIoU 0.101
+Epoch 6/40 | train 33.234 (hm 2.09 reg 2.34 seg 0.843 depth 1.194) | val 101.825 | BEV mIoU 0.111
+Epoch 7/40 | train 30.582 (hm 2.02 reg 2.24 seg 0.756 depth 1.120) | val 101.831 | BEV mIoU 0.133
+Epoch 8/40 | train 28.696 (hm 1.96 reg 2.18 seg 0.700 depth 1.054) | val 97.860 | BEV mIoU 0.123
+Epoch 9/40 | train 26.654 (hm 1.90 reg 2.12 seg 0.639 depth 0.986) | val 101.064 | BEV mIoU 0.142
+Epoch 10/40 | train 24.996 (hm 1.86 reg 2.06 seg 0.593 depth 0.921) | val 119.497 | BEV mIoU 0.110
+Epoch 11/40 | train 23.457 (hm 1.77 reg 1.99 seg 0.553 depth 0.862) | val 116.436 | BEV mIoU 0.117
+Early stopping triggered. Best BEV mIoU: 0.1438

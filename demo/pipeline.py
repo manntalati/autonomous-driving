@@ -73,21 +73,23 @@ class PerceptionPipeline:
         # ── segmentation ──
         seg_mask = self.segmenter(current).argmax(dim=1)[0].cpu()
 
-        # ── BEV detection (single CAM_FRONT camera → N=1) ──
-        heatmap, regression = self.bev(
+        # ── BEV detection + segmentation (single CAM_FRONT camera → N=1) ──
+        bev_out = self.bev(
             current.unsqueeze(1),                       # (1, 1, 3, H, W)
             intrinsic.to(device).view(1, 1, 3, 3),
             cam_to_ego.to(device).view(1, 1, 4, 4),
         )
         bev_boxes, bev_scores, bev_labels = decode_bev_detections(
-            heatmap[0].cpu(), regression[0].cpu(),
+            bev_out["heatmap"][0].cpu(), bev_out["regression"][0].cpu(),
             tuple(self.bev_cfg["xbound"]), tuple(self.bev_cfg["ybound"]),
             score_threshold=self.cfg.get("bev_score_threshold", 0.3),
             max_detections=self.cfg.get("bev_max_detections", 50),
         )
+        bev_seg = bev_out["seg"][0].argmax(dim=0).cpu()   # (X, Y) BEV semantic map
 
         return {
             "boxes": boxes, "scores": scores, "labels": labels,
             "seg_mask": seg_mask,
             "bev_boxes": bev_boxes, "bev_scores": bev_scores, "bev_labels": bev_labels,
+            "bev_seg": bev_seg,
         }

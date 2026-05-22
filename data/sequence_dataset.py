@@ -17,7 +17,7 @@ import torch
 from nuscenes.nuscenes import NuScenes
 from torch.utils.data import Dataset
 
-from data.dataset import NuScenesDetectionDataset, TRAIN_SCENES, VAL_SCENES
+from data.dataset import NuScenesDetectionDataset, get_scene_split
 from data.transforms import get_val_transforms
 
 
@@ -54,7 +54,8 @@ class NuScenesSequenceDataset(Dataset):
         Returns: list of windows, each a list of seq_len sample tokens.
         """
         windows: List[List[str]] = []
-        scenes = TRAIN_SCENES if self.split == "train" else VAL_SCENES
+        train_scenes, val_scenes = get_scene_split(self.nusc, self.frame_ds.data_root)
+        scenes = train_scenes if self.split == "train" else val_scenes
         for scene in self.nusc.scene:
             if scene["name"] not in scenes:
                 continue

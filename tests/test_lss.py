@@ -72,9 +72,10 @@ class TestLiftSplatShoot:
         assert torch.allclose(geom[0, ..., 0], frustum[..., 0] * frustum[..., 2], atol=1e-3)
 
     def test_lift_shape(self):
-        """lift → (B, bev_channels, D, Hf, Wf)."""
-        lifted = _lss().lift(torch.randn(2, 8, 4, 4))
+        """lift → (frustum (B, bev_channels, D, Hf, Wf), depth (B, D, Hf, Wf))."""
+        lifted, depth = _lss().lift(torch.randn(2, 8, 4, 4))
         assert lifted.shape == (2, 4, 3, 4, 4)
+        assert depth.shape == (2, 3, 4, 4)
 
     def test_splat_shape(self):
         """splat → (B, bev_channels, nx_x, nx_y)."""

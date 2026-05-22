@@ -266,6 +266,44 @@ segmenter 27.6M, BEV detector 12.0M. End-to-end throughput **57 ms/frame →
 
 ---
 
+## Phase 8 — BEV Scene Understanding
+
+**Architecture.** Phase 8 extends the Phase-5 BEV detector into a multi-task,
+6-camera surround model — same Lift-Splat-Shoot core, three additions:
+- **Surround input.** All six cameras (each `3 × 448 × 800`) are processed by
+  the shared backbone; every camera's frustum splats into one shared 360°
+  ego-frame BEV grid (`64 × 128 × 128`, a symmetric `[-51.2, 51.2]` m extent).
+- **BEV segmentation head.** A `BEVSegHead` runs parallel to the detection head
+  on the BEV feature grid and predicts a per-cell semantic map
+  (`5 × 128 × 128` — background / drivable / lane / ped-crossing / walkway).
+  Targets come from rasterizing nuScenes map-expansion polygons directly into
+  the ego grid (`data/bev_seg_labels.py`) — no camera projection.
+- **LiDAR depth supervision.** The `LIDAR_TOP` sweep is projected into the
+  camera (`data/lidar_depth.py`) to give sparse ground-truth depth at the
+  `28 × 50` feature resolution; a cross-entropy term supervises `DepthNet`'s
+  depth distribution directly, instead of letting it drift as a side-effect of
+  the detection loss.
+
+`BEVDetector.forward` returns a dict — `heatmap`, `regression`, `seg`, `depth`.
+`BEVLoss` combines the CenterNet detection loss, the Dice+CE segmentation loss
+(weight 20), and the depth cross-entropy (weight 10) — the up-weighting is
+needed because the raw detection heatmap loss is large enough to otherwise
+swamp the segmentation and depth gradients.
+
+**Components.** `data/bev_seg_labels.py`, `data/lidar_depth.py`;
+`models/bev/bev_detector.py` (`BEVSegHead`); `models/bev/losses.py` (`BEVLoss`);
+`utils/visualize.py` (`draw_bev` — renders the BEV seg map as a coloured
+road-layout background with range rings, ego marker, and detection boxes).
+
+**Result.** Trained on the 6-camera surround config, **best BEV mIoU 0.144**
+(early-stopped on mIoU — the combined val loss is dominated by the heatmap term
+and overfits immediately, so it is a misleading stop signal). The headline
+change is qualitative: the BEV panel now shows a real top-down road map
+(drivable / lane / walkway) instead of an empty black canvas. Validation mIoU is
+noisy on the 80-sample val set — the recurring small-dataset ceiling.
+
+---
+
 ## Results Summary
 
 | Phase | Network | Key tensor shapes | Metric |
@@ -277,6 +315,7 @@ segmenter 27.6M, BEV detector 12.0M. End-to-end throughput **57 ms/frame →
 | 5 | LSS BEV detector | frustum 256×46×28×50 → grid 64×128×128 | val loss 7.74 |
 | 6 | Temporal detector | query 350 tokens, memory 700 tokens | mAP 0.135, flicker 0.135 |
 | 7 | Unified pipeline | 56.2M parameters | 17.5 FPS |
+| 8 | Surround BEV (det + seg + depth) | 6 cameras → 64×128×128 grid | BEV mIoU 0.144 |
 
 **The through-line.** Every module is built from scratch and verified to work.
 The limiting factor is never the architecture — it is data. nuScenes mini

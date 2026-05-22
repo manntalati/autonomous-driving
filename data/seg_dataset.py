@@ -7,7 +7,7 @@ from PIL import Image
 from nuscenes.nuscenes import NuScenes
 from torch.utils.data import Dataset
 
-from data.dataset import TRAIN_SCENES, VAL_SCENES
+from data.dataset import get_scene_split
 from data.transforms import get_seg_train_transforms, get_seg_val_transforms
 
 
@@ -48,7 +48,8 @@ class NuScenesSegmentationDataset(Dataset):
           - Logic mirrors NuScenesDetectionDataset._build_index for parity.
         """
         keyframes: List[Tuple[str, str]] = []
-        scenes = TRAIN_SCENES if self.split == "train" else VAL_SCENES
+        train_scenes, val_scenes = get_scene_split(self.nusc, self.data_root)
+        scenes = train_scenes if self.split == "train" else val_scenes
         warned = False
         for scene in self.nusc.scene:
             if scene["name"] not in scenes:

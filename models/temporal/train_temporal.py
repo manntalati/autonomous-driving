@@ -14,6 +14,7 @@ from torch.utils.data import DataLoader
 from nuscenes.nuscenes import NuScenes
 
 from data.sequence_dataset import NuScenesSequenceDataset, sequence_collate_fn
+from data.dataset import version_from_data_root
 from models.backbone.resnet import ResNetBackbone
 from models.detection.fpn import FPN
 from models.detection.head import DetectionHead
@@ -74,7 +75,7 @@ def _build_optimizer(model: TemporalDetector, cfg: dict) -> torch.optim.Optimize
 
 def get_temporal_loaders(cfg: dict):
     """Build train/val DataLoaders of frame-window sequences."""
-    nusc = NuScenes(version="v1.0-mini", dataroot=cfg["data_root"], verbose=False)
+    nusc = NuScenes(version=version_from_data_root(cfg["data_root"]), dataroot=cfg["data_root"], verbose=False)
     seq_len = cfg.get("seq_len", 3)
     train_ds = NuScenesSequenceDataset(nusc, cfg["data_root"], split="train", seq_len=seq_len)
     val_ds = NuScenesSequenceDataset(nusc, cfg["data_root"], split="val", seq_len=seq_len)

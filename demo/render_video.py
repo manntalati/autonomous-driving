@@ -123,7 +123,8 @@ def render_scene_video(cfg: dict, scene_name: str, out_path: str | Path, fps: in
         cam = _denormalize(frames[i])
         cam = overlay_segmentation(cam, out["seg_mask"].numpy(), alpha=0.45)
         cam = draw_boxes(cam, out["boxes"].tolist(), out["labels"].tolist(), out["scores"].tolist())
-        bev = draw_bev(out["bev_boxes"], out["bev_scores"], out["bev_labels"], xbound, ybound)
+        bev = draw_bev(out["bev_boxes"], out["bev_scores"], out["bev_labels"], xbound, ybound,
+                       seg=out["bev_seg"].numpy())
         bev = cv2.resize(bev, (cam.shape[0], cam.shape[0]))   # square panel, match cam height
         combined = np.ascontiguousarray(np.hstack([cam, bev]), dtype=np.uint8)   # RGB
 

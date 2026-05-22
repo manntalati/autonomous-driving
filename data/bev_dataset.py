@@ -1,5 +1,5 @@
 """
-CAM_FRONT BEV detection dataset for nuScenes mini (Phase 5).
+CAM_FRONT BEV detection dataset for nuScenes mini.
 
 Each item yields:
   - the front camera image (resized + normalised),
@@ -20,8 +20,10 @@ from pyquaternion import Quaternion
 from nuscenes.nuscenes import NuScenes
 from torch.utils.data import Dataset
 
-from data.dataset import TRAIN_SCENES, VAL_SCENES, LABEL_MAP
+from data.dataset import get_scene_split, LABEL_MAP
 from data.transforms import MEAN, STD
+from data.bev_seg_labels import build_bev_seg_label
+from data.lidar_depth import lidar_depth_bins
 
 CAM = "CAM_FRONT"
 _MEAN = np.array(MEAN, dtype=np.float32)
@@ -36,7 +38,7 @@ class NuScenesBEVDataset(Dataset):
     intrinsics are also transformed.
     """
 
-    def __init__(self, nusc: NuScenes, data_root: str | Path, split: str = "train", image_size: Tuple[int, int] = (448, 800), xbound: Tuple[float, float, float] = (0.0, 51.2, 0.8), ybound: Tuple[float, float, float] = (-25.6, 25.6, 0.8), cameras: Optional[List[str]] = None) -> None:
+    def __init__(self, nusc: NuScenes, data_root: str | Path, split: str = "train", image_size: Tuple[int, int] = (448, 800), xbound: Tuple[float, float, float] = (0.0, 51.2, 0.8), ybound: Tuple[float, float, float] = (-25.6, 25.6, 0.8), dbound: Tuple[float, float, float] = (4.0, 50.0, 1.0), cameras: Optional[List[str]] = None, bev_seg: bool = True, depth_sup: bool = True) -> None:
         """
         Args:
           nusc — NuScenes instance.
@@ -44,8 +46,12 @@ class NuScenesBEVDataset(Dataset):
           split — "train" or "val".
           image_size — (H, W) the image is resized to; intrinsics are scaled to match.
           xbound/ybound — BEV grid extent; GT boxes outside it are dropped.
+          dbound — (depth_min, depth_max, depth_step) for the LiDAR depth target.
           cameras — camera channels to load (default ["CAM_FRONT"]); pass all 6 for
                     surround BEV. Every camera splats into the same ego-frame grid.
+          bev_seg — if True, also return a rasterized BEV semantic-map target ('bev_seg').
+          depth_sup — if True, also return a LiDAR depth-bin target ('depth') for the
+                      reference camera (Phase-8 depth supervision).
         """
         self.nusc = nusc
         self.data_root = Path(data_root)
@@ -53,7 +59,10 @@ class NuScenesBEVDataset(Dataset):
         self.image_size = image_size
         self.xbound = xbound
         self.ybound = ybound
+        self.dbound = dbound
+        self.depth_sup = depth_sup
         self.cameras = cameras if cameras is not None else [CAM]
+        self.bev_seg = bev_seg
         self.index = self._build_index()
 
     def _build_index(self) -> List[str]:
@@ -62,7 +71,8 @@ class NuScenesBEVDataset(Dataset):
         Returns: list of sample_token. Mirrors NuScenesDetectionDataset._build_index.
         """
         tokens: List[str] = []
-        scenes = TRAIN_SCENES if self.split == "train" else VAL_SCENES
+        train_scenes, val_scenes = get_scene_split(self.nusc, self.data_root)
+        scenes = train_scenes if self.split == "train" else val_scenes
         for scene in self.nusc.scene:
             if scene["name"] not in scenes:
                 continue
@@ -86,6 +96,7 @@ class NuScenesBEVDataset(Dataset):
             'labels'     (M,)   long  — class ids (car/ped/cyclist).
             'intrinsic'  (N_cam, 3, 3) float — per-camera K, scaled to image_size.
             'cam_to_ego' (N_cam, 4, 4) float — per-camera camera→ego transform.
+            'bev_seg'    (X, Y) long — BEV semantic-map class grid (if bev_seg=True).
         """
         sample = self.nusc.get("sample", self.index[idx])
         images, intrinsics, cam_to_egos = [], [], []
@@ -102,14 +113,22 @@ class NuScenesBEVDataset(Dataset):
             cam_to_egos.append(torch.from_numpy(cam_to_ego).float())
 
         # GT boxes in the reference (first camera) ego frame
-        boxes, labels = self._get_bev_boxes(sample["data"][self.cameras[0]])
+        ref_sd_token = sample["data"][self.cameras[0]]
+        boxes, labels = self._get_bev_boxes(ref_sd_token)
         target = {
             "boxes": torch.from_numpy(boxes).float(),
             "labels": torch.from_numpy(labels).long(),
-            "intrinsic": torch.stack(intrinsics),       # (N_cam, 3, 3)
-            "cam_to_ego": torch.stack(cam_to_egos),     # (N_cam, 4, 4)
+            "intrinsic": torch.stack(intrinsics),
+            "cam_to_ego": torch.stack(cam_to_egos),
         }
-        return torch.stack(images), target             # (N_cam, 3, H, W)
+        if self.bev_seg:
+            bev_seg = build_bev_seg_label(self.nusc, ref_sd_token, self.xbound, self.ybound)
+            target["bev_seg"] = torch.from_numpy(bev_seg).long()
+        if self.depth_sup:
+            depth = lidar_depth_bins(self.nusc, self.data_root, ref_sd_token,
+                                     self.image_size, self.dbound)
+            target["depth"] = torch.from_numpy(depth).long()
+        return torch.stack(images), target
 
     def _get_calibration(self, cam_sd_token: str) -> Tuple[np.ndarray, np.ndarray]:
         """

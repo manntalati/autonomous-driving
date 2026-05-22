@@ -11,6 +11,9 @@ import math
 from typing import Dict, List, Tuple
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
+from models.segmentation.losses import SegmentationLoss
 
 
 def _draw_gaussian(heatmap: torch.Tensor, center: Tuple[int, int], radius: int) -> None:
@@ -127,4 +130,53 @@ class BEVDetectionLoss(nn.Module):
 
         total = self.heatmap_weight * hm_loss + self.reg_weight * reg_loss
         log = {"loss": total.item(), "hm_loss": hm_loss.item(), "reg_loss": reg_loss.item()}
+        return total, log
+
+
+class BEVLoss(nn.Module):
+    """
+    Phase 8 — combined BEV loss: detection (CenterNet heatmap + L1 box regression),
+    semantic-map segmentation (Dice + cross-entropy), and LiDAR depth supervision
+    (cross-entropy on the DepthNet distribution, where a LiDAR return exists).
+    """
+
+    def __init__(self, num_classes: int, xbound, ybound, num_seg_classes: int = 5,
+                 seg_weight: float = 1.0, depth_weight: float = 1.0) -> None:
+        super().__init__()
+        self.det_loss = BEVDetectionLoss(num_classes, xbound, ybound)
+        self.seg_loss = SegmentationLoss(num_seg_classes)
+        self.seg_weight = seg_weight
+        self.depth_weight = depth_weight
+
+    def forward(self, outputs: Dict, targets: List[Dict]) -> Tuple[torch.Tensor, dict]:
+        """
+        Args:
+          outputs — dict from BEVDetector with 'heatmap', 'regression', 'seg', 'depth'.
+          targets — list of B dicts with 'boxes', 'labels', 'bev_seg', and optionally 'depth'.
+        Returns: (total_loss, log_dict) with 'loss', 'hm_loss', 'reg_loss',
+        'seg_loss', 'depth_loss'.
+        """
+        det_total, det_log = self.det_loss(outputs["heatmap"], outputs["regression"], targets)
+        seg_target = torch.stack([t["bev_seg"] for t in targets]).to(outputs["seg"].device)
+        seg_total, _ = self.seg_loss(outputs["seg"], seg_target)
+        total = det_total + self.seg_weight * seg_total
+
+        # depth supervision — cross-entropy on the depth distribution at LiDAR-hit cells
+        depth_loss_val = 0.0
+        if "depth" in outputs and "depth" in targets[0]:
+            depth_pred = outputs["depth"]                    # (B, D, Hf, Wf) softmax probs
+            depth_tgt = torch.stack([t["depth"] for t in targets]).to(depth_pred.device)
+            if (depth_tgt >= 0).any():
+                log_d = torch.log(depth_pred.clamp_min(1e-6))
+                depth_total = F.nll_loss(log_d, depth_tgt, ignore_index=-1)
+                total = total + self.depth_weight * depth_total
+                depth_loss_val = depth_total.item()
+
+        log = {
+            "loss": total.item(),
+            "hm_loss": det_log["hm_loss"],
+            "reg_loss": det_log["reg_loss"],
+            "seg_loss": seg_total.item(),
+            "depth_loss": depth_loss_val,
+        }
         return total, log

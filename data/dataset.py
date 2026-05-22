@@ -30,13 +30,41 @@ LABEL_MAP: Dict[str, int] = {
 CLASS_NAMES = ["car", "pedestrian", "cyclist"]
 
 # ── Train / val scene split ─────────────────────────────────────────────────
-TRAIN_SCENES = {
+# The fixed nuScenes-mini split — 8 train scenes / 2 val.
+MINI_TRAIN_SCENES = {
     "scene-0061", "scene-0103", "scene-0553", "scene-0655",
     "scene-0757", "scene-0796", "scene-0916", "scene-1077",
 }
-VAL_SCENES = {
-    "scene-1094", "scene-1100",
-}
+MINI_VAL_SCENES = {"scene-1094", "scene-1100"}
+
+
+def version_from_data_root(data_root) -> str:
+    """nuScenes version = the data_root folder name (e.g. 'v1.0-mini', 'v1.0-trainval')."""
+    return Path(data_root).name
+
+
+def get_scene_split(nusc, data_root, val_fraction: float = 0.15):
+    """
+    Return (train_scene_names, val_scene_names) for whatever nuScenes version is loaded.
+      - v1.0-mini → the fixed 8-train / 2-val split.
+      - v1.0-trainval (possibly a *partial* blob download) → every scene whose
+        CAM_FRONT files are actually present on disk, sorted by name, with the
+        last `val_fraction` held out for validation.
+    This lets the project ingest one or a few of the ten ~85-scene trainval
+    blobs without downloading all 850 scenes.
+    """
+    if getattr(nusc, "version", "") == "v1.0-mini":
+        return set(MINI_TRAIN_SCENES), set(MINI_VAL_SCENES)
+    root = Path(data_root)
+    available = []
+    for scene in nusc.scene:
+        first = nusc.get("sample", scene["first_sample_token"])
+        sd = nusc.get("sample_data", first["data"]["CAM_FRONT"])
+        if (root / sd["filename"]).exists():
+            available.append(scene["name"])
+    available.sort()
+    n_val = max(1, int(round(len(available) * val_fraction)))
+    return set(available[:-n_val]), set(available[-n_val:])
 
 class NuScenesDetectionDataset(Dataset):
 
@@ -70,7 +98,8 @@ class NuScenesDetectionDataset(Dataset):
         Returns: list of (sample_token, camera_name) tuples.
         """
         keyframes = []
-        scenes = TRAIN_SCENES if self.split == 'train' else VAL_SCENES
+        train_scenes, val_scenes = get_scene_split(self.nusc, self.data_root)
+        scenes = train_scenes if self.split == 'train' else val_scenes
         for scene in self.nusc.scene:
             if scene['name'] not in scenes: continue
             token = scene['first_sample_token']

@@ -1,7 +1,7 @@
 from pathlib import Path
 from nuscenes.nuscenes import NuScenes
 from torch.utils.data import DataLoader
-from data.dataset import NuScenesDetectionDataset, collate_fn, CLASS_NAMES
+from data.dataset import NuScenesDetectionDataset, collate_fn, CLASS_NAMES, version_from_data_root
 from data.seg_dataset import NuScenesSegmentationDataset, seg_collate_fn
 from utils.visualize import visualize_batch
 
@@ -21,7 +21,7 @@ def get_loaders(
     Returns: (train_loader, val_loader) — shuffled train, ordered val, both with pin_memory=True.
     """
     if nusc is None:
-        nusc = NuScenes(version="v1.0-mini", dataroot=str(data_root), verbose=False)
+        nusc = NuScenes(version=version_from_data_root(data_root), dataroot=str(data_root), verbose=False)
     data_root = Path(data_root)
     train_ds = NuScenesDetectionDataset(nusc, data_root, split="train", cameras=cameras)
     val_ds   = NuScenesDetectionDataset(nusc, data_root, split="val", cameras=cameras)
@@ -60,7 +60,7 @@ def get_seg_loaders(
     Notes: uses NuScenesSegmentationDataset + seg_collate_fn (stacks masks into a single tensor).
     """
     if nusc is None:
-        nusc = NuScenes(version="v1.0-mini", dataroot=str(data_root), verbose=False)
+        nusc = NuScenes(version=version_from_data_root(data_root), dataroot=str(data_root), verbose=False)
     data_root = Path(data_root)
     train_ds = NuScenesSegmentationDataset(nusc, data_root, split="train", cameras=cameras, mask_dir=mask_dir)
     val_ds   = NuScenesSegmentationDataset(nusc, data_root, split="val",   cameras=cameras, mask_dir=mask_dir)

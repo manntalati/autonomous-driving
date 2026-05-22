@@ -63,10 +63,30 @@ class BEVDetectionHead(nn.Module):
         return torch.sigmoid(self.heatmap(feat)), self.regression(feat)
 
 
-class BEVDetector(nn.Module):
-    """Full Phase 5 model: backbone + LSS + BEV encoder + detection head."""
+class BEVSegHead(nn.Module):
+    """
+    BEV semantic-map head (Phase 8). From the BEV feature grid it predicts a
+    per-cell class map — background / drivable / lane / ped_crossing / walkway.
+    """
 
-    def __init__(self, num_classes: int = 3, image_size: Tuple[int, int] = (448, 800), xbound: Tuple[float, float, float] = (0.0, 51.2, 0.8), ybound: Tuple[float, float, float] = (-25.6, 25.6, 0.8), zbound: Tuple[float, float, float] = (-10.0, 10.0, 20.0), dbound: Tuple[float, float, float] = (4.0, 50.0, 1.0), bev_channels: int = 64) -> None:
+    def __init__(self, in_channels: int, num_seg_classes: int) -> None:
+        super().__init__()
+        self.num_seg_classes = num_seg_classes
+        self.net = nn.Sequential(
+            ConvBlock(in_channels, in_channels),
+            ConvBlock(in_channels, in_channels),
+            nn.Conv2d(in_channels, num_seg_classes, kernel_size=1),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Args: x — (B, in_channels, X, Y). Returns: (B, num_seg_classes, X, Y) logits."""
+        return self.net(x)
+
+
+class BEVDetector(nn.Module):
+    """Phase 5/8 model: backbone + LSS + BEV encoder + detection head + seg head."""
+
+    def __init__(self, num_classes: int = 3, image_size: Tuple[int, int] = (448, 800), xbound: Tuple[float, float, float] = (0.0, 51.2, 0.8), ybound: Tuple[float, float, float] = (-25.6, 25.6, 0.8), zbound: Tuple[float, float, float] = (-10.0, 10.0, 20.0), dbound: Tuple[float, float, float] = (4.0, 50.0, 1.0), bev_channels: int = 64, num_seg_classes: int = 5) -> None:
         super().__init__()
         self.backbone = ResNetBackbone()  # returns (C3, C4, C5)
         self.lss = LiftSplatShoot(
@@ -81,26 +101,36 @@ class BEVDetector(nn.Module):
         )
         self.encoder = BEVEncoder(bev_channels)
         self.head = BEVDetectionHead(bev_channels, num_classes)
+        self.seg_head = BEVSegHead(bev_channels, num_seg_classes)
 
     def load_pretrained(self) -> None:
         """Load ImageNet weights into the ResNet backbone."""
         self.backbone.load_pretrained()
 
     def forward(self, images: torch.Tensor, intrinsics: torch.Tensor,
-                cam_to_ego: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+                cam_to_ego: torch.Tensor) -> dict:
         """
         Args:
           images — (B, N, 3, H, W) — N surround cameras (N=1 for single-camera).
           intrinsics — (B, N, 3, 3) camera K.
           cam_to_ego — (B, N, 4, 4) camera→ego transform.
-        Returns: (heatmap (B,num_classes,X,Y), regression (B,6,X,Y)).
+        Returns: dict with
+          'heatmap'    (B, num_classes, X, Y)     — object-centre probabilities,
+          'regression' (B, 6, X, Y)               — box regression,
+          'seg'        (B, num_seg_classes, X, Y) — BEV semantic-map logits,
+          'depth'      (B, D, Hf, Wf)             — reference-camera depth distribution.
         """
         B, N = images.shape[:2]
         _, c4, _ = self.backbone(images.flatten(0, 1))   # (B·N, 256, Hf, Wf)
         c4 = c4.reshape(B, N, *c4.shape[1:])             # (B, N, 256, Hf, Wf)
-        bev = self.lss(c4, intrinsics, cam_to_ego)
-        bev = self.encoder(bev)
-        return self.head(bev)
+        bev_grid, depth = self.lss(c4, intrinsics, cam_to_ego, return_depth=True)
+        bev = self.encoder(bev_grid)
+        heatmap, regression = self.head(bev)
+        return {
+            "heatmap": heatmap, "regression": regression,
+            "seg": self.seg_head(bev),
+            "depth": depth[:, 0],   # reference camera's depth distribution
+        }
 
 
 def decode_bev_detections(

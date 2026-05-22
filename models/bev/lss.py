@@ -129,14 +129,16 @@ class LiftSplatShoot(nn.Module):
         ego_points = rot @ cam_points + trans
         return ego_points.squeeze(-1)
 
-    def lift(self, features: torch.Tensor) -> torch.Tensor:
+    def lift(self, features: torch.Tensor):
         """
         Lift the feature map into a depth-weighted frustum of features.
         Args: features — (B, in_channels, Hf, Wf).
-        Returns: (B, bev_channels, D, Hf, Wf).
+        Returns: (lifted (B, bev_channels, D, Hf, Wf), depth (B, D, Hf, Wf)) —
+        the frustum, and the predicted depth distribution (for depth supervision).
         """
         depth, context = self.depth_net(features)
-        return context.unsqueeze(2) * depth.unsqueeze(1)
+        lifted = context.unsqueeze(2) * depth.unsqueeze(1)
+        return lifted, depth
 
     def splat(self, lifted: torch.Tensor, geometry: torch.Tensor, num_cams: int = 1) -> torch.Tensor:
         """
@@ -175,15 +177,20 @@ class LiftSplatShoot(nn.Module):
         bev.index_add_(0, flat, feats)
         return bev.view(B, nx_x, nx_y, C).permute(0, 3, 1, 2).contiguous()
 
-    def forward(self, features: torch.Tensor, intrinsics: torch.Tensor, cam_to_ego: torch.Tensor) -> torch.Tensor:
+    def forward(self, features: torch.Tensor, intrinsics: torch.Tensor,
+                cam_to_ego: torch.Tensor, return_depth: bool = False):
         """
         Args: features — (B, N, in_channels, Hf, Wf); intrinsics — (B, N, 3, 3);
               cam_to_ego — (B, N, 4, 4). N = number of cameras (1 = single-camera).
-        Returns: (B, bev_channels, nx_x, nx_y) — all N cameras of a sample
-        splatted into one shared BEV grid.
+              return_depth — also return the per-camera depth distribution.
+        Returns: (B, bev_channels, nx_x, nx_y) BEV grid — and, if return_depth,
+        the depth distribution (B, N, D, Hf, Wf) for depth supervision.
         """
-        _, N = features.shape[:2]
+        B, N = features.shape[:2]
         # flatten cameras into the batch — get_geometry / lift are per-image ops
         geometry = self.get_geometry(intrinsics.flatten(0, 1), cam_to_ego.flatten(0, 1))
-        lifted = self.lift(features.flatten(0, 1))
-        return self.splat(lifted, geometry, num_cams=N)
+        lifted, depth = self.lift(features.flatten(0, 1))
+        bev = self.splat(lifted, geometry, num_cams=N)
+        if return_depth:
+            return bev, depth.reshape(B, N, *depth.shape[1:])
+        return bev
