@@ -1,0 +1,35 @@
+# Phase 5 upgrade — 6-camera surround Lift-Splat-Shoot BEV detection.
+# All six cameras splat into one shared 360° ego-frame BEV grid.
+
+# data
+data_root: data/raw/v1.0-mini
+batch_size: 1            # 6 cameras/sample → 6× backbone passes; keep batch tiny
+num_classes: 3
+
+# input
+image_size: [448, 800]
+
+# the six surround cameras
+cameras: [CAM_FRONT, CAM_FRONT_LEFT, CAM_FRONT_RIGHT, CAM_BACK, CAM_BACK_LEFT, CAM_BACK_RIGHT]
+
+# backbone
+pretrained: true
+
+# BEV grid — full 360° around the ego vehicle (vs the CAM_FRONT-only forward half-plane)
+xbound: [-51.2, 51.2, 0.8]    # 128 cells
+ybound: [-51.2, 51.2, 0.8]    # 128 cells
+zbound: [-10.0, 10.0, 20.0]
+dbound: [4.0, 50.0, 1.0]
+
+# feature dim
+bev_channels: 64
+
+# training
+epochs: 40
+lr: 0.001
+backbone_lr_scale: 0.1
+weight_decay: 0.0001
+scheduler: cosine
+patience: 10
+grad_clip: 1.0
+ckpt_path: checkpoints/bev_surround_best.pt

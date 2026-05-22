@@ -138,26 +138,29 @@ class LiftSplatShoot(nn.Module):
         depth, context = self.depth_net(features)
         return context.unsqueeze(2) * depth.unsqueeze(1)
 
-    def splat(self, lifted: torch.Tensor, geometry: torch.Tensor) -> torch.Tensor:
+    def splat(self, lifted: torch.Tensor, geometry: torch.Tensor, num_cams: int = 1) -> torch.Tensor:
         """
         Pool the lifted frustum features into the BEV grid.
         Args:
-          lifted   — (B, bev_channels, D, Hf, Wf) depth-weighted features.
-          geometry — (B, D, Hf, Wf, 3) ego-frame coordinates of each point.
+          lifted   — (B·N, bev_channels, D, Hf, Wf) depth-weighted features.
+          geometry — (B·N, D, Hf, Wf, 3) ego-frame coordinates of each point.
+          num_cams — N: cameras per sample; their frustums all sum into one grid.
         Returns: (B, bev_channels, nx_x, nx_y) BEV feature grid.
         """
-        B, C, D, Hf, Wf = lifted.shape
+        BN, C, D, Hf, Wf = lifted.shape
+        B = BN // num_cams
         device = lifted.device
         nx_x, nx_y = int(self.nx[0]), int(self.nx[1])
 
         # ego (x, y, z) → integer BEV cell index
         idx = ((geometry - (self.bx - self.dx / 2.0)) / self.dx).long()
 
-        # flatten the frustum points
-        n = B * D * Hf * Wf
+        # flatten the frustum points; each point's sample = (B·N index) // N
+        n = BN * D * Hf * Wf
         feats = lifted.permute(0, 2, 3, 4, 1).reshape(n, C)
         idx = idx.reshape(n, 3)
-        batch = torch.arange(B, device=device).view(B, 1, 1, 1).expand(B, D, Hf, Wf).reshape(n)
+        bn_idx = torch.arange(BN, device=device).view(BN, 1, 1, 1).expand(BN, D, Hf, Wf).reshape(n)
+        batch = bn_idx // num_cams
 
         # keep points whose (x, y) cell is inside the grid
         keep = (
@@ -174,10 +177,13 @@ class LiftSplatShoot(nn.Module):
 
     def forward(self, features: torch.Tensor, intrinsics: torch.Tensor, cam_to_ego: torch.Tensor) -> torch.Tensor:
         """
-        Args: features — (B, in_channels, Hf, Wf); intrinsics — (B,3,3);
-              cam_to_ego — (B,4,4).
-        Returns: (B, bev_channels, nx_x, nx_y) BEV feature grid.
+        Args: features — (B, N, in_channels, Hf, Wf); intrinsics — (B, N, 3, 3);
+              cam_to_ego — (B, N, 4, 4). N = number of cameras (1 = single-camera).
+        Returns: (B, bev_channels, nx_x, nx_y) — all N cameras of a sample
+        splatted into one shared BEV grid.
         """
-        geometry = self.get_geometry(intrinsics, cam_to_ego)
-        lifted = self.lift(features)
-        return self.splat(lifted, geometry)
+        B, N = features.shape[:2]
+        # flatten cameras into the batch — get_geometry / lift are per-image ops
+        geometry = self.get_geometry(intrinsics.flatten(0, 1), cam_to_ego.flatten(0, 1))
+        lifted = self.lift(features.flatten(0, 1))
+        return self.splat(lifted, geometry, num_cams=N)

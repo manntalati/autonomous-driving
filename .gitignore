@@ -16,6 +16,9 @@ htmlcov/
 *.pt
 *.pth
 
+# Generated demo videos
+*.mp4
+
 # Jupyter
 .ipynb_checkpoints/
 notebooks/.ipynb_checkpoints/

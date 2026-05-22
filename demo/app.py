@@ -26,6 +26,7 @@ from nuscenes.nuscenes import NuScenes
 
 from data.transforms import MEAN, STD, INPUT_H, INPUT_W
 from demo.pipeline import PerceptionPipeline
+from demo.render_video import render_scene_video
 from utils.visualize import draw_boxes, overlay_segmentation, draw_bev
 
 CAM = "CAM_FRONT"
@@ -133,6 +134,17 @@ def main() -> None:
         f"Scene {scene} · frame {frame_idx + 1}/{len(cam_tokens)} · "
         f"{len(out['boxes'])} detections · {len(out['bev_boxes'])} BEV objects"
     )
+
+    # ── live video: run the pipeline over the dense sweep stream → MP4 ──
+    st.divider()
+    st.subheader("Live video — dense sweep stream (~12 Hz)")
+    n_frames = st.slider("Frames to render", 24, 240, 96, step=12)
+    if st.button("Render annotated video"):
+        out_path = f"demo/_render_{scene}.mp4"
+        with st.spinner(f"Running perception over {n_frames} frames…"):
+            render_scene_video(cfg, scene, out_path, fps=12,
+                                max_frames=n_frames, pipeline=pipeline)
+        st.video(out_path)
 
 
 if __name__ == "__main__":
