@@ -5,6 +5,13 @@ A full autonomous driving perception pipeline built **from scratch** in PyTorch.
 Built as a deep learning capstone covering the entire modern CV stack: linear classifiers, CNNs, object detection, dense prediction, Vision Transformers, BEV transforms, and temporal attention.
 
 ---
+## Demo
+
+[Demo](https://github.com/user-attachments/assets/45505f67-780a-4e5f-b6b5-12c69410a668)
+
+Camera with detections + segmentation on the left, BEV panel on the right!
+
+---
 
 ## Architecture Overview
 
