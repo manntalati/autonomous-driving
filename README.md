@@ -44,6 +44,8 @@ Camera with detections + segmentation on the left, BEV panel on the right!
                   Annotated video + BEV map + tracks
 ```
 
+In depth architecture: [Architecture Plan](architecture_plan.md)
+
 ---
 
 ## Tech Stack
