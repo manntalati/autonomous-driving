@@ -21,7 +21,7 @@ from PIL import Image
 from nuscenes.nuscenes import NuScenes
 from nuscenes.utils.geometry_utils import view_points, BoxVisibility
 
-from data.dataset import VAL_SCENES, LABEL_MAP
+from data.dataset import get_scene_split, version_from_data_root, LABEL_MAP
 from data.transforms import MEAN, STD, INPUT_H, INPUT_W
 from models.temporal.train_temporal import build_temporal_detector, _pick_device
 from evaluation.temporal_metrics import compute_flicker_rate
@@ -70,12 +70,13 @@ def evaluate_flicker(cfg_path: str, ckpt_path: str) -> float:
     model.load_state_dict(torch.load(ckpt_path, map_location=device, weights_only=True))
     model.eval()
 
-    nusc = NuScenes(version="v1.0-mini", dataroot=cfg["data_root"], verbose=False)
+    nusc = NuScenes(version=version_from_data_root(cfg["data_root"]), dataroot=cfg["data_root"], verbose=False)
     seq_len = cfg.get("seq_len", 3)
+    _, val_scenes = get_scene_split(nusc, cfg["data_root"])
 
     scene_rates = []
     for scene in nusc.scene:
-        if scene["name"] not in VAL_SCENES:
+        if scene["name"] not in val_scenes:
             continue
         # ordered CAM_FRONT sample_data tokens for the scene
         cam_tokens, t = [], scene["first_sample_token"]

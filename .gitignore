@@ -2,6 +2,9 @@
 data/raw/v1.0-mini
 .venv
 data/v1.0-mini.tgz
+data/v1.0-trainval_meta.tgz
+data/v1.0-trainval01_blobs.tgz
+data/raw/v1.0-trainval
 
 # Python bytecode
 __pycache__/

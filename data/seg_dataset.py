@@ -17,19 +17,20 @@ class NuScenesSegmentationDataset(Dataset):
     Same scene-level train/val split as detection.
     """
 
-    def __init__(self, nusc: NuScenes, data_root: str | Path, split: str = "train", cameras: Optional[List[str]] = None, mask_dir: str | Path = "data/raw/v1.0-mini/seg_masks", transform=None):
+    def __init__(self, nusc: NuScenes, data_root: str | Path, split: str = "train", cameras: Optional[List[str]] = None, mask_dir: str | Path | None = None, transform=None):
         """
         Args:
           nusc — NuScenes instance.
-          data_root — path to v1.0-mini.
+          data_root — dataset root.
           split — "train" or "val".
           cameras — list of camera channels (default ["CAM_FRONT"]).
-          mask_dir — directory holding cached {sample_token}_{cam}.png masks.
+          mask_dir — directory of cached {sample_token}_{cam}.png masks
+                     (default {data_root}/seg_masks).
           transform — albumentations pipeline (defaults to seg train/val by split).
         """
         self.nusc = nusc
         self.data_root = Path(data_root)
-        self.mask_dir = Path(mask_dir)
+        self.mask_dir = Path(mask_dir) if mask_dir is not None else self.data_root / "seg_masks"
         self.split = split
         self.cameras = cameras if cameras is not None else ["CAM_FRONT"]
         if transform is None:

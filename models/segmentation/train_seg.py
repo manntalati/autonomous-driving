@@ -138,7 +138,7 @@ def main(cfg_path: str) -> None:
     device = _pick_device()
     train_loader, val_loader = get_seg_loaders(
         data_root=cfg["data_root"],
-        mask_dir=cfg.get("mask_dir", "data/raw/v1.0-mini/seg_masks"),
+        mask_dir=cfg.get("mask_dir"),   # None → {data_root}/seg_masks
         batch_size=cfg["batch_size"],
     )
     model = build_segmenter(cfg).to(device)

@@ -50,12 +50,13 @@ def get_seg_loaders(
     nusc: NuScenes = None,
     cameras=None,
     data_root: str = "data/raw/v1.0-mini",
-    mask_dir: str = "data/raw/v1.0-mini/seg_masks",
+    mask_dir: str = None,
     batch_size: int = 4,
 ):
     """
     Build train and val DataLoaders for nuScenes segmentation.
-    Args: same as get_loaders, plus mask_dir — directory of cached seg masks.
+    Args: same as get_loaders, plus mask_dir — directory of cached seg masks
+          (default {data_root}/seg_masks).
     Returns: (train_loader, val_loader).
     Notes: uses NuScenesSegmentationDataset + seg_collate_fn (stacks masks into a single tensor).
     """

@@ -258,23 +258,26 @@ def build_seg_label_for_sample(
     return rasterize_mask(projected, img_shape)
 
 
-def generate_all_masks(data_root: str | Path, out_dir: str | Path = "data/raw/v1.0-mini/seg_masks") -> None:
+def generate_all_masks(data_root: str | Path, out_dir: str | Path | None = None) -> None:
     """
-    Generate and cache seg masks for every (sample, camera) used by NuScenesDetectionDataset.
-    Args: data_root — path to v1.0-mini; out_dir — where to write {sample_token}_{cam}.png files.
+    Generate and cache seg masks for every (sample, camera) used by the
+    segmentation dataset — for whatever nuScenes version `data_root` points at
+    (v1.0-mini, or a partial v1.0-trainval blob download).
+    Args: data_root — dataset root; out_dir — output dir (default {data_root}/seg_masks).
     Notes:
-      - Iterate via the same scene split logic as data/dataset.py to keep parity.
-      - Save as PNG (single-channel, uint8). PIL.Image.fromarray(mask, mode="L").save(...).
-      - Skip masks that already exist on disk.
+      - Iterates via get_scene_split (the same split logic as the datasets).
+      - Save as PNG (single-channel, uint8). Skip masks that already exist.
     """
-    from data.dataset import TRAIN_SCENES, VAL_SCENES
+    from data.dataset import get_scene_split, version_from_data_root
 
-    nusc = NuScenes(version="v1.0-mini", dataroot=str(data_root), verbose=False)
-    out_dir = Path(out_dir)
+    data_root = Path(data_root)
+    nusc = NuScenes(version=version_from_data_root(data_root), dataroot=str(data_root), verbose=False)
+    out_dir = Path(out_dir) if out_dir is not None else data_root / "seg_masks"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     cameras = ["CAM_FRONT"]
-    split_scenes = TRAIN_SCENES | VAL_SCENES
+    train_scenes, val_scenes = get_scene_split(nusc, data_root)
+    split_scenes = train_scenes | val_scenes
 
     generated, skipped = 0, 0
     for scene in nusc.scene:
@@ -296,6 +299,15 @@ def generate_all_masks(data_root: str | Path, out_dir: str | Path = "data/raw/v1
             token = sample["next"]
 
     print(f"[seg_labels] done — generated {generated} masks, skipped {skipped} existing → {out_dir}")
+
+
+if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser(description="Cache nuScenes camera segmentation masks.")
+    ap.add_argument("--data_root", default="data/raw/v1.0-mini",
+                    help="dataset root (its folder name is the nuScenes version)")
+    args = ap.parse_args()
+    generate_all_masks(args.data_root)
 
 
 if __name__ == "__main__":
