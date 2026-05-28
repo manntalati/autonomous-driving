@@ -1,5 +1,5 @@
 # data
-data_root: data/raw/v1.0-mini
+data_root: data/raw/v1.0-trainval
 batch_size: 4
 
 # model

@@ -1,0 +1,2 @@
+[seg_labels] done — generated 3376 masks, skipped 0 existing → data/raw/v1.0-trainval/seg_masks
+[seg_labels] done — generated 3337 masks, skipped 39 existing → data/raw/v1.0-mini/seg_masks

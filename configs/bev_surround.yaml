@@ -2,7 +2,7 @@
 # All six cameras splat into one shared 360° ego-frame BEV grid.
 
 # data
-data_root: data/raw/v1.0-mini
+data_root: data/raw/v1.0-trainval
 batch_size: 1            # 6 cameras/sample → 6× backbone passes; keep batch tiny
 num_classes: 3           # detection classes — car / pedestrian / cyclist
 num_seg_classes: 5       # BEV map classes — background / drivable / lane / ped_crossing / walkway

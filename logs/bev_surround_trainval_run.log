@@ -1,0 +1,33 @@
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+Epoch 1/40 | train 64.826 (hm 5.25 reg 3.65 seg 1.749 depth 2.095) | val 77.231 | BEV mIoU 0.124
+Epoch 2/40 | train 52.218 (hm 2.59 reg 3.09 seg 1.397 depth 1.859) | val 82.593 | BEV mIoU 0.114
+Epoch 3/40 | train 45.939 (hm 2.39 reg 2.84 seg 1.156 depth 1.758) | val 106.091 | BEV mIoU 0.123
+Epoch 4/40 | train 41.512 (hm 2.25 reg 2.69 seg 0.986 depth 1.685) | val 134.088 | BEV mIoU 0.124
+Epoch 5/40 | train 38.617 (hm 2.13 reg 2.57 seg 0.885 depth 1.622) | val 169.259 | BEV mIoU 0.119
+Epoch 6/40 | train 36.446 (hm 2.03 reg 2.48 seg 0.813 depth 1.568) | val 125.925 | BEV mIoU 0.133
+Epoch 7/40 | train 34.637 (hm 1.94 reg 2.39 seg 0.756 depth 1.517) | val 117.438 | BEV mIoU 0.145
+Epoch 8/40 | train 33.079 (hm 1.87 reg 2.32 seg 0.708 depth 1.474) | val 138.906 | BEV mIoU 0.134
+Epoch 9/40 | train 31.710 (hm 1.80 reg 2.25 seg 0.668 depth 1.430) | val 125.005 | BEV mIoU 0.129
+Epoch 10/40 | train 30.470 (hm 1.73 reg 2.18 seg 0.633 depth 1.390) | val 115.627 | BEV mIoU 0.139
+Epoch 11/40 | train 29.388 (hm 1.67 reg 2.12 seg 0.602 depth 1.355) | val 163.168 | BEV mIoU 0.127
+Epoch 12/40 | train 28.375 (hm 1.62 reg 2.07 seg 0.574 depth 1.320) | val 189.583 | BEV mIoU 0.128
+Epoch 13/40 | train 27.418 (hm 1.57 reg 2.01 seg 0.550 depth 1.285) | val 147.675 | BEV mIoU 0.127
+Epoch 14/40 | train 26.575 (hm 1.52 reg 1.97 seg 0.528 depth 1.253) | val 132.841 | BEV mIoU 0.147
+Epoch 15/40 | train 25.779 (hm 1.47 reg 1.92 seg 0.508 depth 1.222) | val 146.669 | BEV mIoU 0.130
+Epoch 16/40 | train 25.003 (hm 1.43 reg 1.88 seg 0.489 depth 1.193) | val 184.183 | BEV mIoU 0.141
+Epoch 17/40 | train 24.236 (hm 1.38 reg 1.82 seg 0.470 depth 1.163) | val 131.118 | BEV mIoU 0.136
+Epoch 18/40 | train 23.540 (hm 1.34 reg 1.78 seg 0.453 depth 1.135) | val 163.857 | BEV mIoU 0.125
+Epoch 19/40 | train 22.837 (hm 1.29 reg 1.74 seg 0.436 depth 1.108) | val 117.642 | BEV mIoU 0.154
+Epoch 20/40 | train 22.187 (hm 1.25 reg 1.69 seg 0.421 depth 1.083) | val 174.866 | BEV mIoU 0.140
+Epoch 21/40 | train 21.583 (hm 1.21 reg 1.66 seg 0.407 depth 1.058) | val 172.271 | BEV mIoU 0.127
+Epoch 22/40 | train 20.973 (hm 1.17 reg 1.61 seg 0.393 depth 1.034) | val 205.189 | BEV mIoU 0.131
+Epoch 23/40 | train 20.397 (hm 1.13 reg 1.58 seg 0.379 depth 1.010) | val 194.954 | BEV mIoU 0.138
+Epoch 24/40 | train 19.838 (hm 1.09 reg 1.54 seg 0.366 depth 0.988) | val 158.692 | BEV mIoU 0.142
+Epoch 25/40 | train 19.302 (hm 1.05 reg 1.50 seg 0.354 depth 0.967) | val 161.285 | BEV mIoU 0.136
+Epoch 26/40 | train 18.793 (hm 1.01 reg 1.46 seg 0.342 depth 0.947) | val 249.079 | BEV mIoU 0.125
+Epoch 27/40 | train 18.313 (hm 0.98 reg 1.43 seg 0.331 depth 0.929) | val 185.082 | BEV mIoU 0.144
+Epoch 28/40 | train 17.858 (hm 0.95 reg 1.40 seg 0.320 depth 0.912) | val 196.840 | BEV mIoU 0.130
+Epoch 29/40 | train 17.429 (hm 0.91 reg 1.36 seg 0.310 depth 0.896) | val 213.137 | BEV mIoU 0.128
+Early stopping triggered. Best BEV mIoU: 0.1542

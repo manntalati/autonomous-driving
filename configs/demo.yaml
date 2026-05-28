@@ -9,11 +9,15 @@ detector:
   config: configs/temporal.yaml
   checkpoint: checkpoints/temporal_best.pt
 segmenter:
-  config: configs/segmenter_hybrid.yaml   # segmenter_best.pt on disk IS the hybrid model
-  checkpoint: checkpoints/segmenter_best.pt
+  config: configs/segmenter_hybrid.yaml
+  checkpoint: checkpoints/segmenter_hybrid_best.pt
 bev:
-  config: configs/bev.yaml
-  checkpoint: checkpoints/bev_best.pt
+  # Phase-8 surround model: trained on 6 cameras + seg + LiDAR depth.
+  # The demo passes only CAM_FRONT (N=1) so the BEV map is meaningful in the
+  # front portion; the back stays mostly background — that matches what a
+  # forward-camera-only system can see.
+  config: configs/bev_surround.yaml
+  checkpoint: checkpoints/bev_surround_best.pt
 
 # display / decode thresholds
 det_score_threshold: 0.3

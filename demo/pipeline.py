@@ -48,17 +48,22 @@ class PerceptionPipeline:
 
     @torch.no_grad()
     def process_frame(self, frame_window: torch.Tensor, intrinsic: torch.Tensor,
-                      cam_to_ego: torch.Tensor) -> dict:
+                      cam_to_ego: torch.Tensor, bev_surround=None) -> dict:
         """
         Run all three models on one timestep.
         Args:
-          frame_window — (T, 3, H, W) the last T frames; the LAST is the current frame.
-          intrinsic — (3, 3) camera K for the current frame.
-          cam_to_ego — (4, 4) camera→ego transform for the current frame.
+          frame_window — (T, 3, H, W) the last T CAM_FRONT frames; LAST = current.
+          intrinsic — (3, 3) CAM_FRONT K for the current frame.
+          cam_to_ego — (4, 4) CAM_FRONT→ego transform for the current frame.
+          bev_surround — optional (images (N,3,H,W), intrinsics (N,3,3),
+                         cam_to_ego (N,4,4)) for the BEV path — all N surround
+                         cameras of the current frame. If None, BEV runs on
+                         CAM_FRONT only (N=1, front-half BEV map).
         Returns: dict with
           'boxes' (N,4), 'scores' (N,), 'labels' (N,)   — 2D detections (current frame),
           'seg_mask' (H, W) int                         — segmentation of the current frame,
-          'bev_boxes' (M,5), 'bev_scores' (M,), 'bev_labels' (M,) — BEV detections.
+          'bev_boxes' (M,5), 'bev_scores' (M,), 'bev_labels' (M,) — BEV detections,
+          'bev_seg' (X, Y) int                          — BEV semantic-map argmax.
         """
         device = self.device
         frame_window = frame_window.to(device)
@@ -73,12 +78,20 @@ class PerceptionPipeline:
         # ── segmentation ──
         seg_mask = self.segmenter(current).argmax(dim=1)[0].cpu()
 
-        # ── BEV detection + segmentation (single CAM_FRONT camera → N=1) ──
-        bev_out = self.bev(
-            current.unsqueeze(1),                       # (1, 1, 3, H, W)
-            intrinsic.to(device).view(1, 1, 3, 3),
-            cam_to_ego.to(device).view(1, 1, 4, 4),
-        )
+        # ── BEV detection + segmentation ──
+        if bev_surround is not None:
+            imgs_n, k_n, c2e_n = bev_surround
+            bev_out = self.bev(
+                imgs_n.unsqueeze(0).to(device),         # (1, N, 3, H, W)
+                k_n.unsqueeze(0).to(device),            # (1, N, 3, 3)
+                c2e_n.unsqueeze(0).to(device),          # (1, N, 4, 4)
+            )
+        else:
+            bev_out = self.bev(
+                current.unsqueeze(1),                   # (1, 1, 3, H, W) — CAM_FRONT only
+                intrinsic.to(device).view(1, 1, 3, 3),
+                cam_to_ego.to(device).view(1, 1, 4, 4),
+            )
         bev_boxes, bev_scores, bev_labels = decode_bev_detections(
             bev_out["heatmap"][0].cpu(), bev_out["regression"][0].cpu(),
             tuple(self.bev_cfg["xbound"]), tuple(self.bev_cfg["ybound"]),

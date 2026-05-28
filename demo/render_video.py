@@ -8,6 +8,7 @@ pipeline over that dense stream and writes an annotated MP4: the camera view
 (detections + segmentation) beside the top-down BEV panel.
 """
 from __future__ import annotations
+import bisect
 import shutil
 import subprocess
 from pathlib import Path
@@ -18,6 +19,7 @@ from PIL import Image
 from pyquaternion import Quaternion
 from nuscenes.nuscenes import NuScenes
 
+from data.dataset import version_from_data_root
 from data.transforms import MEAN, STD, INPUT_H, INPUT_W
 from demo.pipeline import PerceptionPipeline
 from utils.visualize import draw_boxes, overlay_segmentation, draw_bev
@@ -79,6 +81,52 @@ def _denormalize(image_tensor: torch.Tensor) -> np.ndarray:
     return (np.clip(img * _STD + _MEAN, 0, 1) * 255).astype(np.uint8)
 
 
+def _build_cam_chains(nusc: NuScenes, scene_name: str, cameras):
+    """For each camera, return a sorted list [(timestamp, sample_data_token), ...]
+    covering every keyframe + sweep in the scene. Lets the render loop find the
+    nearest other-camera frame to a given CAM_FRONT sweep timestamp."""
+    scene = next(s for s in nusc.scene if s["name"] == scene_name)
+    chains = {}
+    for cam in cameras:
+        sd = nusc.get("sample_data",
+                       nusc.get("sample", scene["first_sample_token"])["data"][cam])
+        while sd["prev"] != "":
+            sd = nusc.get("sample_data", sd["prev"])
+        items = [(sd["timestamp"], sd["token"])]
+        while sd["next"] != "":
+            sd = nusc.get("sample_data", sd["next"])
+            items.append((sd["timestamp"], sd["token"]))
+        items.sort()
+        chains[cam] = items
+    return chains
+
+
+def _nearest_token(chain, timestamp: int) -> str:
+    """Token in `chain` (sorted by timestamp) whose timestamp is closest to `timestamp`."""
+    ts = [t for t, _ in chain]
+    i = bisect.bisect_left(ts, timestamp)
+    if i == 0:
+        return chain[0][1]
+    if i == len(chain):
+        return chain[-1][1]
+    before, after = chain[i - 1], chain[i]
+    return after[1] if (after[0] - timestamp) < (timestamp - before[0]) else before[1]
+
+
+def _surround_inputs(nusc, data_root, cf_token: str, chains: dict, cameras):
+    """Build (images, intrinsics, cam_to_egos) for all N cameras at the CAM_FRONT
+    sweep's timestamp — each other-camera token is picked by nearest timestamp."""
+    cf_ts = nusc.get("sample_data", cf_token)["timestamp"]
+    imgs, ks, c2es = [], [], []
+    for cam in cameras:
+        tk = cf_token if cam == "CAM_FRONT" else _nearest_token(chains[cam], cf_ts)
+        imgs.append(_load_frame(nusc, data_root, tk))
+        K, c2e = _calibration(nusc, tk)
+        ks.append(K)
+        c2es.append(c2e)
+    return torch.stack(imgs), torch.stack(ks), torch.stack(c2es)
+
+
 def render_scene_video(cfg: dict, scene_name: str, out_path: str | Path, fps: int = 12, max_frames: int | None = None, pipeline: PerceptionPipeline | None = None) -> Path:
     """
     Run the pipeline over a scene's dense frame stream and write an annotated MP4.
@@ -94,7 +142,8 @@ def render_scene_video(cfg: dict, scene_name: str, out_path: str | Path, fps: in
     device = _device()
     if pipeline is None:
         pipeline = PerceptionPipeline(cfg, device)
-    nusc = NuScenes(version="v1.0-mini", dataroot=cfg["data_root"], verbose=False)
+    nusc = NuScenes(version=version_from_data_root(cfg["data_root"]),
+                    dataroot=cfg["data_root"], verbose=False)
 
     tokens = scene_sweep_tokens(nusc, scene_name)
     if max_frames is not None:
@@ -102,6 +151,10 @@ def render_scene_video(cfg: dict, scene_name: str, out_path: str | Path, fps: in
     frames = [_load_frame(nusc, cfg["data_root"], tk) for tk in tokens]
     seq_len = cfg.get("seq_len", 3)
     xbound, ybound = tuple(pipeline.bev_cfg["xbound"]), tuple(pipeline.bev_cfg["ybound"])
+
+    # surround camera chains for the BEV path (so it updates at sweep rate, not keyframe rate)
+    bev_cams = pipeline.bev_cfg.get("cameras", [CAM])
+    chains = _build_cam_chains(nusc, scene_name, bev_cams) if len(bev_cams) > 1 else None
 
     out_path = Path(out_path)
     ffmpeg = shutil.which("ffmpeg")
@@ -118,7 +171,9 @@ def render_scene_video(cfg: dict, scene_name: str, out_path: str | Path, fps: in
     for i, sd_token in enumerate(tokens):
         window = torch.stack([frames[max(0, i - k)] for k in reversed(range(seq_len))])
         intrinsic, cam_to_ego = _calibration(nusc, sd_token)
-        out = pipeline.process_frame(window, intrinsic, cam_to_ego)
+        bev_surround = (_surround_inputs(nusc, cfg["data_root"], sd_token, chains, bev_cams)
+                        if chains is not None else None)
+        out = pipeline.process_frame(window, intrinsic, cam_to_ego, bev_surround=bev_surround)
 
         cam = _denormalize(frames[i])
         cam = overlay_segmentation(cam, out["seg_mask"].numpy(), alpha=0.45)

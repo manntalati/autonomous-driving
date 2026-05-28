@@ -1,0 +1,59 @@
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/core/validation.py:114: UserWarning: ShiftScaleRotate is a special case of Affine transform. Please use Affine transform instead.
+  original_init(self, **validated_kwargs)
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+Epoch 1/40 | train: 1.1555 | val: 1.5776 | mIoU: 0.260 [0.704 0.306 0.022 0.168 0.102]
+Epoch 2/40 | train: 1.0067 | val: 1.3813 | mIoU: 0.298 [0.766 0.312 0.040 0.293 0.081]
+Epoch 3/40 | train: 0.9362 | val: 1.4717 | mIoU: 0.309 [0.760 0.260 0.181 0.279 0.067]
+Epoch 4/40 | train: 0.9000 | val: 1.3163 | mIoU: 0.312 [0.785 0.293 0.128 0.242 0.110]
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 51] Network is unreachable>
+  data = fetch_version_info()
+Epoch 5/40 | train: 0.8568 | val: 1.5805 | mIoU: 0.311 [0.739 0.285 0.166 0.251 0.115]
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 8] nodename nor servname provided, or not known>
+  data = fetch_version_info()
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 8] nodename nor servname provided, or not known>
+  data = fetch_version_info()
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 8] nodename nor servname provided, or not known>
+  data = fetch_version_info()
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 8] nodename nor servname provided, or not known>
+  data = fetch_version_info()
+Epoch 6/40 | train: 0.8349 | val: 1.7753 | mIoU: 0.247 [0.742 0.067 0.168 0.247 0.010]
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 8] nodename nor servname provided, or not known>
+  data = fetch_version_info()
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 8] nodename nor servname provided, or not known>
+  data = fetch_version_info()
+Epoch 7/40 | train: 0.7961 | val: 1.4266 | mIoU: 0.312 [0.773 0.236 0.195 0.298 0.060]
+Epoch 8/40 | train: 0.7719 | val: 1.4539 | mIoU: 0.301 [0.804 0.330 0.000 0.306 0.067]
+Epoch 9/40 | train: 0.7475 | val: 1.9225 | mIoU: 0.295 [0.772 0.307 0.104 0.165 0.127]
+Epoch 10/40 | train: 0.7172 | val: 1.3732 | mIoU: 0.337 [0.780 0.268 0.198 0.322 0.117]
+Epoch 11/40 | train: 0.6908 | val: 1.7739 | mIoU: 0.289 [0.692 0.307 0.034 0.306 0.108]
+Epoch 12/40 | train: 0.6698 | val: 1.4501 | mIoU: 0.338 [0.776 0.267 0.216 0.328 0.102]
+Epoch 13/40 | train: 0.6524 | val: 1.5934 | mIoU: 0.343 [0.775 0.300 0.175 0.332 0.131]
+Epoch 14/40 | train: 0.6281 | val: 1.9063 | mIoU: 0.289 [0.762 0.221 0.144 0.288 0.030]
+Epoch 15/40 | train: 0.6132 | val: 1.4901 | mIoU: 0.341 [0.792 0.296 0.176 0.327 0.114]
+Epoch 16/40 | train: 0.5934 | val: 1.4692 | mIoU: 0.317 [0.775 0.321 0.112 0.291 0.089]
+Epoch 17/40 | train: 0.5754 | val: 1.7043 | mIoU: 0.327 [0.750 0.314 0.145 0.330 0.094]
+Epoch 18/40 | train: 0.5611 | val: 1.5100 | mIoU: 0.332 [0.769 0.306 0.175 0.326 0.086]
+Epoch 19/40 | train: 0.5445 | val: 1.8829 | mIoU: 0.324 [0.777 0.349 0.099 0.314 0.083]
+Epoch 20/40 | train: 0.5300 | val: 1.4691 | mIoU: 0.327 [0.782 0.339 0.106 0.327 0.079]
+Epoch 21/40 | train: 0.5047 | val: 1.6686 | mIoU: 0.330 [0.782 0.334 0.112 0.302 0.120]
+Epoch 22/40 | train: 0.4900 | val: 1.4876 | mIoU: 0.316 [0.787 0.252 0.176 0.233 0.132]
+Epoch 23/40 | train: 0.4780 | val: 1.5868 | mIoU: 0.349 [0.786 0.329 0.164 0.342 0.127]
+Epoch 24/40 | train: 0.4637 | val: 1.7048 | mIoU: 0.345 [0.780 0.338 0.140 0.355 0.114]
+Epoch 25/40 | train: 0.4607 | val: 1.7560 | mIoU: 0.334 [0.785 0.323 0.162 0.290 0.107]
+Epoch 26/40 | train: 0.4450 | val: 1.5828 | mIoU: 0.341 [0.786 0.304 0.168 0.318 0.129]
+Epoch 27/40 | train: 0.4366 | val: 1.6185 | mIoU: 0.346 [0.791 0.339 0.116 0.350 0.135]
+Epoch 28/40 | train: 0.4246 | val: 1.5172 | mIoU: 0.348 [0.791 0.322 0.162 0.341 0.127]
+Epoch 29/40 | train: 0.4137 | val: 1.5923 | mIoU: 0.351 [0.789 0.309 0.180 0.355 0.124]
+Epoch 30/40 | train: 0.4072 | val: 1.7566 | mIoU: 0.350 [0.785 0.330 0.172 0.337 0.124]
+Epoch 31/40 | train: 0.4055 | val: 1.6768 | mIoU: 0.348 [0.791 0.329 0.167 0.332 0.118]
+Epoch 32/40 | train: 0.3959 | val: 1.7286 | mIoU: 0.345 [0.789 0.333 0.155 0.334 0.115]
+Epoch 33/40 | train: 0.3902 | val: 1.6842 | mIoU: 0.347 [0.790 0.322 0.179 0.324 0.122]
+Epoch 34/40 | train: 0.3869 | val: 1.7180 | mIoU: 0.349 [0.786 0.322 0.183 0.333 0.122]
+Epoch 35/40 | train: 0.3788 | val: 1.6858 | mIoU: 0.349 [0.790 0.322 0.173 0.337 0.123]
+Epoch 36/40 | train: 0.3752 | val: 1.7406 | mIoU: 0.348 [0.785 0.332 0.166 0.334 0.125]
+Epoch 37/40 | train: 0.3773 | val: 1.7161 | mIoU: 0.349 [0.787 0.330 0.171 0.332 0.127]
+Epoch 38/40 | train: 0.3789 | val: 1.7206 | mIoU: 0.350 [0.786 0.330 0.170 0.334 0.128]
+Epoch 39/40 | train: 0.3729 | val: 1.7144 | mIoU: 0.349 [0.785 0.326 0.176 0.337 0.122]
+Early stopping triggered. Best mIoU: 0.351

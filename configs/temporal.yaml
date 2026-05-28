@@ -1,7 +1,7 @@
 # Phase 6 — 3-frame temporal-fusion detector (cross-attention → FPN detector).
 
 # data
-data_root: data/raw/v1.0-mini
+data_root: data/raw/v1.0-trainval
 batch_size: 2        # each item is 3 frames → 3× the backbone passes; keep batch small
 seq_len: 3           # current frame + 2 past frames
 

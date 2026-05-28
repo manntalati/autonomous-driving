@@ -96,6 +96,21 @@ def _calibration(nusc, cam_sd_token: str):
     return torch.from_numpy(K), torch.from_numpy(cam_to_ego)
 
 
+def _surround_inputs(nusc, data_root: str, cam_sd_token: str, cameras):
+    """Load all N surround-camera images + calibration for the sample containing
+    cam_sd_token. Used by the BEV path so the Phase-8 model gets its full 360° input."""
+    sd = nusc.get("sample_data", cam_sd_token)
+    sample = nusc.get("sample", sd["sample_token"])
+    imgs, ks, c2es = [], [], []
+    for cam in cameras:
+        tk = sample["data"][cam]
+        imgs.append(_load_frame(nusc, data_root, tk))
+        K, c2e = _calibration(nusc, tk)
+        ks.append(K)
+        c2es.append(c2e)
+    return torch.stack(imgs), torch.stack(ks), torch.stack(c2es)
+
+
 def main() -> None:
     """Streamlit entry point — scene picker, frame slider, unified perception view."""
     st.set_page_config(page_title="AD Perception Demo", layout="wide")
@@ -117,7 +132,11 @@ def main() -> None:
     window = torch.stack([_load_frame(nusc, cfg["data_root"], tk) for tk in window_tokens])
     intrinsic, cam_to_ego = _calibration(nusc, cam_tokens[frame_idx])
 
-    out = pipeline.process_frame(window, intrinsic, cam_to_ego)
+    # surround inputs for the BEV path: all N cameras of the current frame
+    bev_cams = pipeline.bev_cfg.get("cameras", [CAM])
+    bev_surround = (_surround_inputs(nusc, cfg["data_root"], cam_tokens[frame_idx], bev_cams)
+                    if len(bev_cams) > 1 else None)
+    out = pipeline.process_frame(window, intrinsic, cam_to_ego, bev_surround=bev_surround)
 
     image = _denormalize(window[-1])
     vis = overlay_segmentation(image, out["seg_mask"].numpy(), alpha=0.45)
@@ -128,9 +147,9 @@ def main() -> None:
 
     left, right = st.columns([2, 1])
     left.subheader("Camera — detection + segmentation")
-    left.image(vis, use_container_width=True)
+    left.image(vis, width="stretch")
     right.subheader("Bird's-eye view")
-    right.image(bev_img, use_container_width=True)
+    right.image(bev_img, width="stretch")
     st.caption(
         f"Scene {scene} · frame {frame_idx + 1}/{len(cam_tokens)} · "
         f"{len(out['boxes'])} detections · {len(out['bev_boxes'])} BEV objects"

@@ -1,0 +1,26 @@
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/core/validation.py:114: UserWarning: ShiftScaleRotate is a special case of Affine transform. Please use Affine transform instead.
+  original_init(self, **validated_kwargs)
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+Epoch 1/40 | train: 1.1387 | val: 1.4264 | mIoU: 0.321 [0.758 0.307 0.196 0.237 0.104]
+Epoch 2/40 | train: 0.9721 | val: 1.4048 | mIoU: 0.338 [0.758 0.318 0.184 0.316 0.116]
+Epoch 3/40 | train: 0.8922 | val: 1.4018 | mIoU: 0.331 [0.761 0.325 0.142 0.333 0.093]
+Epoch 4/40 | train: 0.8335 | val: 1.3913 | mIoU: 0.320 [0.764 0.321 0.132 0.279 0.104]
+Epoch 5/40 | train: 0.7784 | val: 1.4338 | mIoU: 0.313 [0.777 0.317 0.112 0.288 0.071]
+Epoch 6/40 | train: 0.7373 | val: 1.4181 | mIoU: 0.317 [0.762 0.335 0.103 0.294 0.090]
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 8] nodename nor servname provided, or not known>
+  data = fetch_version_info()
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 8] nodename nor servname provided, or not known>
+  data = fetch_version_info()
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 8] nodename nor servname provided, or not known>
+  data = fetch_version_info()
+Epoch 7/40 | train: 0.7040 | val: 1.4493 | mIoU: 0.328 [0.768 0.320 0.139 0.299 0.114]
+Epoch 8/40 | train: 0.6683 | val: 1.4518 | mIoU: 0.323 [0.774 0.327 0.127 0.307 0.082]
+Epoch 9/40 | train: 0.6352 | val: 1.4876 | mIoU: 0.319 [0.775 0.345 0.081 0.314 0.082]
+Epoch 10/40 | train: 0.6106 | val: 1.4744 | mIoU: 0.325 [0.777 0.295 0.167 0.274 0.113]
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/check_version.py:147: UserWarning: Error fetching version info <urlopen error [Errno 8] nodename nor servname provided, or not known>
+  data = fetch_version_info()
+Epoch 11/40 | train: 0.5881 | val: 1.4855 | mIoU: 0.338 [0.777 0.283 0.190 0.339 0.103]
+Epoch 12/40 | train: 0.5619 | val: 1.5874 | mIoU: 0.329 [0.776 0.318 0.149 0.299 0.106]
+Early stopping triggered. Best mIoU: 0.338
