@@ -24,6 +24,7 @@ from PIL import Image
 from pyquaternion import Quaternion
 from nuscenes.nuscenes import NuScenes
 
+from data.dataset import get_scene_split
 from data.transforms import MEAN, STD, INPUT_H, INPUT_W
 from demo.pipeline import PerceptionPipeline
 from demo.render_video import render_scene_video
@@ -33,6 +34,7 @@ CAM = "CAM_FRONT"
 _MEAN = np.array(MEAN, dtype=np.float32)
 _STD = np.array(STD, dtype=np.float32)
 _CFG_PATH = "configs/demo.yaml"
+_TRAINVAL_ROOT = "data/raw/v1.0-trainval"   # used to identify scenes the trainval models trained on
 
 
 def _denormalize(image_tensor: torch.Tensor) -> np.ndarray:
@@ -61,6 +63,21 @@ def load_pipeline(cfg_path: str):
 def load_nusc(data_root: str):
     """Load the NuScenes index once (slow) and cache it."""
     return NuScenes(version="v1.0-mini", dataroot=data_root, verbose=False)
+
+
+@st.cache_resource
+def held_out_scenes(all_scene_names: tuple) -> list:
+    """Restrict the picker to scenes the trainval models never trained on.
+    If the trainval split (data/raw/v1.0-trainval) isn't on disk, return everything;
+    otherwise drop any scene that appears in the trainval *train* split.
+    Falls back to the full list if filtering would leave the picker empty.
+    """
+    if not Path(_TRAINVAL_ROOT, "v1.0-trainval").exists():
+        return list(all_scene_names)
+    nusc_t = NuScenes(version="v1.0-trainval", dataroot=_TRAINVAL_ROOT, verbose=False)
+    seen = set(get_scene_split(nusc_t, _TRAINVAL_ROOT)[0])    # trainval train scenes
+    held = [s for s in all_scene_names if s not in seen]
+    return held or list(all_scene_names)
 
 
 def _scene_cam_tokens(nusc, scene_name: str):
@@ -119,9 +136,14 @@ def main() -> None:
     pipeline, cfg, _ = load_pipeline(_CFG_PATH)
     nusc = load_nusc(cfg["data_root"])
 
-    scene_names = sorted(s["name"] for s in nusc.scene)
+    all_scenes = tuple(sorted(s["name"] for s in nusc.scene))
+    scene_names = held_out_scenes(all_scenes)
     default = cfg["scene"] if cfg["scene"] in scene_names else scene_names[0]
     scene = st.sidebar.selectbox("Scene", scene_names, index=scene_names.index(default))
+    st.sidebar.caption(
+        f"{len(scene_names)} / {len(all_scenes)} mini scenes — only those the trainval "
+        f"models never trained on are shown."
+    )
 
     cam_tokens = _scene_cam_tokens(nusc, scene)
     seq_len = cfg.get("seq_len", 3)
