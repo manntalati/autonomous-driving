@@ -29,16 +29,23 @@ SEG_COLORS = np.array([
 ], dtype=np.uint8)
 
 
-def overlay_segmentation(image: np.ndarray, mask: np.ndarray, alpha: float = 0.5) -> np.ndarray:
+def overlay_segmentation(image: np.ndarray, mask: np.ndarray, alpha: float = 0.5,
+                          skip_classes=None) -> np.ndarray:
     """
     Blend a per-pixel segmentation mask over an image.
-    Args: image — (H, W, 3) uint8; mask — (H, W) int class IDs; alpha — blend weight.
-    Returns: (H, W, 3) uint8 — image with non-background classes colour-blended.
+    Args: image — (H, W, 3) uint8; mask — (H, W) int class IDs; alpha — blend weight;
+          skip_classes — iterable of class IDs to leave un-painted (useful for the
+          drivable class, whose road-surface polygons paint over vehicles on the road
+          and obscure the detection boxes).
+    Returns: (H, W, 3) uint8 — image with non-background, non-skipped classes blended.
     """
     mask = np.asarray(mask)
     out = image.astype(np.float32).copy()
     colours = SEG_COLORS[mask].astype(np.float32)   # (H, W, 3)
     fg = mask > 0                                    # leave background untouched
+    if skip_classes:
+        for c in skip_classes:
+            fg &= mask != c
     out[fg] = (1.0 - alpha) * out[fg] + alpha * colours[fg]
     return out.astype(np.uint8)
 

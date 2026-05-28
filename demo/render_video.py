@@ -176,7 +176,8 @@ def render_scene_video(cfg: dict, scene_name: str, out_path: str | Path, fps: in
         out = pipeline.process_frame(window, intrinsic, cam_to_ego, bev_surround=bev_surround)
 
         cam = _denormalize(frames[i])
-        cam = overlay_segmentation(cam, out["seg_mask"].numpy(), alpha=0.45)
+        # skip the drivable class (1) — its road-surface paint hides vehicles on the road
+        cam = overlay_segmentation(cam, out["seg_mask"].numpy(), alpha=0.45, skip_classes=(1,))
         cam = draw_boxes(cam, out["boxes"].tolist(), out["labels"].tolist(), out["scores"].tolist())
         bev = draw_bev(out["bev_boxes"], out["bev_scores"], out["bev_labels"], xbound, ybound,
                        seg=out["bev_seg"].numpy())

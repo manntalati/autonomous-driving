@@ -139,7 +139,8 @@ def main() -> None:
     out = pipeline.process_frame(window, intrinsic, cam_to_ego, bev_surround=bev_surround)
 
     image = _denormalize(window[-1])
-    vis = overlay_segmentation(image, out["seg_mask"].numpy(), alpha=0.45)
+    # skip the drivable class (1) — its road-surface paint hides vehicles on the road
+    vis = overlay_segmentation(image, out["seg_mask"].numpy(), alpha=0.45, skip_classes=(1,))
     vis = draw_boxes(vis, out["boxes"].tolist(), out["labels"].tolist(), out["scores"].tolist())
     bev_img = draw_bev(out["bev_boxes"], out["bev_scores"], out["bev_labels"],
                        tuple(pipeline.bev_cfg["xbound"]), tuple(pipeline.bev_cfg["ybound"]),
