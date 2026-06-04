@@ -14,11 +14,13 @@ from __future__ import annotations
 import argparse
 import asyncio
 
+from agent.config import load_env
 from agent.loop import run_agent
 from agent.mcp_client import MCPClient
 
 
 async def _main(question: str, model: str) -> None:
+    load_env()  # pulls ANTHROPIC_API_KEY from .env if not already exported
     client = MCPClient()
     await client.connect()
     try:
