@@ -1,7 +1,3 @@
-
-
-https://github.com/user-attachments/assets/9be2ee6f-5d44-409b-a746-28f3d2ffa66b
-
 # Autonomous Driving Perception Stack
 
 A full autonomous driving perception pipeline built **from scratch** in PyTorch. This project implements the core vision system that self-driving cars use to understand the world: detecting vehicles, pedestrians, and cyclists, segmenting roads and lanes, projecting everything into a bird's eye view, and tracking objects across time.
