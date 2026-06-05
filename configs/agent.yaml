@@ -1,0 +1,19 @@
+# data
+data_root: data/raw/v1.0-mini
+# temporal detector
+detector:
+  config: configs/temporal.yaml
+  checkpoint: checkpoints/temporal_best.pt
+# hybrid segementation
+segmenter:
+  config: configs/segmenter_hybrid.yaml
+  checkpoint: checkpoints/segmenter_hybrid_best.pt
+# bev detection
+bev:
+  config: configs/bev_surround.yaml
+  checkpoint: checkpoints/bev_surround_best.pt
+
+det_score_threshold: 0.3
+bev_score_threshold: 0.3
+bev_max_detections: 50
+seq_len: 3
