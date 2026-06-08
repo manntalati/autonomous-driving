@@ -304,6 +304,82 @@ noisy on the 80-sample val set — the recurring small-dataset ceiling.
 
 ---
 
+## Phase 9 — Agentic Perception Tool API
+
+**Architecture.** An MCP (Model Context Protocol) server exposes the Phase-7
+unified pipeline as a clean JSON tool API that an LLM agent calls autonomously.
+The server is split into three layers:
+
+```
+agent/run.py                      ← CLI entry: async _main → MCPClient → run_agent
+agent/loop.py                     ← hand-built Anthropic tool-use loop
+        │
+        │  stdio (subprocess)
+        ▼
+mcp_server/server.py              ← FastMCP instance + tool registration
+        │
+        ├── ping()                  Phase 0: health check
+        │
+        └── register_all_tools(mcp) Phase 1: 11 perception tools
+                │
+                ├── mcp_server/scene_store.py     frame loading + UUID cache
+                ├── mcp_server/model_registry.py  pipeline singleton + lazy inference
+                └── mcp_server/perception_tools.py tool implementations
+                         │
+                         └── demo/pipeline.py     PerceptionPipeline (Phase 7)
+                                  ├── Temporal detector  (Phase 6)
+                                  ├── Hybrid U-Net       (Phase 4)
+                                  └── BEV detector       (Phase 8)
+```
+
+**Tool tiers.**
+
+*Core tools* (data access + raw model outputs):
+
+| Tool | What it returns |
+|---|---|
+| `list_scenes()` | Scene names, descriptions, frame counts |
+| `load_frame(scene_name, frame_idx)` | UUID `frame_id` + timestamp |
+| `detect_objects(frame_id)` | 2D boxes + class counts (car / ped / cyclist) |
+| `segment_scene(frame_id)` | Per-class pixel coverage + ahead-region flags |
+| `bev_map(frame_id)` | Top-down object positions in metres (ego frame) |
+
+*Driving-decision tools* (spatial reasoning wrappers):
+
+| Tool | Wraps | Returns |
+|---|---|---|
+| `check_lane_switch_safety(frame_id, dir)` | BEV + seg | Safe bool + obstacle list |
+| `check_turn_clearance(frame_id, dir)` | BEV + seg + 2D | Clear bool + hazard list |
+| `check_obstacle_stop(frame_id)` | BEV | Stop bool + nearest obstacle (m) |
+| `check_pedestrian_crossing(frame_id)` | Seg + 2D det | Crossing active + occupancy |
+| `estimate_following_distance(frame_id)` | BEV | Metres to car ahead |
+| `scene_summary(frame_id)` | All three models | Full structured scene JSON |
+
+**Key design decisions.**
+
+- **Load-once serving.** `ModelRegistry` initialises as a module-level singleton on
+  first tool call; all subsequent calls use the already-loaded pipeline.
+- **Perception-once per frame.** `run_perception(frame_id)` runs `PerceptionPipeline.
+  process_frame()` on the first call for a `frame_id` and caches the numpy result in the
+  `FrameRecord`; every subsequent tool call on that frame reuses the cache — no redundant
+  inference.
+- **Tensors never cross the MCP boundary.** Tools convert model outputs to scalar dicts /
+  lists and return JSON strings. The LLM reasons in language, not array indices.
+- **BEV spatial convention.** `x` = forward (0–51.2 m), `y` = lateral (negative = left).
+  Lane thresholds: current lane `|y| ≤ 2 m`, adjacent lane `2 ≤ |y| ≤ 6 m`.
+- **Obstacle-only stop.** `check_obstacle_stop` uses BEV object proximity because the
+  3-class detection model (car / pedestrian / cyclist) has no traffic-light or stop-sign
+  class; this constraint is documented in the tool's docstring.
+
+**Components.** `mcp_server/scene_store.py` (`SceneStore`, `FrameRecord`,
+`SEG_CLASS_NAMES`, `DETECT_CLASS_NAMES`); `mcp_server/model_registry.py`
+(`ModelRegistry`, `get_registry`); `mcp_server/perception_tools.py`
+(`register_all_tools`); `mcp_server/server.py` (FastMCP instance + `ping` + Phase 1
+registration); `agent/mcp_client.py` (`MCPClient`); `agent/loop.py` (`run_agent`,
+`mcp_tools_to_anthropic`); `agent/run.py` (CLI entry point).
+
+---
+
 ## Results Summary
 
 | Phase | Network | Key tensor shapes | Metric |

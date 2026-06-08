@@ -58,6 +58,7 @@ In depth architecture: [Architecture Plan](architecture_plan.md)
 | Visualization | Matplotlib, OpenCV |
 | Training | Custom training loops, LR scheduling, mixed precision |
 | Evaluation | mAP (detection), mIoU (segmentation), FPS benchmarks |
+| Agent / MCP | Anthropic API, MCP Python SDK (stdio transport) |
 
 ---
 
@@ -153,6 +154,54 @@ In depth architecture: [Architecture Plan](architecture_plan.md)
 | `P6-2` | Implement temporal attention (cross-attention between current and past frame features) | [✅] |
 | `P6-3` | Temporal-fusion module enriching the detector with past-frame features | [✅] |
 | `P6-4` | Temporal-consistency (flicker) metric + frame-by-frame evaluation | [✅] |
+
+---
+
+### Phase 8 (Agentic): MCP Perception Tool API
+
+> **Goal:** Expose the trained perception pipeline as an MCP tool API that an LLM agent can call autonomously to understand driving scenes.
+
+| Ticket | Task | Status |
+|---|---|---|
+| `A0-1` | MCP server scaffolding (FastMCP, stdio transport, `ping` tool) | [✅] |
+| `A0-2` | Hand-built Anthropic tool-use loop (`mcp_tools_to_anthropic`, `run_agent`) | [✅] |
+| `A1-1` | `SceneStore` — nuScenes frame loader + UUID per-frame cache | [✅] |
+| `A1-2` | `ModelRegistry` — pipeline singleton + `run_perception(frame_id)` | [✅] |
+| `A1-3` | Core tools: `list_scenes`, `load_frame`, `detect_objects`, `segment_scene`, `bev_map` | [✅] |
+| `A1-4` | Driving-decision tools: `check_lane_switch_safety`, `check_turn_clearance`, `check_obstacle_stop`, `check_pedestrian_crossing`, `estimate_following_distance`, `scene_summary` | [✅] |
+| `A2-1` | Orchestrator agent (spatial-reasoning system prompt + chained tool calls) | [ ] |
+| `A3-1` | Eval harness (GT-derived question bank, accuracy / tool-call count / latency / cost) | [ ] |
+| `A4-1` | Interactive Streamlit agent demo with live tool-trace panel | [ ] |
+
+Detailed agentic roadmap: [docs/agentic_perception_roadmap.md](docs/agentic_perception_roadmap.md)
+
+**Quickstart:**
+```bash
+# Set your Anthropic API key
+echo "ANTHROPIC_API_KEY=sk-..." > .env
+
+# Ask a scene question — the agent will call load_frame + detect_objects automatically
+python -m agent.run "how many cars are in scene-0103 frame 5?"
+
+# Safety decision example — triggers load_frame + bev_map + check_lane_switch_safety
+python -m agent.run "is it safe to change lanes left in scene-0103 frame 10?"
+```
+
+**MCP tool inventory:**
+
+| Tool | Purpose |
+|---|---|
+| `list_scenes` | List all available nuScenes scenes |
+| `load_frame(scene, idx)` | Load a frame, get a `frame_id` for subsequent calls |
+| `detect_objects(frame_id)` | 2D bounding boxes with class + confidence |
+| `segment_scene(frame_id)` | Per-class pixel coverage + ahead-region flags |
+| `bev_map(frame_id)` | Top-down object positions in real-world metres |
+| `check_lane_switch_safety(frame_id, dir)` | Safe to change left/right? |
+| `check_turn_clearance(frame_id, dir)` | Turn clearance at intersection |
+| `check_obstacle_stop(frame_id)` | Should the vehicle stop? Nearest obstacle distance |
+| `check_pedestrian_crossing(frame_id)` | Crossing ahead + pedestrian occupancy |
+| `estimate_following_distance(frame_id)` | Metres to nearest car ahead |
+| `scene_summary(frame_id)` | Full structured scene JSON for holistic reasoning |
 
 ---
 
@@ -330,7 +379,8 @@ autonomous-driving/
 ├── README.md
 ├── CLAUDE.md
 ├── requirements.txt
-├── configs/                  # Training configs and hyperparameters
+├── configs/                  # Training + agent configs and hyperparameters
+│   └── agent.yaml            # Checkpoint paths + thresholds for the MCP server
 ├── data/
 │   ├── dataset.py            # NuScenesDetectionDataset — 3-class detection, 3D→2D projection
 │   ├── dataloader.py         # get_loaders() — train/val DataLoader factory
@@ -348,5 +398,17 @@ autonomous-driving/
 │   └── visualize.py          # draw_boxes, visualize_batch, visualize_sample
 ├── notebooks/
 │   └── p0_2_data_exploration.ipynb  # nuScenes schema, cameras, intrinsics, LiDAR projection
-└── demo/                     # End-to-end inference and demo scripts
+├── demo/                     # End-to-end inference and demo scripts
+├── mcp_server/               # MCP tool API (agentic perception platform)
+│   ├── server.py             # FastMCP instance — ping + register_all_tools()
+│   ├── scene_store.py        # SceneStore — frame loading, UUID cache, calibration
+│   ├── model_registry.py     # ModelRegistry singleton — pipeline + run_perception()
+│   └── perception_tools.py   # All 11 perception tools (5 core + 6 driving-decision)
+├── agent/                    # LLM agent that calls the MCP tools
+│   ├── run.py                # CLI entry point
+│   ├── loop.py               # Hand-built Anthropic tool-use loop
+│   ├── mcp_client.py         # stdio MCP client wrapper
+│   └── config.py             # .env loader (ANTHROPIC_API_KEY)
+└── docs/
+    └── agentic_perception_roadmap.md  # Phase-by-phase agentic roadmap
 ```
