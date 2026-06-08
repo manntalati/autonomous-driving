@@ -42,7 +42,7 @@ overfitting ceiling hit in every phase of the driving project.
 
 ## Phase Progress
 - [✅] **Phase 0** — MCP scaffolding & hand-built agent loop
-- [ ] **Phase 1** — Perception tools (the tool API)
+- [✅] **Phase 1** — Perception tools (the tool API)
 - [ ] **Phase 2** — Orchestrator agent (spatial reasoning)
 - [ ] **Phase 3** — Eval harness (accuracy / efficiency / latency / cost)
 - [ ] **Phase 4** — Interactive demo (live tool trace)
@@ -101,23 +101,66 @@ trivial tool, before any model code is involved.
 
 **Deliverables**
 - `mcp_server/model_registry.py` — load checkpoints **once** at server startup
-  (wraps `demo.pipeline.PerceptionPipeline` / the individual models); device select.
-- `mcp_server/scene_store.py` — load nuScenes frames by `(scene, frame_idx)`,
-  cache them server-side keyed by a `frame_id` string (so tools pass an id, not
-  base64 pixels, over MCP).
-- `mcp_server/perception_tools.py` — register tools on the FastMCP server:
-  - `list_scenes()` / `load_frame(scene, frame_idx) -> {frame_id, timestamp, ...}`
-  - `detect_objects(frame_id) -> {counts:{car,ped,cyclist}, boxes:[{cls,score,xyxy}]}`
-  - `segment_scene(frame_id) -> {coverage_pct:{drivable,lane,...}, drivable_ahead:bool}`
-  - `bev_map(frame_id) -> {objects:[{cls,x,y,range_m,bearing_deg}], ...}`
-  - *(optional)* `track_temporal(frame_id)` using the 3-frame window
-- `configs/agent.yaml` — checkpoint paths + thresholds (reuse `configs/demo.yaml`).
+  (wraps `demo.pipeline.PerceptionPipeline`); device select; `get_registry()` singleton. ✅
+- `mcp_server/scene_store.py` — load nuScenes frames by `(scene_name, frame_idx)`,
+  cache them server-side keyed by a UUID `frame_id`; builds 3-frame temporal window;
+  extracts CAM_FRONT intrinsic + cam_to_ego calibration. ✅
+- `mcp_server/perception_tools.py` — `register_all_tools(mcp)` binds all tools:
+  - **Core:** `list_scenes`, `load_frame`, `detect_objects`, `segment_scene`, `bev_map`
+  - **Driving decisions:** `check_lane_switch_safety`, `check_turn_clearance`,
+    `check_obstacle_stop`, `check_pedestrian_crossing`, `estimate_following_distance`,
+    `scene_summary`
+- `mcp_server/server.py` — updated to call `register_all_tools(mcp)` after `ping`. ✅
+- `configs/agent.yaml` — checkpoint paths + thresholds (already present). ✅
 
 **Concepts/MLE:** load-once serving; schema/contract design; **summarizing tensors
 into language** (the agent reasons over JSON, never pixels); units (meters, ego frame).
 
 **Done when:** `python -m agent.run "how many cars are in scene-0103 frame 5?"` returns
 a correct count via `detect_objects`, matching a `demo/benchmark.py`-style sanity check.
+
+### Phase 1 — Complete ✅
+
+**New files:**
+- `mcp_server/scene_store.py` — `SceneStore` class: scene indexing, frame loading,
+  3-frame temporal window construction, CAM_FRONT calibration extraction, UUID cache.
+- `mcp_server/perception_tools.py` — `register_all_tools(mcp)`: all 11 tools
+  (5 core + 6 driving-decision wrappers).
+
+**Updated files:**
+- `mcp_server/model_registry.py` — added `SceneStore` attribute, `run_perception(frame_id)`
+  method (lazy pipeline run + numpy cache), `get_registry()` module singleton.
+- `mcp_server/server.py` — calls `register_all_tools(mcp)` after the `ping` tool.
+
+**Tool summary:**
+
+| Tool | Tier | Models used | Returns |
+|---|---|---|---|
+| `list_scenes` | core | — | scene name / description / frame count |
+| `load_frame` | core | — | frame_id + timestamp |
+| `detect_objects` | core | temporal detector | 2D boxes + class counts |
+| `segment_scene` | core | U-Net segmenter | pixel coverage + ahead flags |
+| `bev_map` | core | BEV detector | top-down object positions (m) |
+| `check_lane_switch_safety` | driving | BEV + seg | safe bool + obstacle list |
+| `check_turn_clearance` | driving | BEV + seg + 2D det | clear bool + hazard list |
+| `check_obstacle_stop` | driving | BEV | stop bool + nearest obstacle |
+| `check_pedestrian_crossing` | driving | seg + 2D det | crossing + occupancy |
+| `estimate_following_distance` | driving | BEV | metres to car ahead |
+| `scene_summary` | driving | all three | full structured scene JSON |
+
+**BEV coordinate convention** (ego frame, matches trained LSS config):
+- `x` = forward from vehicle (0 → 51.2 m for single-camera front config)
+- `y` = lateral (negative = left, positive = right)
+- Lane thresholds: current lane `|y| ≤ 2 m`; adjacent lane `2 m ≤ |y| ≤ 6 m`
+
+**Design decisions:**
+- Perception runs once per frame (on first tool call); all subsequent calls on the
+  same `frame_id` reuse the cached numpy arrays — no redundant inference.
+- Tools return structured JSON strings, not tensors — the agent reasons in language.
+- Driving-decision tools are wrappers over the core outputs; no additional model
+  inference is triggered by calling them.
+- `check_obstacle_stop` is obstacle-only — traffic lights and stop signs are outside
+  the detection model's 3-class set (car / pedestrian / cyclist).
 
 ## Phase 2 — Orchestrator agent (spatial reasoning)
 **Objective:** a spatial-reasoning agent that **chains** tools to answer compositional
