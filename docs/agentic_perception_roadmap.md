@@ -43,7 +43,7 @@ overfitting ceiling hit in every phase of the driving project.
 ## Phase Progress
 - [✅] **Phase 0** — MCP scaffolding & hand-built agent loop
 - [✅] **Phase 1** — Perception tools (the tool API)
-- [ ] **Phase 2** — Orchestrator agent (spatial reasoning)
+- [✅] **Phase 2** — Orchestrator agent (spatial reasoning)
 - [ ] **Phase 3** — Eval harness (accuracy / efficiency / latency / cost)
 - [ ] **Phase 4** — Interactive demo (live tool trace)
 - [ ] **Phase 5** — Embedding & retrieval tools (FAISS)
@@ -177,6 +177,42 @@ questions about a scene.
 
 **Done when:** questions like *"Is it safe to change into the left lane?"* trigger a
 sensible trace (detect + bev + seg) and a grounded answer.
+
+### Phase 2 — Complete ✅
+
+**New files:**
+- `agent/prompts.py` — `SYSTEM_PROMPT` constant: role + ego-frame coordinate conventions
+  (x forward, y < 0 = LEFT) + tool-selection guide (which tool for which question type,
+  prefer driving-decision tools over recomposing) + workflow rules (`load_frame` first,
+  smallest-set rule, no retry on error) + answer format (≤3 sentences, cite the
+  grounding fact) + invariants (never invent counts/distances).
+- `agent/examples.py` — `EXAMPLES` list (8 canned questions covering single-tool,
+  two-tool, decision-tool, and broad-summary cases) + `expects` field per example
+  (seeds Phase 3 tool-selection precision metric) + `run_all` driver to fire all 8
+  through one MCP session.
+
+**Updated files:**
+- `agent/run.py` — passes `SYSTEM_PROMPT` to `run_agent` by default; `--no-system`
+  flag for A/B testing prompted-vs-baseline (will be used in Phase 3).
+
+**Loop reuse:** `agent/loop.py` `run_agent` already supported `system=...` from
+Phase 0 — Phase 2 was prompt + glue with no loop changes.
+
+**Bugs caught in review (Phase 2):**
+1. `--no-system` added to argparse but not wired (no `action="store_true"`, not
+   threaded through `_main`) — flag silently no-op.
+2. `run_all` declared as `def` (not `async`) but used `await` — `SyntaxError`.
+3. `run_all` called `run_agent(client)` — dropped the question, passed the
+   `MCPClient` as the question string. Correct call is
+   `run_agent(ex["q"], client, model=model, system=SYSTEM_PROMPT)`.
+4. Missing `import asyncio` / `run_agent` / `MCPClient` / `SYSTEM_PROMPT` /
+   `load_env` in `examples.py` — `NameError` on first run.
+5. No `if __name__ == "__main__"` block — file was import-only, couldn't run
+   `python -m agent.examples`.
+
+**Done:** `python -m agent.run "How many cars are in scene-0103 frame 5?"` triggers
+`load_frame` → `detect_objects` → grounded answer; `python -m agent.examples` runs
+all 8 compositional questions in one MCP session.
 
 ## Phase 3 — Eval harness (the MLE centerpiece)
 **Objective:** measure the agent quantitatively — the skill most student portfolios lack.
