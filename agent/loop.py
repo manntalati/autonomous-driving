@@ -14,7 +14,15 @@ from __future__ import annotations
 from typing import Any
 from anthropic import AsyncAnthropic
 from agent.mcp_client import MCPClient
+from dataclasses import dataclass, field
 
+@dataclass
+class AgentResult:
+    answer: str
+    trace: list[str] = field(default_factory=list)
+    input_tokens: int = 0
+    output_tokens: int = 0
+    turns: int = 0
 
 def mcp_tools_to_anthropic(mcp_tools: list[Any]) -> list[dict[str, Any]]:
     """Convert MCP tool defs → the Anthropic `tools` schema."""
@@ -22,7 +30,6 @@ def mcp_tools_to_anthropic(mcp_tools: list[Any]) -> list[dict[str, Any]]:
     for tool in mcp_tools:
         tools.append({"name": tool.name, "description": tool.description, "input_schema": tool.inputSchema})
     return tools
-
 
 async def run_agent(question: str, client: MCPClient, *, model: str = "claude-opus-4-7", max_turns: int = 8, system: str | None = None) -> str:
     """Drive the tool-use loop until Claude returns a final text answer.
@@ -37,6 +44,7 @@ async def run_agent(question: str, client: MCPClient, *, model: str = "claude-op
     Returns:
         The model's final assistant text.
     """
+    result = AgentResult(answer="")
     anthropic = AsyncAnthropic()
     tools = mcp_tools_to_anthropic(await client.list_tools())
     messages = [{"role": "user", "content": question}]
@@ -45,14 +53,19 @@ async def run_agent(question: str, client: MCPClient, *, model: str = "claude-op
         if system is not None:
             kwargs["system"] = system
         response = await anthropic.messages.create(**kwargs)
+        result.turns += 1
+        result.input_tokens += response.usage.input_tokens
+        result.output_tokens += response.usage.output_tokens
         messages.append({"role": "assistant", "content": response.content})
         if response.stop_reason != "tool_use":
-            return "".join(body.text for body in response.content if body.type == "text")
+            result.answer = "".join(body.text for body in response.content if body.type == "text")
+            return result
         tool_results = []
         for block in response.content:
             if block.type != "tool_use":
                 continue
-            result = await client.call_tool(block.name, block.input)
-            tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": result})
+            result.trace.append(block.name)
+            tool_output = await client.call_tool(block.name, block.input)
+            tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": tool_output})
         messages.append({"role": "user", "content": tool_results})
     raise RuntimeError("hit max_turns without a final answer")
