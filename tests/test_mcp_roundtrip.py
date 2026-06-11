@@ -9,10 +9,10 @@ import asyncio
 
 import pytest
 
-from agent.mcp_client import MCPClient
-
 # Skip cleanly if the optional `mcp` dependency isn't installed yet.
 pytest.importorskip("mcp")
+
+from agent.mcp_client import MCPClient
 
 
 async def _roundtrip() -> tuple[list[str], str]:
