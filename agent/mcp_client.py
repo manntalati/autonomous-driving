@@ -10,6 +10,7 @@ complete — the from-scratch logic you implement is in agent/loop.py.
 """
 from __future__ import annotations
 
+import sys
 from contextlib import AsyncExitStack
 from typing import Any
 
@@ -30,7 +31,7 @@ class MCPClient:
         We enter the stdio transport and the ClientSession into a single
         AsyncExitStack so a later close() tears both down in order.
         """
-        params = StdioServerParameters(command="python", args=["-m", server_module])
+        params = StdioServerParameters(command=sys.executable, args=["-m", server_module])
         read, write = await self._stack.enter_async_context(stdio_client(params))
         self.session = await self._stack.enter_async_context(ClientSession(read, write))
         await self.session.initialize()

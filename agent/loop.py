@@ -11,10 +11,12 @@ The contract of an Anthropic tool-use turn:
      then return its final text.
 """
 from __future__ import annotations
-from typing import Any
+from typing import Any, Callable
 from anthropic import AsyncAnthropic
 from agent.mcp_client import MCPClient
 from dataclasses import dataclass, field
+
+EventCallback = Callable[[dict], None]
 
 @dataclass
 class AgentResult:
@@ -31,7 +33,7 @@ def mcp_tools_to_anthropic(mcp_tools: list[Any]) -> list[dict[str, Any]]:
         tools.append({"name": tool.name, "description": tool.description, "input_schema": tool.inputSchema})
     return tools
 
-async def run_agent(question: str, client: MCPClient, *, model: str = "claude-opus-4-7", max_turns: int = 8, system: str | None = None) -> str:
+async def run_agent(question: str, client: MCPClient, *, model: str = "claude-opus-4-7", max_turns: int = 8, system: str | None = None, on_event: EventCallback | None = None) -> AgentResult:
     """Drive the tool-use loop until Claude returns a final text answer.
 
     Args:
@@ -40,9 +42,10 @@ async def run_agent(question: str, client: MCPClient, *, model: str = "claude-op
         model: Anthropic model id.
         max_turns: hard cap on tool-call rounds (guards against infinite loops).
         system: optional system prompt (Phase 2 puts the spatial-reasoning prompt here).
+        on_event: optional Callable
 
     Returns:
-        The model's final assistant text.
+        AgentResult with answer, trace, token counts, and turn count
     """
     result = AgentResult(answer="")
     anthropic = AsyncAnthropic()
@@ -59,13 +62,18 @@ async def run_agent(question: str, client: MCPClient, *, model: str = "claude-op
         messages.append({"role": "assistant", "content": response.content})
         if response.stop_reason != "tool_use":
             result.answer = "".join(body.text for body in response.content if body.type == "text")
+            if on_event: on_event({"type": "final", "answer": result.answer})
             return result
         tool_results = []
         for block in response.content:
-            if block.type != "tool_use":
+            if block.type == "text":
+                if on_event: on_event({"type": "text", "text": block.text})
                 continue
+            if block.type != "tool_use": continue
+            if on_event: on_event({"type": "tool_call", "name": block.name, "input": block.input})
             result.trace.append(block.name)
             tool_output = await client.call_tool(block.name, block.input)
+            if on_event: on_event({"type": "tool_result", "name": block.name, "output": tool_output})
             tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": tool_output})
         messages.append({"role": "user", "content": tool_results})
     raise RuntimeError("hit max_turns without a final answer")

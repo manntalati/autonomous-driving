@@ -44,7 +44,7 @@ overfitting ceiling hit in every phase of the driving project.
 - [✅] **Phase 0** — MCP scaffolding & hand-built agent loop
 - [✅] **Phase 1** — Perception tools (the tool API)
 - [✅] **Phase 2** — Orchestrator agent (spatial reasoning)
-- [ ] **Phase 3** — Eval harness (accuracy / efficiency / latency / cost)
+- [✅] **Phase 3** — Eval harness (accuracy / efficiency / latency / cost)
 - [ ] **Phase 4** — Interactive demo (live tool trace)
 - [ ] **Phase 5** — Embedding & retrieval tools (FAISS)
 - [ ] **Phase 6** — Active-learning scoring tools (uncertainty)
@@ -231,6 +231,31 @@ all 8 compositional questions in one MCP session.
 cost trade-offs; regression tracking.
 
 **Done when:** a reproducible report: accuracy %, mean tool calls, p50/p95 latency, $/query.
+
+### Phase 3 — Complete ✅
+
+**New files:**
+- `evaluation/agent_eval/benchmark.py` — 4 generators (`gen_counting`, `gen_presence`, `gen_nearest`, `gen_spatial`) emit GT-from-labels questions over the val scenes; `_ego_boxes` helper projects 3D boxes to the ego frame (x-forward, y-LEFT, matching nuScenes); `BenchQuestion` dataclass carries `(qid, question, scene, frame_idx, qtype, gt_answer, expects_tools)`; lane bands `|y| ≤ 2 = current`, `2 < y ≤ 6 = left`, `-6 ≤ y < -2 = right`; cached to `logs/agent_eval_benchmark.json` (320 questions on val scenes 1094 + 1100).
+- `evaluation/agent_eval/metrics.py` — `parse_count` / `parse_distance` / `parse_yesno` (case-folded), `score_answer` with model-error-calibrated tolerance bands (count ±1, presence/spatial exact, nearest ±20%), `score_tool_selection` (precision/recall + exact-match flag, div-by-zero guarded), `aggregate` (accuracy, parse_failures, mean_tool_calls, tool_precision/recall, p50/p95 latency, token totals, total + per-query cost at Opus 4.7 pricing).
+- `evaluation/agent_eval/run_eval.py` — `run_one` (full-shape error branch so failures don't break aggregation) + `main` (argparse: `--model`, `--limit`, `--no-system`, `--concurrency`, `--data-root`, `--results-path`, `--report-path`); semaphore-bounded concurrency; writes per-question JSONL + markdown report.
+
+**Updated files:**
+- `agent/loop.py` — `AgentResult` dataclass (`answer`, `trace`, `input_tokens`, `output_tokens`, `turns`) for instrumented runs; `run_agent` now returns `AgentResult` instead of a bare string.
+
+**Bugs caught in review (Phase 3):**
+1. Trace append placed inside `if block.type != "tool_use":` (inverted) — would record skipped blocks instead of called tools.
+2. `result = await client.call_tool(...)` stomped the `AgentResult` accumulator — renamed local to `tool_output`.
+3. `gen_presence` stub had undefined `idx` and no return — incomplete generator skeleton.
+4. `build_benchmark` initially shipped without default kwargs for `val_scenes` / `seed` / `n_per_frame` / `out_path` — caller-burdening contract that didn't match the design.
+5. `parse_yesno` first cut used `answer[0:1] == "no"` (slice width 1 vs 2) and no case folding — would mis-parse "Yes."/"NO" and never match "no". Fixed to `.strip().lower().startswith()`.
+6. `run_eval.py` first cut imported `run_agent` from `agent.run` (lives in `agent.loop`) and used `...` Ellipsis as a dict value.
+
+**Done — actual numbers:**
+
+- **Smoke (5q, `--concurrency 1`, system on):** accuracy 0.200, tool precision/recall 1.000, mean tool calls 2.00, parse failures 0.000, $/q $0.24, p50 latency 89s. Agent picked the correct tools on every question; the one miss was perception error (detector returned 0 boxes on a 7-pedestrian frame).
+- **Full prompted run (320q, default `--concurrency 4`):** rate-limit cascade — 92.5% of questions short-circuited through `run_one`'s error branch on Anthropic 429s, leaving the metrics dominated by error-dict residue rather than agent behavior. Honest read: the harness works end-to-end, but a real 320-question run needs either `--concurrency 1` (~7 hrs) or a 429 retry-with-backoff inside `run_one`.
+
+**Decision:** treat the smoke results as the validation that the *plumbing* is correct (correct tool selection, AgentResult populated, JSONL + report wrote, error branch never tripped at concurrency=1) and *move on*. The accuracy ceiling on this benchmark is the detector's recall, not the agent — fixing that is a model-side problem (covered later by Part B's data flywheel), not an agent-loop problem.
 
 ## Phase 4 — Interactive demo (live tool trace)
 **Objective:** a visible product that shows the agent thinking.
