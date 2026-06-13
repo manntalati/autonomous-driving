@@ -1,0 +1,3842 @@
+[
+  {
+    "qid": "scene-1094:0:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 0?",
+    "scene": "scene-1094",
+    "frame_idx": 0,
+    "qtype": "count",
+    "gt_answer": 7,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:0:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1094 frame 0?",
+    "scene": "scene-1094",
+    "frame_idx": 0,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:0:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1094 frame 0?",
+    "scene": "scene-1094",
+    "frame_idx": 0,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:0:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 0?",
+    "scene": "scene-1094",
+    "frame_idx": 0,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:10:count_car",
+    "question": "How many cars are in scene-1094 frame 10?",
+    "scene": "scene-1094",
+    "frame_idx": 10,
+    "qtype": "count",
+    "gt_answer": 5,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:10:count_cyclist",
+    "question": "How many cyclists are in scene-1094 frame 10?",
+    "scene": "scene-1094",
+    "frame_idx": 10,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:10:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 10?",
+    "scene": "scene-1094",
+    "frame_idx": 10,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:10:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1094 frame 10?",
+    "scene": "scene-1094",
+    "frame_idx": 10,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:11:count_car",
+    "question": "How many cars are in scene-1094 frame 11?",
+    "scene": "scene-1094",
+    "frame_idx": 11,
+    "qtype": "count",
+    "gt_answer": 6,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:11:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 11?",
+    "scene": "scene-1094",
+    "frame_idx": 11,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:11:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1094 frame 11?",
+    "scene": "scene-1094",
+    "frame_idx": 11,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:11:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 11?",
+    "scene": "scene-1094",
+    "frame_idx": 11,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:12:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1094 frame 12? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 12,
+    "qtype": "nearest",
+    "gt_answer": 10.3,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:12:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1094 frame 12?",
+    "scene": "scene-1094",
+    "frame_idx": 12,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:12:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 12?",
+    "scene": "scene-1094",
+    "frame_idx": 12,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:12:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1094 frame 12?",
+    "scene": "scene-1094",
+    "frame_idx": 12,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:13:count_cyclist",
+    "question": "How many cyclists are in scene-1094 frame 13?",
+    "scene": "scene-1094",
+    "frame_idx": 13,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:13:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 13? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 13,
+    "qtype": "nearest",
+    "gt_answer": 13.5,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:13:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1094 frame 13? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 13,
+    "qtype": "nearest",
+    "gt_answer": 9.5,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:13:presence_car",
+    "question": "Are there any cars in scene-1094 frame 13?",
+    "scene": "scene-1094",
+    "frame_idx": 13,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:14:count_cyclist",
+    "question": "How many cyclists are in scene-1094 frame 14?",
+    "scene": "scene-1094",
+    "frame_idx": 14,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:14:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 14?",
+    "scene": "scene-1094",
+    "frame_idx": 14,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:14:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1094 frame 14?",
+    "scene": "scene-1094",
+    "frame_idx": 14,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:14:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1094 frame 14?",
+    "scene": "scene-1094",
+    "frame_idx": 14,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:15:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 15?",
+    "scene": "scene-1094",
+    "frame_idx": 15,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:15:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1094 frame 15?",
+    "scene": "scene-1094",
+    "frame_idx": 15,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:15:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1094 frame 15?",
+    "scene": "scene-1094",
+    "frame_idx": 15,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:15:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 15?",
+    "scene": "scene-1094",
+    "frame_idx": 15,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:16:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 16?",
+    "scene": "scene-1094",
+    "frame_idx": 16,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:16:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1094 frame 16?",
+    "scene": "scene-1094",
+    "frame_idx": 16,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:16:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1094 frame 16?",
+    "scene": "scene-1094",
+    "frame_idx": 16,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:16:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 16?",
+    "scene": "scene-1094",
+    "frame_idx": 16,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:17:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 17? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 17,
+    "qtype": "nearest",
+    "gt_answer": 8.5,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:17:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1094 frame 17?",
+    "scene": "scene-1094",
+    "frame_idx": 17,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:17:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 17?",
+    "scene": "scene-1094",
+    "frame_idx": 17,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:17:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1094 frame 17?",
+    "scene": "scene-1094",
+    "frame_idx": 17,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:18:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 18?",
+    "scene": "scene-1094",
+    "frame_idx": 18,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:18:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1094 frame 18?",
+    "scene": "scene-1094",
+    "frame_idx": 18,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:18:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1094 frame 18?",
+    "scene": "scene-1094",
+    "frame_idx": 18,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:18:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1094 frame 18?",
+    "scene": "scene-1094",
+    "frame_idx": 18,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:19:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1094 frame 19? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 19,
+    "qtype": "nearest",
+    "gt_answer": 7.9,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:19:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1094 frame 19?",
+    "scene": "scene-1094",
+    "frame_idx": 19,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:19:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1094 frame 19?",
+    "scene": "scene-1094",
+    "frame_idx": 19,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:19:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 19?",
+    "scene": "scene-1094",
+    "frame_idx": 19,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:1:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1094 frame 1?",
+    "scene": "scene-1094",
+    "frame_idx": 1,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:1:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 1?",
+    "scene": "scene-1094",
+    "frame_idx": 1,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:1:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 1?",
+    "scene": "scene-1094",
+    "frame_idx": 1,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:1:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1094 frame 1?",
+    "scene": "scene-1094",
+    "frame_idx": 1,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:20:count_car",
+    "question": "How many cars are in scene-1094 frame 20?",
+    "scene": "scene-1094",
+    "frame_idx": 20,
+    "qtype": "count",
+    "gt_answer": 6,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:20:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 20? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 20,
+    "qtype": "nearest",
+    "gt_answer": 10.7,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:20:presence_cyclist",
+    "question": "Are there any cyclists in scene-1094 frame 20?",
+    "scene": "scene-1094",
+    "frame_idx": 20,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:20:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1094 frame 20?",
+    "scene": "scene-1094",
+    "frame_idx": 20,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:21:count_cyclist",
+    "question": "How many cyclists are in scene-1094 frame 21?",
+    "scene": "scene-1094",
+    "frame_idx": 21,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:21:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 21?",
+    "scene": "scene-1094",
+    "frame_idx": 21,
+    "qtype": "count",
+    "gt_answer": 3,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:21:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1094 frame 21? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 21,
+    "qtype": "nearest",
+    "gt_answer": 18.5,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:21:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 21?",
+    "scene": "scene-1094",
+    "frame_idx": 21,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:22:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 22?",
+    "scene": "scene-1094",
+    "frame_idx": 22,
+    "qtype": "count",
+    "gt_answer": 5,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:22:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1094 frame 22?",
+    "scene": "scene-1094",
+    "frame_idx": 22,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:22:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1094 frame 22?",
+    "scene": "scene-1094",
+    "frame_idx": 22,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:22:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1094 frame 22?",
+    "scene": "scene-1094",
+    "frame_idx": 22,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:23:count_cyclist",
+    "question": "How many cyclists are in scene-1094 frame 23?",
+    "scene": "scene-1094",
+    "frame_idx": 23,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:23:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1094 frame 23? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 23,
+    "qtype": "nearest",
+    "gt_answer": 7.6,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:23:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 23?",
+    "scene": "scene-1094",
+    "frame_idx": 23,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:23:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 23?",
+    "scene": "scene-1094",
+    "frame_idx": 23,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:24:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 24? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 24,
+    "qtype": "nearest",
+    "gt_answer": 10.5,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:24:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1094 frame 24? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 24,
+    "qtype": "nearest",
+    "gt_answer": 17.5,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:24:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 24?",
+    "scene": "scene-1094",
+    "frame_idx": 24,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:24:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 24?",
+    "scene": "scene-1094",
+    "frame_idx": 24,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:25:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1094 frame 25? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 25,
+    "qtype": "nearest",
+    "gt_answer": 12.9,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:25:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1094 frame 25?",
+    "scene": "scene-1094",
+    "frame_idx": 25,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:25:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 25?",
+    "scene": "scene-1094",
+    "frame_idx": 25,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:25:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1094 frame 25?",
+    "scene": "scene-1094",
+    "frame_idx": 25,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:26:count_cyclist",
+    "question": "How many cyclists are in scene-1094 frame 26?",
+    "scene": "scene-1094",
+    "frame_idx": 26,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:26:presence_cyclist",
+    "question": "Are there any cyclists in scene-1094 frame 26?",
+    "scene": "scene-1094",
+    "frame_idx": 26,
+    "qtype": "presence",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:26:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1094 frame 26?",
+    "scene": "scene-1094",
+    "frame_idx": 26,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:26:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 26?",
+    "scene": "scene-1094",
+    "frame_idx": 26,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:27:presence_car",
+    "question": "Are there any cars in scene-1094 frame 27?",
+    "scene": "scene-1094",
+    "frame_idx": 27,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:27:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1094 frame 27?",
+    "scene": "scene-1094",
+    "frame_idx": 27,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:27:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 27?",
+    "scene": "scene-1094",
+    "frame_idx": 27,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:27:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1094 frame 27?",
+    "scene": "scene-1094",
+    "frame_idx": 27,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:28:count_car",
+    "question": "How many cars are in scene-1094 frame 28?",
+    "scene": "scene-1094",
+    "frame_idx": 28,
+    "qtype": "count",
+    "gt_answer": 4,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:28:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 28? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 28,
+    "qtype": "nearest",
+    "gt_answer": 26.8,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:28:presence_car",
+    "question": "Are there any cars in scene-1094 frame 28?",
+    "scene": "scene-1094",
+    "frame_idx": 28,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:28:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 28?",
+    "scene": "scene-1094",
+    "frame_idx": 28,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:29:presence_car",
+    "question": "Are there any cars in scene-1094 frame 29?",
+    "scene": "scene-1094",
+    "frame_idx": 29,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:29:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1094 frame 29?",
+    "scene": "scene-1094",
+    "frame_idx": 29,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:29:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1094 frame 29?",
+    "scene": "scene-1094",
+    "frame_idx": 29,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:29:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 29?",
+    "scene": "scene-1094",
+    "frame_idx": 29,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:2:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1094 frame 2?",
+    "scene": "scene-1094",
+    "frame_idx": 2,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:2:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 2?",
+    "scene": "scene-1094",
+    "frame_idx": 2,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:2:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 2?",
+    "scene": "scene-1094",
+    "frame_idx": 2,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:2:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1094 frame 2?",
+    "scene": "scene-1094",
+    "frame_idx": 2,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:30:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 30? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 30,
+    "qtype": "nearest",
+    "gt_answer": 11.3,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:30:presence_cyclist",
+    "question": "Are there any cyclists in scene-1094 frame 30?",
+    "scene": "scene-1094",
+    "frame_idx": 30,
+    "qtype": "presence",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:30:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1094 frame 30?",
+    "scene": "scene-1094",
+    "frame_idx": 30,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:30:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 30?",
+    "scene": "scene-1094",
+    "frame_idx": 30,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:31:count_cyclist",
+    "question": "How many cyclists are in scene-1094 frame 31?",
+    "scene": "scene-1094",
+    "frame_idx": 31,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:31:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 31?",
+    "scene": "scene-1094",
+    "frame_idx": 31,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:31:presence_car",
+    "question": "Are there any cars in scene-1094 frame 31?",
+    "scene": "scene-1094",
+    "frame_idx": 31,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:31:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1094 frame 31?",
+    "scene": "scene-1094",
+    "frame_idx": 31,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:32:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 32?",
+    "scene": "scene-1094",
+    "frame_idx": 32,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:32:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1094 frame 32? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 32,
+    "qtype": "nearest",
+    "gt_answer": 4.8,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:32:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1094 frame 32?",
+    "scene": "scene-1094",
+    "frame_idx": 32,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:32:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1094 frame 32?",
+    "scene": "scene-1094",
+    "frame_idx": 32,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:33:count_car",
+    "question": "How many cars are in scene-1094 frame 33?",
+    "scene": "scene-1094",
+    "frame_idx": 33,
+    "qtype": "count",
+    "gt_answer": 2,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:33:count_cyclist",
+    "question": "How many cyclists are in scene-1094 frame 33?",
+    "scene": "scene-1094",
+    "frame_idx": 33,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:33:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 33?",
+    "scene": "scene-1094",
+    "frame_idx": 33,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:33:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 33?",
+    "scene": "scene-1094",
+    "frame_idx": 33,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:34:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 34?",
+    "scene": "scene-1094",
+    "frame_idx": 34,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:34:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 34? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 34,
+    "qtype": "nearest",
+    "gt_answer": 13.8,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:34:presence_car",
+    "question": "Are there any cars in scene-1094 frame 34?",
+    "scene": "scene-1094",
+    "frame_idx": 34,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:34:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 34?",
+    "scene": "scene-1094",
+    "frame_idx": 34,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:35:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 35?",
+    "scene": "scene-1094",
+    "frame_idx": 35,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:35:presence_car",
+    "question": "Are there any cars in scene-1094 frame 35?",
+    "scene": "scene-1094",
+    "frame_idx": 35,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:35:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1094 frame 35?",
+    "scene": "scene-1094",
+    "frame_idx": 35,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:35:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 35?",
+    "scene": "scene-1094",
+    "frame_idx": 35,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:36:count_car",
+    "question": "How many cars are in scene-1094 frame 36?",
+    "scene": "scene-1094",
+    "frame_idx": 36,
+    "qtype": "count",
+    "gt_answer": 2,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:36:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 36? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 36,
+    "qtype": "nearest",
+    "gt_answer": 31.7,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:36:presence_cyclist",
+    "question": "Are there any cyclists in scene-1094 frame 36?",
+    "scene": "scene-1094",
+    "frame_idx": 36,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:36:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 36?",
+    "scene": "scene-1094",
+    "frame_idx": 36,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:37:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 37? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 37,
+    "qtype": "nearest",
+    "gt_answer": 31.7,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:37:presence_car",
+    "question": "Are there any cars in scene-1094 frame 37?",
+    "scene": "scene-1094",
+    "frame_idx": 37,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:37:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 37?",
+    "scene": "scene-1094",
+    "frame_idx": 37,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:37:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 37?",
+    "scene": "scene-1094",
+    "frame_idx": 37,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:38:count_car",
+    "question": "How many cars are in scene-1094 frame 38?",
+    "scene": "scene-1094",
+    "frame_idx": 38,
+    "qtype": "count",
+    "gt_answer": 2,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:38:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 38?",
+    "scene": "scene-1094",
+    "frame_idx": 38,
+    "qtype": "count",
+    "gt_answer": 3,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:38:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1094 frame 38?",
+    "scene": "scene-1094",
+    "frame_idx": 38,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:38:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1094 frame 38?",
+    "scene": "scene-1094",
+    "frame_idx": 38,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:39:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 39?",
+    "scene": "scene-1094",
+    "frame_idx": 39,
+    "qtype": "count",
+    "gt_answer": 3,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:39:presence_car",
+    "question": "Are there any cars in scene-1094 frame 39?",
+    "scene": "scene-1094",
+    "frame_idx": 39,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:39:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1094 frame 39?",
+    "scene": "scene-1094",
+    "frame_idx": 39,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:39:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1094 frame 39?",
+    "scene": "scene-1094",
+    "frame_idx": 39,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:3:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 3? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 3,
+    "qtype": "nearest",
+    "gt_answer": 8.2,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:3:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1094 frame 3?",
+    "scene": "scene-1094",
+    "frame_idx": 3,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:3:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1094 frame 3?",
+    "scene": "scene-1094",
+    "frame_idx": 3,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:3:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 3?",
+    "scene": "scene-1094",
+    "frame_idx": 3,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:4:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1094 frame 4? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 4,
+    "qtype": "nearest",
+    "gt_answer": 31.4,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:4:presence_car",
+    "question": "Are there any cars in scene-1094 frame 4?",
+    "scene": "scene-1094",
+    "frame_idx": 4,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:4:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1094 frame 4?",
+    "scene": "scene-1094",
+    "frame_idx": 4,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:4:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1094 frame 4?",
+    "scene": "scene-1094",
+    "frame_idx": 4,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:5:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 5?",
+    "scene": "scene-1094",
+    "frame_idx": 5,
+    "qtype": "count",
+    "gt_answer": 11,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:5:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1094 frame 5?",
+    "scene": "scene-1094",
+    "frame_idx": 5,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:5:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1094 frame 5?",
+    "scene": "scene-1094",
+    "frame_idx": 5,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:5:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1094 frame 5?",
+    "scene": "scene-1094",
+    "frame_idx": 5,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:6:count_cyclist",
+    "question": "How many cyclists are in scene-1094 frame 6?",
+    "scene": "scene-1094",
+    "frame_idx": 6,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:6:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1094 frame 6? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 6,
+    "qtype": "nearest",
+    "gt_answer": 29.7,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:6:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1094 frame 6?",
+    "scene": "scene-1094",
+    "frame_idx": 6,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:6:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 6?",
+    "scene": "scene-1094",
+    "frame_idx": 6,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:7:presence_car",
+    "question": "Are there any cars in scene-1094 frame 7?",
+    "scene": "scene-1094",
+    "frame_idx": 7,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:7:presence_cyclist",
+    "question": "Are there any cyclists in scene-1094 frame 7?",
+    "scene": "scene-1094",
+    "frame_idx": 7,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:7:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1094 frame 7?",
+    "scene": "scene-1094",
+    "frame_idx": 7,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:7:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1094 frame 7?",
+    "scene": "scene-1094",
+    "frame_idx": 7,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:8:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1094 frame 8? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 8,
+    "qtype": "nearest",
+    "gt_answer": 9.5,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:8:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1094 frame 8?",
+    "scene": "scene-1094",
+    "frame_idx": 8,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:8:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1094 frame 8?",
+    "scene": "scene-1094",
+    "frame_idx": 8,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:8:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1094 frame 8?",
+    "scene": "scene-1094",
+    "frame_idx": 8,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:9:count_pedestrian",
+    "question": "How many pedestrians are in scene-1094 frame 9?",
+    "scene": "scene-1094",
+    "frame_idx": 9,
+    "qtype": "count",
+    "gt_answer": 12,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1094:9:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1094 frame 9? Answer in meters.",
+    "scene": "scene-1094",
+    "frame_idx": 9,
+    "qtype": "nearest",
+    "gt_answer": 25.7,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:9:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1094 frame 9?",
+    "scene": "scene-1094",
+    "frame_idx": 9,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1094:9:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1094 frame 9?",
+    "scene": "scene-1094",
+    "frame_idx": 9,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:0:count_cyclist",
+    "question": "How many cyclists are in scene-1100 frame 0?",
+    "scene": "scene-1100",
+    "frame_idx": 0,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:0:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1100 frame 0? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 0,
+    "qtype": "nearest",
+    "gt_answer": 5.9,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:0:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1100 frame 0?",
+    "scene": "scene-1100",
+    "frame_idx": 0,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:0:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 0?",
+    "scene": "scene-1100",
+    "frame_idx": 0,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:10:count_cyclist",
+    "question": "How many cyclists are in scene-1100 frame 10?",
+    "scene": "scene-1100",
+    "frame_idx": 10,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:10:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 10?",
+    "scene": "scene-1100",
+    "frame_idx": 10,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:10:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1100 frame 10? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 10,
+    "qtype": "nearest",
+    "gt_answer": 19.7,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:10:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1100 frame 10?",
+    "scene": "scene-1100",
+    "frame_idx": 10,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:11:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1100 frame 11? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 11,
+    "qtype": "nearest",
+    "gt_answer": 19.6,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:11:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1100 frame 11? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 11,
+    "qtype": "nearest",
+    "gt_answer": 18.0,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:11:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1100 frame 11?",
+    "scene": "scene-1100",
+    "frame_idx": 11,
+    "qtype": "presence",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:11:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1100 frame 11?",
+    "scene": "scene-1100",
+    "frame_idx": 11,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:12:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1100 frame 12?",
+    "scene": "scene-1100",
+    "frame_idx": 12,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:12:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1100 frame 12?",
+    "scene": "scene-1100",
+    "frame_idx": 12,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:12:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 12?",
+    "scene": "scene-1100",
+    "frame_idx": 12,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:12:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1100 frame 12?",
+    "scene": "scene-1100",
+    "frame_idx": 12,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:13:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1100 frame 13? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 13,
+    "qtype": "nearest",
+    "gt_answer": 14.7,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:13:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1100 frame 13?",
+    "scene": "scene-1100",
+    "frame_idx": 13,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:13:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1100 frame 13?",
+    "scene": "scene-1100",
+    "frame_idx": 13,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:13:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 13?",
+    "scene": "scene-1100",
+    "frame_idx": 13,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:14:count_car",
+    "question": "How many cars are in scene-1100 frame 14?",
+    "scene": "scene-1100",
+    "frame_idx": 14,
+    "qtype": "count",
+    "gt_answer": 5,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:14:count_cyclist",
+    "question": "How many cyclists are in scene-1100 frame 14?",
+    "scene": "scene-1100",
+    "frame_idx": 14,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:14:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1100 frame 14?",
+    "scene": "scene-1100",
+    "frame_idx": 14,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:14:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 14?",
+    "scene": "scene-1100",
+    "frame_idx": 14,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:15:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1100 frame 15? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 15,
+    "qtype": "nearest",
+    "gt_answer": 7.5,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:15:presence_car",
+    "question": "Are there any cars in scene-1100 frame 15?",
+    "scene": "scene-1100",
+    "frame_idx": 15,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:15:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 15?",
+    "scene": "scene-1100",
+    "frame_idx": 15,
+    "qtype": "presence",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:15:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1100 frame 15?",
+    "scene": "scene-1100",
+    "frame_idx": 15,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:16:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1100 frame 16? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 16,
+    "qtype": "nearest",
+    "gt_answer": 17.9,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:16:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 16?",
+    "scene": "scene-1100",
+    "frame_idx": 16,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:16:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1100 frame 16?",
+    "scene": "scene-1100",
+    "frame_idx": 16,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:16:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1100 frame 16?",
+    "scene": "scene-1100",
+    "frame_idx": 16,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:17:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 17?",
+    "scene": "scene-1100",
+    "frame_idx": 17,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:17:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1100 frame 17?",
+    "scene": "scene-1100",
+    "frame_idx": 17,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:17:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 17?",
+    "scene": "scene-1100",
+    "frame_idx": 17,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:17:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1100 frame 17?",
+    "scene": "scene-1100",
+    "frame_idx": 17,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:18:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 18?",
+    "scene": "scene-1100",
+    "frame_idx": 18,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:18:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1100 frame 18? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 18,
+    "qtype": "nearest",
+    "gt_answer": 17.9,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:18:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 18?",
+    "scene": "scene-1100",
+    "frame_idx": 18,
+    "qtype": "presence",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:18:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 18?",
+    "scene": "scene-1100",
+    "frame_idx": 18,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:19:count_cyclist",
+    "question": "How many cyclists are in scene-1100 frame 19?",
+    "scene": "scene-1100",
+    "frame_idx": 19,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:19:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1100 frame 19? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 19,
+    "qtype": "nearest",
+    "gt_answer": 23.9,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:19:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1100 frame 19? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 19,
+    "qtype": "nearest",
+    "gt_answer": 17.8,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:19:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 19?",
+    "scene": "scene-1100",
+    "frame_idx": 19,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:1:count_car",
+    "question": "How many cars are in scene-1100 frame 1?",
+    "scene": "scene-1100",
+    "frame_idx": 1,
+    "qtype": "count",
+    "gt_answer": 7,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:1:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 1?",
+    "scene": "scene-1100",
+    "frame_idx": 1,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:1:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 1?",
+    "scene": "scene-1100",
+    "frame_idx": 1,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:1:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1100 frame 1?",
+    "scene": "scene-1100",
+    "frame_idx": 1,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:20:count_car",
+    "question": "How many cars are in scene-1100 frame 20?",
+    "scene": "scene-1100",
+    "frame_idx": 20,
+    "qtype": "count",
+    "gt_answer": 3,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:20:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1100 frame 20?",
+    "scene": "scene-1100",
+    "frame_idx": 20,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:20:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1100 frame 20?",
+    "scene": "scene-1100",
+    "frame_idx": 20,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:20:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1100 frame 20?",
+    "scene": "scene-1100",
+    "frame_idx": 20,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:21:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 21?",
+    "scene": "scene-1100",
+    "frame_idx": 21,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:21:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1100 frame 21?",
+    "scene": "scene-1100",
+    "frame_idx": 21,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:21:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1100 frame 21?",
+    "scene": "scene-1100",
+    "frame_idx": 21,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:21:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1100 frame 21?",
+    "scene": "scene-1100",
+    "frame_idx": 21,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:22:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 22?",
+    "scene": "scene-1100",
+    "frame_idx": 22,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:22:presence_car",
+    "question": "Are there any cars in scene-1100 frame 22?",
+    "scene": "scene-1100",
+    "frame_idx": 22,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:22:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 22?",
+    "scene": "scene-1100",
+    "frame_idx": 22,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:22:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1100 frame 22?",
+    "scene": "scene-1100",
+    "frame_idx": 22,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:23:count_car",
+    "question": "How many cars are in scene-1100 frame 23?",
+    "scene": "scene-1100",
+    "frame_idx": 23,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:23:count_cyclist",
+    "question": "How many cyclists are in scene-1100 frame 23?",
+    "scene": "scene-1100",
+    "frame_idx": 23,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:23:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1100 frame 23?",
+    "scene": "scene-1100",
+    "frame_idx": 23,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:23:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1100 frame 23?",
+    "scene": "scene-1100",
+    "frame_idx": 23,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:24:count_car",
+    "question": "How many cars are in scene-1100 frame 24?",
+    "scene": "scene-1100",
+    "frame_idx": 24,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:24:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1100 frame 24?",
+    "scene": "scene-1100",
+    "frame_idx": 24,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:24:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 24?",
+    "scene": "scene-1100",
+    "frame_idx": 24,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:24:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1100 frame 24?",
+    "scene": "scene-1100",
+    "frame_idx": 24,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:25:count_car",
+    "question": "How many cars are in scene-1100 frame 25?",
+    "scene": "scene-1100",
+    "frame_idx": 25,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:25:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1100 frame 25? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 25,
+    "qtype": "nearest",
+    "gt_answer": 22.4,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:25:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1100 frame 25?",
+    "scene": "scene-1100",
+    "frame_idx": 25,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:25:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 25?",
+    "scene": "scene-1100",
+    "frame_idx": 25,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:26:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 26?",
+    "scene": "scene-1100",
+    "frame_idx": 26,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:26:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1100 frame 26? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 26,
+    "qtype": "nearest",
+    "gt_answer": 22.3,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:26:presence_car",
+    "question": "Are there any cars in scene-1100 frame 26?",
+    "scene": "scene-1100",
+    "frame_idx": 26,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:26:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1100 frame 26?",
+    "scene": "scene-1100",
+    "frame_idx": 26,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:27:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1100 frame 27? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 27,
+    "qtype": "nearest",
+    "gt_answer": 22.2,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:27:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1100 frame 27? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 27,
+    "qtype": "nearest",
+    "gt_answer": 12.6,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:27:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1100 frame 27?",
+    "scene": "scene-1100",
+    "frame_idx": 27,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:27:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 27?",
+    "scene": "scene-1100",
+    "frame_idx": 27,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:28:presence_car",
+    "question": "Are there any cars in scene-1100 frame 28?",
+    "scene": "scene-1100",
+    "frame_idx": 28,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:28:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 28?",
+    "scene": "scene-1100",
+    "frame_idx": 28,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:28:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1100 frame 28?",
+    "scene": "scene-1100",
+    "frame_idx": 28,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:28:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 28?",
+    "scene": "scene-1100",
+    "frame_idx": 28,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:29:count_car",
+    "question": "How many cars are in scene-1100 frame 29?",
+    "scene": "scene-1100",
+    "frame_idx": 29,
+    "qtype": "count",
+    "gt_answer": 3,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:29:count_cyclist",
+    "question": "How many cyclists are in scene-1100 frame 29?",
+    "scene": "scene-1100",
+    "frame_idx": 29,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:29:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1100 frame 29?",
+    "scene": "scene-1100",
+    "frame_idx": 29,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:29:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1100 frame 29?",
+    "scene": "scene-1100",
+    "frame_idx": 29,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:2:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1100 frame 2? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 2,
+    "qtype": "nearest",
+    "gt_answer": 13.0,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:2:presence_car",
+    "question": "Are there any cars in scene-1100 frame 2?",
+    "scene": "scene-1100",
+    "frame_idx": 2,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:2:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1100 frame 2?",
+    "scene": "scene-1100",
+    "frame_idx": 2,
+    "qtype": "presence",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:2:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1100 frame 2?",
+    "scene": "scene-1100",
+    "frame_idx": 2,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:30:count_cyclist",
+    "question": "How many cyclists are in scene-1100 frame 30?",
+    "scene": "scene-1100",
+    "frame_idx": 30,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:30:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1100 frame 30? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 30,
+    "qtype": "nearest",
+    "gt_answer": 53.3,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:30:presence_car",
+    "question": "Are there any cars in scene-1100 frame 30?",
+    "scene": "scene-1100",
+    "frame_idx": 30,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:30:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1100 frame 30?",
+    "scene": "scene-1100",
+    "frame_idx": 30,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:31:presence_car",
+    "question": "Are there any cars in scene-1100 frame 31?",
+    "scene": "scene-1100",
+    "frame_idx": 31,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:31:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 31?",
+    "scene": "scene-1100",
+    "frame_idx": 31,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:31:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1100 frame 31?",
+    "scene": "scene-1100",
+    "frame_idx": 31,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:31:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 31?",
+    "scene": "scene-1100",
+    "frame_idx": 31,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:32:count_car",
+    "question": "How many cars are in scene-1100 frame 32?",
+    "scene": "scene-1100",
+    "frame_idx": 32,
+    "qtype": "count",
+    "gt_answer": 3,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:32:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1100 frame 32? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 32,
+    "qtype": "nearest",
+    "gt_answer": 59.5,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:32:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1100 frame 32?",
+    "scene": "scene-1100",
+    "frame_idx": 32,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:32:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1100 frame 32?",
+    "scene": "scene-1100",
+    "frame_idx": 32,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:33:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 33?",
+    "scene": "scene-1100",
+    "frame_idx": 33,
+    "qtype": "count",
+    "gt_answer": 2,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:33:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1100 frame 33? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 33,
+    "qtype": "nearest",
+    "gt_answer": 21.9,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:33:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1100 frame 33? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 33,
+    "qtype": "nearest",
+    "gt_answer": 62.7,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:33:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1100 frame 33?",
+    "scene": "scene-1100",
+    "frame_idx": 33,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:34:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 34?",
+    "scene": "scene-1100",
+    "frame_idx": 34,
+    "qtype": "count",
+    "gt_answer": 2,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:34:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1100 frame 34?",
+    "scene": "scene-1100",
+    "frame_idx": 34,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:34:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 34?",
+    "scene": "scene-1100",
+    "frame_idx": 34,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:34:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 34?",
+    "scene": "scene-1100",
+    "frame_idx": 34,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:35:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 35?",
+    "scene": "scene-1100",
+    "frame_idx": 35,
+    "qtype": "presence",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:35:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1100 frame 35?",
+    "scene": "scene-1100",
+    "frame_idx": 35,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:35:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 35?",
+    "scene": "scene-1100",
+    "frame_idx": 35,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:35:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1100 frame 35?",
+    "scene": "scene-1100",
+    "frame_idx": 35,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:36:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1100 frame 36? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 36,
+    "qtype": "nearest",
+    "gt_answer": 9.3,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:36:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 36?",
+    "scene": "scene-1100",
+    "frame_idx": 36,
+    "qtype": "presence",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:36:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1100 frame 36?",
+    "scene": "scene-1100",
+    "frame_idx": 36,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:36:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1100 frame 36?",
+    "scene": "scene-1100",
+    "frame_idx": 36,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:37:count_car",
+    "question": "How many cars are in scene-1100 frame 37?",
+    "scene": "scene-1100",
+    "frame_idx": 37,
+    "qtype": "count",
+    "gt_answer": 3,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:37:count_cyclist",
+    "question": "How many cyclists are in scene-1100 frame 37?",
+    "scene": "scene-1100",
+    "frame_idx": 37,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:37:presence_pedestrian",
+    "question": "Are there any pedestrians in scene-1100 frame 37?",
+    "scene": "scene-1100",
+    "frame_idx": 37,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:37:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1100 frame 37?",
+    "scene": "scene-1100",
+    "frame_idx": 37,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:38:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1100 frame 38? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 38,
+    "qtype": "nearest",
+    "gt_answer": 78.6,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:38:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1100 frame 38?",
+    "scene": "scene-1100",
+    "frame_idx": 38,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:38:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1100 frame 38?",
+    "scene": "scene-1100",
+    "frame_idx": 38,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:38:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1100 frame 38?",
+    "scene": "scene-1100",
+    "frame_idx": 38,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:39:count_cyclist",
+    "question": "How many cyclists are in scene-1100 frame 39?",
+    "scene": "scene-1100",
+    "frame_idx": 39,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:39:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1100 frame 39?",
+    "scene": "scene-1100",
+    "frame_idx": 39,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:39:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 39?",
+    "scene": "scene-1100",
+    "frame_idx": 39,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:39:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1100 frame 39?",
+    "scene": "scene-1100",
+    "frame_idx": 39,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:3:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 3?",
+    "scene": "scene-1100",
+    "frame_idx": 3,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:3:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 3?",
+    "scene": "scene-1100",
+    "frame_idx": 3,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:3:spatial_cyclist_left",
+    "question": "Is there a cyclist in the left lane in scene-1100 frame 3?",
+    "scene": "scene-1100",
+    "frame_idx": 3,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:3:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1100 frame 3?",
+    "scene": "scene-1100",
+    "frame_idx": 3,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:4:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 4?",
+    "scene": "scene-1100",
+    "frame_idx": 4,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:4:nearest_car",
+    "question": "How far is the nearest car ahead in scene-1100 frame 4? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 4,
+    "qtype": "nearest",
+    "gt_answer": 5.0,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:4:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 4?",
+    "scene": "scene-1100",
+    "frame_idx": 4,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:4:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 4?",
+    "scene": "scene-1100",
+    "frame_idx": 4,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:5:count_pedestrian",
+    "question": "How many pedestrians are in scene-1100 frame 5?",
+    "scene": "scene-1100",
+    "frame_idx": 5,
+    "qtype": "count",
+    "gt_answer": 0,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:5:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1100 frame 5? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 5,
+    "qtype": "nearest",
+    "gt_answer": 19.7,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:5:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 5?",
+    "scene": "scene-1100",
+    "frame_idx": 5,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:5:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1100 frame 5?",
+    "scene": "scene-1100",
+    "frame_idx": 5,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:6:count_car",
+    "question": "How many cars are in scene-1100 frame 6?",
+    "scene": "scene-1100",
+    "frame_idx": 6,
+    "qtype": "count",
+    "gt_answer": 4,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:6:nearest_pedestrian",
+    "question": "How far is the nearest pedestrian ahead in scene-1100 frame 6? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 6,
+    "qtype": "nearest",
+    "gt_answer": 18.1,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:6:presence_cyclist",
+    "question": "Are there any cyclists in scene-1100 frame 6?",
+    "scene": "scene-1100",
+    "frame_idx": 6,
+    "qtype": "presence",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:6:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1100 frame 6?",
+    "scene": "scene-1100",
+    "frame_idx": 6,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:7:spatial_car_current",
+    "question": "Is there a car in the current lane in scene-1100 frame 7?",
+    "scene": "scene-1100",
+    "frame_idx": 7,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:7:spatial_car_left",
+    "question": "Is there a car in the left lane in scene-1100 frame 7?",
+    "scene": "scene-1100",
+    "frame_idx": 7,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:7:spatial_cyclist_current",
+    "question": "Is there a cyclist in the current lane in scene-1100 frame 7?",
+    "scene": "scene-1100",
+    "frame_idx": 7,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:7:spatial_pedestrian_current",
+    "question": "Is there a pedestrian in the current lane in scene-1100 frame 7?",
+    "scene": "scene-1100",
+    "frame_idx": 7,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:8:count_cyclist",
+    "question": "How many cyclists are in scene-1100 frame 8?",
+    "scene": "scene-1100",
+    "frame_idx": 8,
+    "qtype": "count",
+    "gt_answer": 1,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:8:nearest_cyclist",
+    "question": "How far is the nearest cyclist ahead in scene-1100 frame 8? Answer in meters.",
+    "scene": "scene-1100",
+    "frame_idx": 8,
+    "qtype": "nearest",
+    "gt_answer": 19.7,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:8:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 8?",
+    "scene": "scene-1100",
+    "frame_idx": 8,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:8:spatial_pedestrian_left",
+    "question": "Is there a pedestrian in the left lane in scene-1100 frame 8?",
+    "scene": "scene-1100",
+    "frame_idx": 8,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:9:count_car",
+    "question": "How many cars are in scene-1100 frame 9?",
+    "scene": "scene-1100",
+    "frame_idx": 9,
+    "qtype": "count",
+    "gt_answer": 5,
+    "expects_tools": [
+      "load_frame",
+      "detect_objects"
+    ]
+  },
+  {
+    "qid": "scene-1100:9:spatial_car_right",
+    "question": "Is there a car in the right lane in scene-1100 frame 9?",
+    "scene": "scene-1100",
+    "frame_idx": 9,
+    "qtype": "spatial",
+    "gt_answer": true,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:9:spatial_cyclist_right",
+    "question": "Is there a cyclist in the right lane in scene-1100 frame 9?",
+    "scene": "scene-1100",
+    "frame_idx": 9,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  },
+  {
+    "qid": "scene-1100:9:spatial_pedestrian_right",
+    "question": "Is there a pedestrian in the right lane in scene-1100 frame 9?",
+    "scene": "scene-1100",
+    "frame_idx": 9,
+    "qtype": "spatial",
+    "gt_answer": false,
+    "expects_tools": [
+      "load_frame",
+      "bev_map"
+    ]
+  }
+]

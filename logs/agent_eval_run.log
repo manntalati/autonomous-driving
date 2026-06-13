@@ -1,0 +1,17 @@
+# Agent Eval — model=claude-opus-4-7, system=on
+
+N questions: 5
+
+| Metric | Value |
+|---|---|
+| accuracy | 0.200 |
+| parse failures | 0.000 |
+| mean tool calls | 2.00 |
+| tool precision | 1.000 |
+| tool recall | 1.000 |
+| p50 latency (s) | 88.99 |
+| p95 latency (s) | 95.33 |
+| input tokens | 73389 |
+| output tokens | 1261 |
+| total cost (USD) | 1.1954 |
+| $/query | 0.2391 |
