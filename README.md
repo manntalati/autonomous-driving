@@ -11,6 +11,9 @@ Built as a deep learning capstone covering the entire modern CV stack: linear cl
 
 Camera with detections + segmentation on the left, BEV panel on the right!
 
+Demo w/ Agent<img width="1512" height="831" alt="Screenshot 2026-06-13 at 10 19 07 AM" src="https://github.com/user-attachments/assets/e80e776f-a8d3-45c9-9e33-ffc53f234b7e" />
+
+
 ---
 
 ## Architecture Overview
