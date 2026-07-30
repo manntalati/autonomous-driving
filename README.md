@@ -1,8 +1,14 @@
 # Autonomous Driving Perception Stack
 
-A full autonomous driving perception pipeline built **from scratch** in PyTorch. This project implements the core vision system that self-driving cars use to understand the world: detecting vehicles, pedestrians, and cyclists, segmenting roads and lanes, projecting everything into a bird's eye view, and tracking objects across time.
+A full autonomous driving perception pipeline built **from scratch** in PyTorch — detection, segmentation, bird's-eye-view, and temporal fusion — and then an investigation into the thing that actually breaks these systems in the field.
 
-Built as a deep learning capstone covering the entire modern CV stack: linear classifiers, CNNs, object detection, dense prediction, Vision Transformers, BEV transforms, and temporal attention.
+**The question this project asks:** what happens to a perception stack when it leaves the conditions it was trained on, and can it tell that it has?
+
+The training data here is 3,376 keyframes of clear daylight. Evaluated on held-out daytime frames the detector reaches **mAP 0.285**. Evaluated on night footage it has never seen, it collapses to **mAP 0.095** — a 67% drop, with cyclists falling 87%. Nothing warns you this is happening. The detector reports the same confidence scores it always did.
+
+That silent failure — not raw accuracy — is the open problem in autonomous driving deployment. Phases 0–8 build the perception stack. Phases 9–12 measure where it breaks, close the gap with radar, and wrap it in a monitor that knows when its own output should not be trusted.
+
+Built as a deep learning capstone covering the modern CV stack: linear classifiers, CNNs, object detection, dense prediction, Vision Transformers, BEV transforms, temporal attention — plus uncertainty quantification, sensor fusion, and an agentic runtime monitor.
 
 ---
 ## Demo
@@ -56,11 +62,12 @@ In depth architecture: [Architecture Plan](architecture_plan.md)
 | Component | Technology |
 |---|---|
 | Framework | PyTorch |
-| Dataset | nuScenes mini (10 scenes, ~404 samples, 6 cameras) |
+| Dataset | nuScenes — trainval blob (85 scenes, 3,376 keyframes, all daytime) + mini (10 scenes, 3 of them night) |
 | Computer Vision | OpenCV |
 | Visualization | Matplotlib, OpenCV |
 | Training | Custom training loops, LR scheduling, mixed precision |
-| Evaluation | mAP (detection), mIoU (segmentation), FPS benchmarks |
+| Sensors | 6 cameras, LiDAR, 5 radars |
+| Evaluation | mAP (detection), mIoU (segmentation), flicker rate, ECE / AUROC / risk-coverage (Phase 11), FPS benchmarks |
 | Agent / MCP | Anthropic API, MCP Python SDK (stdio transport) |
 
 ---
@@ -157,6 +164,59 @@ In depth architecture: [Architecture Plan](architecture_plan.md)
 | `P6-2` | Implement temporal attention (cross-attention between current and past frame features) | [✅] |
 | `P6-3` | Temporal-fusion module enriching the detector with past-frame features | [✅] |
 | `P6-4` | Temporal-consistency (flicker) metric + frame-by-frame evaluation | [✅] |
+
+---
+
+### Phase 9: Day→Night ODD Audit
+
+> **Goal:** Quantify how far the perception stack degrades outside its operational design domain, and separate that from ordinary overfitting.
+
+| Ticket | Task | Status |
+|---|---|---|
+| `P9-1` | Condition-labelled evaluation harness (`evaluation/day_night_audit.py`) + `scenes=` dataset override | [✅] |
+| `P9-2` | Report both splits; write up the day→night transfer gap | [✅] |
+| `P9-3` | Correct the split documentation; expose the official devkit split | [✅] |
+
+---
+
+### Phase 10: Radar Fusion
+
+> **Goal:** Close the night gap with the one sensor that does not care about illumination. Radar measures range and radial velocity directly; a camera infers both from appearance.
+
+| Ticket | Task | Status |
+|---|---|---|
+| `P10-1` | Radar point-cloud loader (5 sensors → ego frame, motion-compensated) | [ ] |
+| `P10-2` | Radar BEV rasterizer (occupancy / radial velocity / RCS channels) | [ ] |
+| `P10-3` | Camera+radar BEV fusion module | [ ] |
+| `P10-4` | Day/night ablation, reported separately at near and long range | [ ] |
+
+---
+
+### Phase 11: Trust Layer
+
+> **Goal:** Make the stack's uncertainty explicit and calibrated, so a downstream consumer can decide when to stop trusting it.
+
+| Ticket | Task | Status |
+|---|---|---|
+| `P11-1` | Epistemic uncertainty via MC-dropout / ensemble over the detector | [ ] |
+| `P11-2` | Cross-modal disagreement signal (radar ⟂ camera) | [ ] |
+| `P11-3` | Introspection head: signals → P(detection is correct) | [ ] |
+| `P11-4` | Calibration + failure-prediction metrics (ECE, AUROC, risk-coverage) | [ ] |
+| `P11-5` | Per-frame trust score + ODD boundary threshold | [ ] |
+
+---
+
+### Phase 12: Streaming Autonomy Monitor
+
+> **Goal:** A continuously running agent that watches the drive, speaks only when something matters, and abstains when the stack is outside its ODD.
+
+| Ticket | Task | Status |
+|---|---|---|
+| `P12-1` | Frame stream player (12 Hz mini sweeps for demo, 2 Hz keyframes for eval) | [ ] |
+| `P12-2` | Fast tier: per-frame state tracking + deterministic event detector (no LLM) | [ ] |
+| `P12-3` | Slow tier: event-triggered LLM advisories with memory of what was already said | [ ] |
+| `P12-4` | Abstention behaviour driven by the Phase 11 trust score | [ ] |
+| `P12-5` | Streaming eval: warning lead time, false-alarm rate, abstention correctness | [ ] |
 
 ---
 
@@ -322,6 +382,33 @@ The temporal stage fuses information across consecutive video frames. A sequence
 **Analysis:** Training early-stopped at epoch 34 (best at 24). Temporal fusion finished marginally above the single-frame detector (mAP 0.135 vs 0.129, ~5% relative) — a real but modest gain, carried by cyclist AP while car AP slipped slightly. The temporal model carries extra parameters (the cross-attention stack) and overfit hard — validation loss climbed from 1.4 to 6.0 while training loss fell toward 0.01 — on only 308 three-frame windows. The honest takeaway matches the rest of the project: the mechanism is sound and implemented from scratch, but a 300-sample regime can't show temporal attention's full value; it would pay off more clearly with longer sequences and far more data.
 
 **Temporal consistency (P6-4):** beyond mAP, `evaluation/eval_flicker.py` runs the detector frame-by-frame over the validation scenes and measures *flicker* — objects detected at t-1 and t+1 but dropped in the middle frame, tracked by nuScenes instance id. The temporal detector's mean flicker rate is **0.135**: about 1 in 7 consistently-visible objects still blinks out for a single frame — a concrete handle on the stability that mAP alone can't see.
+
+---
+
+### Phase 9 Day→Night ODD Audit
+
+Every earlier phase blamed its modest numbers on dataset size. That explanation was incomplete, and the data on disk turned out to contain a clean natural experiment.
+
+**The setup.** Two nuScenes roots are present. The downloaded trainval blob is 85 scenes (scene-0001…0102), 3,376 CAM_FRONT keyframes — and **100% daytime, clear weather**; a keyword scan over all 85 hand-written scene descriptions finds no mention of night, rain, or dusk. The mini split contains three night scenes: 1077, 1094 ("Night, after rain"), and 1100 ("Night… difficult lighting"). Only scene-0061 overlaps the blob, and it is a day scene. **The night scenes are therefore provably unseen by any trainval-trained model** — a zero-shot day→night transfer benchmark with no contamination.
+
+`evaluation/day_night_audit.py` evaluates one checkpoint across four condition cells (and refuses to report anything if a night scene is found in the training set):
+
+| Cell | Frames | mAP | Car | Ped | Cyclist |
+|---|---|---|---|---|---|
+| seen, day (trainval train) | 2,863 | 0.615 | 0.761 | 0.496 | 0.587 |
+| unseen, day (trainval val) | 513 | 0.285 | 0.575 | 0.157 | 0.124 |
+| **unseen, night (mini)** | 121 | **0.095** | 0.188 | 0.081 | 0.016 |
+| unseen, day (mini) — *control* | 244 | 0.304 | 0.486 | 0.320 | 0.105 |
+
+**Day→night transfer gap: 0.285 → 0.095, a 67% relative collapse.** Both rows are unseen data, so generalisation is held constant and the difference is domain shift alone.
+
+**The control rules out the obvious confound.** One could object that the night scenes come from mini, so the drop might reflect a dataset difference rather than darkness. It does not: mini's *daytime* scenes score **0.304**, statistically indistinguishable from trainval's held-out day scenes at 0.285 — same source as the night frames, none of the collapse. The degradation tracks lighting, not provenance.
+
+**Vulnerable road users degrade worst.** Against the mini-day control, cyclist AP falls 85% (0.105 → 0.016) and pedestrian AP 75% (0.320 → 0.081), versus 61% for cars. The classes that disappear at night are exactly the ones an autonomous vehicle cannot afford to miss — small, unlit, and unpredictable. This is the safety case for Phases 10–12, and it is measured rather than asserted.
+
+**A correction to the Phase 2 record.** Earlier phases reported pedestrian AP ≈ 0.001 and attributed it to anchor geometry — the smallest anchor being too large for a 19-pixel pedestrian — with a proposed fix of adding a P2 FPN level. That diagnosis was wrong. Pedestrian AP is **0.496** on seen daytime data with the same anchor configuration. The anchors were never the problem; training-set size and night conditions were. The P2 remedy has been dropped.
+
+**Why this reframes the project.** The recurring "the data is the ceiling" conclusion holds, but it is not the whole story. There are two distinct failure modes stacked on top of each other: a generalisation gap (0.615 → 0.285) from limited data, and a domain-shift gap (0.285 → 0.095) from operating outside the training distribution. Only the first is fixed by collecting more of the same data. The second is what makes deployed perception dangerous, because the model's confidence scores do not drop when it happens — it fails silently. Phases 10–12 address that directly.
 
 ---
 

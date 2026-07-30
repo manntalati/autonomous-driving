@@ -1,0 +1,207 @@
+{
+  "ckpt": "checkpoints/detector_best.pt",
+  "cells": {
+    "seen_day": {
+      "loss": 0.15076827866836762,
+      "pos_per_img": 20.897310513447433,
+      "mAP": 0.6146137413091983,
+      "AP": [
+        0.7609870868383649,
+        0.4958606253738236,
+        0.5869935117154065
+      ],
+      "num_frames": 2863,
+      "num_scenes": 72,
+      "scenes": [
+        "scene-0001",
+        "scene-0002",
+        "scene-0003",
+        "scene-0004",
+        "scene-0005",
+        "scene-0006",
+        "scene-0007",
+        "scene-0008",
+        "scene-0009",
+        "scene-0010",
+        "scene-0011",
+        "scene-0012",
+        "scene-0013",
+        "scene-0014",
+        "scene-0015",
+        "scene-0016",
+        "scene-0017",
+        "scene-0018",
+        "scene-0019",
+        "scene-0020",
+        "scene-0021",
+        "scene-0022",
+        "scene-0023",
+        "scene-0024",
+        "scene-0025",
+        "scene-0026",
+        "scene-0027",
+        "scene-0028",
+        "scene-0029",
+        "scene-0030",
+        "scene-0031",
+        "scene-0032",
+        "scene-0033",
+        "scene-0034",
+        "scene-0035",
+        "scene-0036",
+        "scene-0038",
+        "scene-0039",
+        "scene-0041",
+        "scene-0042",
+        "scene-0043",
+        "scene-0044",
+        "scene-0045",
+        "scene-0046",
+        "scene-0047",
+        "scene-0048",
+        "scene-0049",
+        "scene-0050",
+        "scene-0051",
+        "scene-0052",
+        "scene-0053",
+        "scene-0054",
+        "scene-0055",
+        "scene-0056",
+        "scene-0057",
+        "scene-0058",
+        "scene-0059",
+        "scene-0060",
+        "scene-0061",
+        "scene-0062",
+        "scene-0063",
+        "scene-0064",
+        "scene-0065",
+        "scene-0066",
+        "scene-0067",
+        "scene-0068",
+        "scene-0069",
+        "scene-0070",
+        "scene-0071",
+        "scene-0072",
+        "scene-0073",
+        "scene-0074"
+      ]
+    },
+    "unseen_day": {
+      "loss": 0.4810068082324294,
+      "pos_per_img": 33.4775828460039,
+      "mAP": 0.28533881229350916,
+      "AP": [
+        0.5747031392808117,
+        0.15709162885749905,
+        0.12422166874221668
+      ],
+      "num_frames": 513,
+      "num_scenes": 13,
+      "scenes": [
+        "scene-0075",
+        "scene-0076",
+        "scene-0092",
+        "scene-0093",
+        "scene-0094",
+        "scene-0095",
+        "scene-0096",
+        "scene-0097",
+        "scene-0098",
+        "scene-0099",
+        "scene-0100",
+        "scene-0101",
+        "scene-0102"
+      ]
+    },
+    "unseen_night": {
+      "loss": 0.94264169758366,
+      "pos_per_img": 34.752066115702476,
+      "mAP": 0.0951435073888216,
+      "AP": [
+        0.1881693918188856,
+        0.08093309330933093,
+        0.01632803703824825
+      ],
+      "num_frames": 121,
+      "num_scenes": 3,
+      "scenes": [
+        "scene-1077",
+        "scene-1094",
+        "scene-1100"
+      ]
+    },
+    "unseen_miniday": {
+      "loss": 0.5161035764412801,
+      "pos_per_img": 45.09426229508197,
+      "mAP": 0.303654020907935,
+      "AP": [
+        0.48567009890205,
+        0.32004144703412507,
+        0.1052505167876299
+      ],
+      "num_frames": 244,
+      "num_scenes": 6,
+      "scenes": [
+        "scene-0103",
+        "scene-0553",
+        "scene-0655",
+        "scene-0757",
+        "scene-0796",
+        "scene-0916"
+      ]
+    }
+  },
+  "mini_conditions": {
+    "scene-0061": {
+      "night": false,
+      "rain": false,
+      "description": "Parked truck, construction, intersection, turn left, following a van"
+    },
+    "scene-0103": {
+      "night": false,
+      "rain": false,
+      "description": "Many peds right, wait for turning car, long bike rack left, cyclist"
+    },
+    "scene-0553": {
+      "night": false,
+      "rain": false,
+      "description": "Wait at intersection, bicycle, large truck, peds crossing crosswalk, ped with stroller"
+    },
+    "scene-0655": {
+      "night": false,
+      "rain": false,
+      "description": "Parking lot, parked cars, jaywalker, bendy bus, gardening vehicles"
+    },
+    "scene-0757": {
+      "night": false,
+      "rain": false,
+      "description": "Arrive at busy intersection, bus, wait at intersection, bicycle, peds"
+    },
+    "scene-0796": {
+      "night": false,
+      "rain": false,
+      "description": "Scooter, peds on sidewalk, bus, cars, truck, fake construction worker, bicycle, cross intersection, car overtaking us"
+    },
+    "scene-0916": {
+      "night": false,
+      "rain": false,
+      "description": "Parking lot, bicycle rack, parked bicycles, bus, many peds, parked scooters, parked motorcycle"
+    },
+    "scene-1077": {
+      "night": true,
+      "rain": false,
+      "description": "Night, big street, bus stop, high speed, construction vehicle"
+    },
+    "scene-1094": {
+      "night": true,
+      "rain": true,
+      "description": "Night, after rain, many peds, PMD, ped with bag, jaywalker, truck, scooter"
+    },
+    "scene-1100": {
+      "night": true,
+      "rain": false,
+      "description": "Night, peds in sidewalk, peds cross crosswalk, scooter, PMD, difficult lighting"
+    }
+  }
+}

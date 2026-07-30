@@ -30,12 +30,29 @@ LABEL_MAP: Dict[str, int] = {
 CLASS_NAMES = ["car", "pedestrian", "cyclist"]
 
 # ── Train / val scene split ─────────────────────────────────────────────────
-# The fixed nuScenes-mini split — 8 train scenes / 2 val.
+# NOTE: this is *not* the official nuScenes split. The devkit's mini_val is
+# {scene-0103, scene-0916} (both daytime); see nuscenes.utils.splits. This project
+# deliberately holds out the two hardest night scenes instead:
+#   scene-1094 — "Night, after rain, many peds, jaywalker"
+#   scene-1100 — "Night, peds cross crosswalk, difficult lighting"
+# so that mini validation doubles as a day->night domain-shift probe (Phase 9).
+# Use OFFICIAL_MINI_* below if you need to compare against published mini numbers.
 MINI_TRAIN_SCENES = {
     "scene-0061", "scene-0103", "scene-0553", "scene-0655",
     "scene-0757", "scene-0796", "scene-0916", "scene-1077",
 }
 MINI_VAL_SCENES = {"scene-1094", "scene-1100"}
+
+# The devkit split, for reproducing published mini baselines.
+OFFICIAL_MINI_TRAIN_SCENES = {
+    "scene-0061", "scene-0553", "scene-0655", "scene-0757",
+    "scene-0796", "scene-1077", "scene-1094", "scene-1100",
+}
+OFFICIAL_MINI_VAL_SCENES = {"scene-0103", "scene-0916"}
+
+# Night scenes across all splits — the Phase 9 out-of-ODD evaluation set.
+# nuScenes has no structured lighting field; these are read off scene descriptions.
+NIGHT_SCENES = {"scene-1077", "scene-1094", "scene-1100"}
 
 
 def version_from_data_root(data_root) -> str:
@@ -43,17 +60,24 @@ def version_from_data_root(data_root) -> str:
     return Path(data_root).name
 
 
-def get_scene_split(nusc, data_root, val_fraction: float = 0.15):
+def get_scene_split(nusc, data_root, val_fraction: float = 0.15, official: bool = False):
     """
     Return (train_scene_names, val_scene_names) for whatever nuScenes version is loaded.
-      - v1.0-mini → the fixed 8-train / 2-val split.
+      - v1.0-mini → this project's night-heavy 8-train / 2-val split (see the note on
+        MINI_VAL_SCENES). Pass official=True for the devkit's mini_train/mini_val.
       - v1.0-trainval (possibly a *partial* blob download) → every scene whose
         CAM_FRONT files are actually present on disk, sorted by name, with the
         last `val_fraction` held out for validation.
     This lets the project ingest one or a few of the ten ~85-scene trainval
     blobs without downloading all 850 scenes.
+
+    Caveat (Phase 9): the currently downloaded trainval blob (scene-0001..0102) is
+    100% daytime, so a trainval-derived val split contains no night frames. Night
+    evaluation must come from the mini NIGHT_SCENES.
     """
     if getattr(nusc, "version", "") == "v1.0-mini":
+        if official:
+            return set(OFFICIAL_MINI_TRAIN_SCENES), set(OFFICIAL_MINI_VAL_SCENES)
         return set(MINI_TRAIN_SCENES), set(MINI_VAL_SCENES)
     root = Path(data_root)
     available = []
@@ -68,16 +92,19 @@ def get_scene_split(nusc, data_root, val_fraction: float = 0.15):
 
 class NuScenesDetectionDataset(Dataset):
 
-    def __init__(self, nusc: NuScenes, data_root: str | Path, split: str = "train", cameras: Optional[List[str]] = None, transform=None):
+    def __init__(self, nusc: NuScenes, data_root: str | Path, split: str = "train", cameras: Optional[List[str]] = None, transform=None, scenes: Optional[set] = None):
         """
         nuScenes detection dataset: loads camera images and projects 3D GT boxes to 2D.
         Args: nusc — NuScenes instance; data_root — path to v1.0-mini;
               split — "train" or "val"; cameras — list of camera names (default ["CAM_FRONT"]);
-              transform — albumentations pipeline (defaults to train/val transforms by split).
+              transform — albumentations pipeline (defaults to train/val transforms by split);
+              scenes — explicit set of scene names, overriding the split-derived set. Used by
+                       the day/night audit to evaluate one condition at a time.
         """
         self.nusc = nusc
         self.data_root = Path(data_root)
         self.split = split
+        self.scenes = scenes
         if cameras is None:
             self.cameras = ["CAM_FRONT"]
         else:
@@ -98,8 +125,11 @@ class NuScenesDetectionDataset(Dataset):
         Returns: list of (sample_token, camera_name) tuples.
         """
         keyframes = []
-        train_scenes, val_scenes = get_scene_split(self.nusc, self.data_root)
-        scenes = train_scenes if self.split == 'train' else val_scenes
+        if self.scenes is not None:
+            scenes = self.scenes
+        else:
+            train_scenes, val_scenes = get_scene_split(self.nusc, self.data_root)
+            scenes = train_scenes if self.split == 'train' else val_scenes
         for scene in self.nusc.scene:
             if scene['name'] not in scenes: continue
             token = scene['first_sample_token']

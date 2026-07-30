@@ -1,0 +1,49 @@
+# Phase 10 — camera + radar BEV fusion.
+# Identical to bev_surround.yaml except for the radar branch, so the day/night
+# ablation isolates exactly what radar adds. Do not tune anything else here or
+# the comparison stops being an ablation.
+
+# data
+data_root: data/raw/v1.0-trainval
+batch_size: 1
+num_classes: 3
+num_seg_classes: 5
+
+# input
+image_size: [448, 800]
+cameras: [CAM_FRONT, CAM_FRONT_LEFT, CAM_FRONT_RIGHT, CAM_BACK, CAM_BACK_LEFT, CAM_BACK_RIGHT]
+
+# ── radar branch (Phase 10) ──────────────────────────────────────────────────
+use_radar: true
+radar_channels: [RADAR_FRONT, RADAR_FRONT_LEFT, RADAR_FRONT_RIGHT, RADAR_BACK_LEFT, RADAR_BACK_RIGHT]
+radar_in_channels: 5          # occupancy / rcs / vx / vy / speed
+radar_encoder_channels: 64    # must equal bev_channels for gated fusion
+fusion_mode: gated            # "concat" | "gated" — run both, report both
+radar_filter_invalid: true
+log_gate_stats: true          # per-frame mean gate, for the day/night gate plot
+
+# backbone
+pretrained: true
+
+# BEV grid — must match the radar rasterizer's xbound/ybound exactly
+xbound: [-51.2, 51.2, 0.8]
+ybound: [-51.2, 51.2, 0.8]
+zbound: [-10.0, 10.0, 20.0]
+dbound: [4.0, 50.0, 1.0]
+
+# feature dim
+bev_channels: 64
+
+# loss weights
+seg_weight: 20.0
+depth_weight: 10.0
+
+# training
+epochs: 40
+lr: 0.001
+backbone_lr_scale: 0.1
+weight_decay: 0.0001
+scheduler: cosine
+patience: 10
+grad_clip: 1.0
+ckpt_path: checkpoints/bev_radar_best.pt
