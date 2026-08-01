@@ -24,6 +24,7 @@ from data.dataset import get_scene_split, LABEL_MAP
 from data.transforms import MEAN, STD
 from data.bev_seg_labels import build_bev_seg_label
 from data.lidar_depth import lidar_depth_bins
+from data.radar_utils import radar_bev_for_sample
 
 CAM = "CAM_FRONT"
 _MEAN = np.array(MEAN, dtype=np.float32)
@@ -38,7 +39,7 @@ class NuScenesBEVDataset(Dataset):
     intrinsics are also transformed.
     """
 
-    def __init__(self, nusc: NuScenes, data_root: str | Path, split: str = "train", image_size: Tuple[int, int] = (448, 800), xbound: Tuple[float, float, float] = (0.0, 51.2, 0.8), ybound: Tuple[float, float, float] = (-25.6, 25.6, 0.8), dbound: Tuple[float, float, float] = (4.0, 50.0, 1.0), cameras: Optional[List[str]] = None, bev_seg: bool = True, depth_sup: bool = True) -> None:
+    def __init__(self, nusc: NuScenes, data_root: str | Path, split: str = "train", image_size: Tuple[int, int] = (448, 800), xbound: Tuple[float, float, float] = (0.0, 51.2, 0.8), ybound: Tuple[float, float, float] = (-25.6, 25.6, 0.8), dbound: Tuple[float, float, float] = (4.0, 50.0, 1.0), cameras: Optional[List[str]] = None, bev_seg: bool = True, depth_sup: bool = True, use_radar: bool = False, radar_channels: Optional[List[str]] = None, radar_dilate: int = 1, scenes: Optional[set] = None) -> None:
         """
         Args:
           nusc — NuScenes instance.
@@ -52,6 +53,13 @@ class NuScenesBEVDataset(Dataset):
           bev_seg — if True, also return a rasterized BEV semantic-map target ('bev_seg').
           depth_sup — if True, also return a LiDAR depth-bin target ('depth') for the
                       reference camera (Phase-8 depth supervision).
+          use_radar — if True, also return a rasterized radar BEV grid ('radar_bev'),
+                      aligned cell-for-cell with the camera BEV grid (Phase 10).
+          radar_channels — radar sensors to load (default: all five).
+          radar_dilate — half-width in cells of the dilation applied to each radar
+                      return; reflects radar's angular uncertainty and stops the
+                      encoder from convolving a nearly-empty grid.
+          scenes — explicit scene-name set, overriding the split (day/night audit).
         """
         self.nusc = nusc
         self.data_root = Path(data_root)
@@ -63,6 +71,10 @@ class NuScenesBEVDataset(Dataset):
         self.depth_sup = depth_sup
         self.cameras = cameras if cameras is not None else [CAM]
         self.bev_seg = bev_seg
+        self.use_radar = use_radar
+        self.radar_channels = radar_channels
+        self.radar_dilate = radar_dilate
+        self.scenes = scenes
         self.index = self._build_index()
 
     def _build_index(self) -> List[str]:
@@ -71,8 +83,11 @@ class NuScenesBEVDataset(Dataset):
         Returns: list of sample_token. Mirrors NuScenesDetectionDataset._build_index.
         """
         tokens: List[str] = []
-        train_scenes, val_scenes = get_scene_split(self.nusc, self.data_root)
-        scenes = train_scenes if self.split == "train" else val_scenes
+        if self.scenes is not None:
+            scenes = self.scenes
+        else:
+            train_scenes, val_scenes = get_scene_split(self.nusc, self.data_root)
+            scenes = train_scenes if self.split == "train" else val_scenes
         for scene in self.nusc.scene:
             if scene["name"] not in scenes:
                 continue
@@ -128,6 +143,12 @@ class NuScenesBEVDataset(Dataset):
             depth = lidar_depth_bins(self.nusc, self.data_root, ref_sd_token,
                                      self.image_size, self.dbound)
             target["depth"] = torch.from_numpy(depth).long()
+        if self.use_radar:
+            radar = radar_bev_for_sample(self.nusc, self.data_root, sample,
+                                         self.xbound, self.ybound,
+                                         channels=self.radar_channels,
+                                         dilate=self.radar_dilate)
+            target["radar_bev"] = torch.from_numpy(radar).float()
         return torch.stack(images), target
 
     def _get_calibration(self, cam_sd_token: str) -> Tuple[np.ndarray, np.ndarray]:

@@ -24,7 +24,8 @@ def build_detector(cfg: dict) -> FPNDetector:
         resnet.load_pretrained()
     fpn = FPN(in_channels=[128, 256, 512], out_channels=256)
     anchor = AnchorGenerator(cfg["scales"], cfg["aspect_ratios"], cfg["strides"])
-    detection = DetectionHead(256, cfg["num_anchors"], cfg["num_classes"])
+    detection = DetectionHead(256, cfg["num_anchors"], cfg["num_classes"],
+                              dropout=cfg.get("head_dropout", 0.0))
     return FPNDetector(resnet, fpn, detection, anchor, cfg["num_classes"])
 
 
@@ -145,15 +146,33 @@ def main(cfg_path: str) -> None:
     device = _pick_device()
     train_loader, val_loader = get_loaders(data_root=cfg["data_root"], batch_size=cfg["batch_size"])
     model = build_detector(cfg).to(device)
+
+    # Optional warm start. Dropout modules hold no parameters, so a checkpoint
+    # trained WITHOUT dropout loads cleanly into a model built WITH it — which is
+    # what makes the MC-dropout fine-tune cheap: it adapts existing features to
+    # dropout noise rather than relearning them.
+    init_from = cfg.get("init_from")
+    if init_from:
+        state = torch.load(init_from, map_location=device, weights_only=False)
+        if isinstance(state, dict) and "model" in state:
+            state = state["model"]
+        model.load_state_dict(state)
+        print(f"Warm-started from {init_from}")
+
     optimizer = _build_optimizer(model, cfg)
     scheduler = build_scheduler(optimizer, scheduler_type=cfg.get("scheduler", "cosine"), epochs=cfg["epochs"])
     loss = DetectionLoss(cfg["num_classes"])
     scaler = GradScaler("cuda", enabled=(device.type == "cuda"))
     grad_clip = cfg.get("grad_clip", 1.0)
     Path("checkpoints").mkdir(parents=True, exist_ok=True)
+    # Config-driven, matching the segmenter convention. Previously hardcoded, so
+    # any variant run would silently overwrite the checkpoint every Phase 9 result
+    # is measured against.
+    ckpt_path = cfg.get("ckpt_path", "checkpoints/detector_best.pt")
+    print(f"Best checkpoint -> {ckpt_path}")
     early_stop = EarlyStopping(
         patience=cfg.get("patience", 10),
-        ckpt_path="checkpoints/detector_best.pt",
+        ckpt_path=ckpt_path,
         mode="max",
         min_delta=1e-3,
     )

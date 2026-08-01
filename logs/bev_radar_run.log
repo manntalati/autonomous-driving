@@ -1,0 +1,17 @@
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+Fixed-epoch mode: 12 epochs, no early stopping.
+Epoch 1/12 | train 66.920 (hm 7.54 reg 3.68 seg 1.740 depth 2.091) | val 75.897 | BEV mIoU 0.134 | gate 0.497
+Epoch 2/12 | train 51.255 (hm 2.39 reg 3.00 seg 1.367 depth 1.852) | val 92.088 | BEV mIoU 0.127 | gate 0.533
+Epoch 3/12 | train 44.588 (hm 2.18 reg 2.76 seg 1.108 depth 1.749) | val 100.477 | BEV mIoU 0.114 | gate 0.533
+Epoch 4/12 | train 40.049 (hm 2.03 reg 2.62 seg 0.934 depth 1.672) | val 110.538 | BEV mIoU 0.132 | gate 0.509
+Epoch 5/12 | train 36.780 (hm 1.91 reg 2.47 seg 0.818 depth 1.604) | val 124.350 | BEV mIoU 0.119 | gate 0.522
+Epoch 6/12 | train 34.159 (hm 1.80 reg 2.34 seg 0.732 depth 1.538) | val 118.067 | BEV mIoU 0.150 | gate 0.522
+Epoch 7/12 | train 32.058 (hm 1.71 reg 2.22 seg 0.667 depth 1.478) | val 104.763 | BEV mIoU 0.138 | gate 0.523
+Epoch 8/12 | train 30.183 (hm 1.63 reg 2.10 seg 0.611 depth 1.423) | val 132.993 | BEV mIoU 0.136 | gate 0.527
+Epoch 9/12 | train 28.623 (hm 1.56 reg 2.01 seg 0.564 depth 1.377) | val 125.086 | BEV mIoU 0.137 | gate 0.528
+Epoch 10/12 | train 27.409 (hm 1.50 reg 1.92 seg 0.528 depth 1.342) | val 130.644 | BEV mIoU 0.156 | gate 0.545
+Epoch 11/12 | train 26.536 (hm 1.46 reg 1.85 seg 0.503 depth 1.317) | val 154.074 | BEV mIoU 0.133 | gate 0.533
+Epoch 12/12 | train 26.048 (hm 1.43 reg 1.81 seg 0.488 depth 1.303) | val 95.552 | BEV mIoU 0.170 | gate 0.522
+Final checkpoint (epoch 12) -> checkpoints/bev_radar_last.pt

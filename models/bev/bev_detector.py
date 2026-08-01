@@ -15,6 +15,7 @@ import torch.nn.functional as F
 
 from models.backbone.resnet import ConvBlock, ResNetBackbone
 from models.bev.lss import LiftSplatShoot
+from models.bev.radar_encoder import CameraRadarFusion, RadarBEVEncoder
 
 # The detector lifts the backbone's C4 feature map (stride 16, 256 channels).
 _FEAT_STRIDE = 16
@@ -86,7 +87,8 @@ class BEVSegHead(nn.Module):
 class BEVDetector(nn.Module):
     """Phase 5/8 model: backbone + LSS + BEV encoder + detection head + seg head."""
 
-    def __init__(self, num_classes: int = 3, image_size: Tuple[int, int] = (448, 800), xbound: Tuple[float, float, float] = (0.0, 51.2, 0.8), ybound: Tuple[float, float, float] = (-25.6, 25.6, 0.8), zbound: Tuple[float, float, float] = (-10.0, 10.0, 20.0), dbound: Tuple[float, float, float] = (4.0, 50.0, 1.0), bev_channels: int = 64, num_seg_classes: int = 5) -> None:
+    def __init__(self, num_classes: int = 3, image_size: Tuple[int, int] = (448, 800), xbound: Tuple[float, float, float] = (0.0, 51.2, 0.8), ybound: Tuple[float, float, float] = (-25.6, 25.6, 0.8), zbound: Tuple[float, float, float] = (-10.0, 10.0, 20.0), dbound: Tuple[float, float, float] = (4.0, 50.0, 1.0), bev_channels: int = 64, num_seg_classes: int = 5,
+                 use_radar: bool = False, radar_in_channels: int = 5, fusion_mode: str = "gated") -> None:
         super().__init__()
         self.backbone = ResNetBackbone()  # returns (C3, C4, C5)
         self.lss = LiftSplatShoot(
@@ -99,6 +101,13 @@ class BEVDetector(nn.Module):
             dbound=dbound,
             bev_channels=bev_channels,
         )
+        # Phase 10 radar branch. Left unbuilt when use_radar is False, so a
+        # camera-only checkpoint has exactly the state dict it always had and the
+        # ablation compares like with like.
+        self.use_radar = use_radar
+        if use_radar:
+            self.radar_encoder = RadarBEVEncoder(radar_in_channels, bev_channels)
+            self.fusion = CameraRadarFusion(bev_channels, mode=fusion_mode)
         self.encoder = BEVEncoder(bev_channels)
         self.head = BEVDetectionHead(bev_channels, num_classes)
         self.seg_head = BEVSegHead(bev_channels, num_seg_classes)
@@ -108,29 +117,43 @@ class BEVDetector(nn.Module):
         self.backbone.load_pretrained()
 
     def forward(self, images: torch.Tensor, intrinsics: torch.Tensor,
-                cam_to_ego: torch.Tensor) -> dict:
+                cam_to_ego: torch.Tensor, radar_bev: torch.Tensor = None) -> dict:
         """
         Args:
           images — (B, N, 3, H, W) — N surround cameras (N=1 for single-camera).
           intrinsics — (B, N, 3, 3) camera K.
           cam_to_ego — (B, N, 4, 4) camera→ego transform.
+          radar_bev — (B, 5, X, Y) rasterized radar grid; required when use_radar.
         Returns: dict with
           'heatmap'    (B, num_classes, X, Y)     — object-centre probabilities,
           'regression' (B, 6, X, Y)               — box regression,
           'seg'        (B, num_seg_classes, X, Y) — BEV semantic-map logits,
-          'depth'      (B, D, Hf, Wf)             — reference-camera depth distribution.
+          'depth'      (B, D, Hf, Wf)             — reference-camera depth distribution,
+          'gate'       scalar mean gate value     — only when fusing in gated mode.
         """
         B, N = images.shape[:2]
         _, c4, _ = self.backbone(images.flatten(0, 1))   # (B·N, 256, Hf, Wf)
         c4 = c4.reshape(B, N, *c4.shape[1:])             # (B, N, 256, Hf, Wf)
         bev_grid, depth = self.lss(c4, intrinsics, cam_to_ego, return_depth=True)
+
+        gate = None
+        if self.use_radar:
+            if radar_bev is None:
+                raise ValueError("use_radar=True but no radar_bev was provided")
+            radar_feat = self.radar_encoder(radar_bev)
+            bev_grid = self.fusion(bev_grid, radar_feat)
+            gate = self.fusion.mean_gate()
+
         bev = self.encoder(bev_grid)
         heatmap, regression = self.head(bev)
-        return {
+        out = {
             "heatmap": heatmap, "regression": regression,
             "seg": self.seg_head(bev),
             "depth": depth[:, 0],   # reference camera's depth distribution
         }
+        if gate is not None:
+            out["gate"] = gate
+        return out
 
 
 def decode_bev_detections(

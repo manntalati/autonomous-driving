@@ -1,0 +1,23 @@
+device: cpu
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+[harvest] introspection-train = trainval val (13 scenes)
+  harvest: 47001 detections, 2489 TP / 44512 FP (positive rate 0.053), pos_weight 17.88
+    epoch  50  loss 0.7381
+    epoch 100  loss 0.6250
+    epoch 150  loss 0.6049
+    epoch 200  loss 0.5883
+  fitted calibration: a=1.008 b=-2.865
+[saved] checkpoints/introspection_nomc.pt
+
+[eval] unseen_day: ['scene-0103', 'scene-0553', 'scene-0655', 'scene-0757', 'scene-0796', 'scene-0916']
+
+[eval] unseen_night: ['scene-1077', 'scene-1094', 'scene-1100']
+
+==============================================================================
+cell                      n  AUROC head  AUROC raw  ECE head  ECE raw
+------------------------------------------------------------------------------
+train_cell            47001       0.941      0.907     0.003    0.086
+unseen_day            22756       0.932      0.920     0.005    0.086
+unseen_night          11899       0.817      0.767     0.012    0.063
+==============================================================================
+wrote logs/introspection_nomc.json

@@ -25,6 +25,7 @@ class AgentResult:
     input_tokens: int = 0
     output_tokens: int = 0
     turns: int = 0
+    exhausted: bool = False   # True if max_turns was hit before a final answer
 
 def mcp_tools_to_anthropic(mcp_tools: list[Any]) -> list[dict[str, Any]]:
     """Convert MCP tool defs → the Anthropic `tools` schema."""
@@ -76,4 +77,16 @@ async def run_agent(question: str, client: MCPClient, *, model: str = "claude-op
             if on_event: on_event({"type": "tool_result", "name": block.name, "output": tool_output})
             tool_results.append({"type": "tool_result", "tool_use_id": block.id, "content": tool_output})
         messages.append({"role": "user", "content": tool_results})
-    raise RuntimeError("hit max_turns without a final answer")
+
+    # Turn budget exhausted. A one-shot CLI can afford to raise here, but the
+    # Phase 12 streaming monitor calls this once per salient event across a whole
+    # drive — a single confusing frame must not kill the run. Degrade instead:
+    # report inability to assess, and let the caller decide what to do with it.
+    result.exhausted = True
+    result.answer = (
+        "Unable to assess this situation — reasoning did not converge within "
+        f"{max_turns} tool-use turns. Treat this frame as unassessed."
+    )
+    if on_event:
+        on_event({"type": "exhausted", "answer": result.answer, "turns": result.turns})
+    return result

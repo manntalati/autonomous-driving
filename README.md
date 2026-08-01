@@ -185,10 +185,39 @@ In depth architecture: [Architecture Plan](architecture_plan.md)
 
 | Ticket | Task | Status |
 |---|---|---|
-| `P10-1` | Radar point-cloud loader (5 sensors → ego frame, motion-compensated) | [ ] |
-| `P10-2` | Radar BEV rasterizer (occupancy / radial velocity / RCS channels) | [ ] |
-| `P10-3` | Camera+radar BEV fusion module | [ ] |
-| `P10-4` | Day/night ablation, reported separately at near and long range | [ ] |
+| `P10-1` | Radar point-cloud loader (5 sensors → ego frame, motion-compensated) | [✅] |
+| `P10-2` | Radar BEV rasterizer (occupancy / radial velocity / RCS channels) | [✅] |
+| `P10-3` | Camera+radar BEV fusion module (gated) | [✅] |
+| `P10-4` | Day/night ablation, reported separately at near and long range | [✅] |
+
+**Result: the hypothesis was refuted, and a different mechanism confirmed.**
+
+| | unseen day | unseen night |
+|---|---|---|
+| camera only | 0.1410 | 0.0057 |
+| camera + radar | 0.1855 | 0.0439 |
+| benefit | +0.0444 | +0.0382 |
+
+The prediction was that radar would close the *night* gap specifically. It did not:
+the day and night benefits differ by 0.0062, inside the ±0.02 noise band declared
+before the run. The learned fusion gate independently agrees, moving the wrong way
+(0.522 day → 0.660 night, i.e. *toward* the camera at night).
+
+What the data does support is that radar closes the **range** gap. Camera-only
+far-range mAP is 0.0124 *in daylight* — depth inference has effectively failed by
+35 m — and radar lifts it to 0.1020 (8.2×), with a similar 12.4× at night:
+
+| range bucket | day | night |
+|---|---|---|
+| near (0–20 m) | 1.1× | 8.5× |
+| mid (20–35 m) | 2.6× | 1.9× |
+| far (35–51 m) | **8.2×** | **12.4×** |
+
+Two things this does *not* show. The 7.7× overall night gain rests on a near-zero
+baseline, and absolute night mAP is still 0.044 — radar does not solve the night ODD
+problem. And because the gate was trained on 100% daytime data, its night behaviour
+is extrapolation: **the sensor-trust mechanism is itself outside its ODD**, failing
+exactly where trust arbitration matters most.
 
 ---
 

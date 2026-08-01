@@ -1,0 +1,32 @@
+=== [camera-only] start 2026-07-31 20:58:25 ===
+=== [camera-only] exit 0 at 2026-08-01 00:51:43 ===
+Epoch 10/12 | train 28.491 (hm 1.68 reg 2.06 seg 0.568 depth 1.339) | val 143.356 | BEV mIoU 0.144
+Epoch 11/12 | train 27.630 (hm 1.63 reg 2.00 seg 0.542 depth 1.315) | val 147.618 | BEV mIoU 0.142
+Epoch 12/12 | train 27.151 (hm 1.61 reg 1.96 seg 0.528 depth 1.301) | val 182.207 | BEV mIoU 0.130
+=== [camera+radar] start 2026-08-01 00:51:43 ===
+=== [camera+radar] exit 0 at 2026-08-01 03:14:31 ===
+Epoch 10/12 | train 27.409 (hm 1.50 reg 1.92 seg 0.528 depth 1.342) | val 130.644 | BEV mIoU 0.156 | gate 0.545
+Epoch 11/12 | train 26.536 (hm 1.46 reg 1.85 seg 0.503 depth 1.317) | val 154.074 | BEV mIoU 0.133 | gate 0.533
+Epoch 12/12 | train 26.048 (hm 1.43 reg 1.81 seg 0.488 depth 1.303) | val 95.552 | BEV mIoU 0.170 | gate 0.522
+[chain] both arms done — running the 2x2 ablation
+[chain] ablation exit 0 — see logs/radar_ablation_run.log
+    mid   mAP 0.1618  (GT 3985)
+    far   mAP 0.1020  (GT 3142)
+
+[camera_radar / unseen_night] 3 scenes, 121 frames
+  mAP 0.0439 | GT 2956 | gate 0.660
+    near  mAP 0.0530  (GT 980)
+    mid   mAP 0.0703  (GT 1274)
+    far   mAP 0.0783  (GT 610)
+
+==============================================================
+                    unseen day    unseen night
+--------------------------------------------------------------
+camera                  0.1410          0.0057
+camera_radar            0.1855          0.0439
+==============================================================
+day benefit  : +0.0444
+night benefit: +0.0382   <-- the Phase 10 claim
+mean gate    : day 0.522 -> night 0.660 (NO shift toward radar)
+
+wrote logs/radar_ablation.json

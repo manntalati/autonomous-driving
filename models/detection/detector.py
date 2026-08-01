@@ -40,12 +40,22 @@ class FPNDetector(nn.Module):
             return cls_logits, bbox_deltas, anchors
         return self.postprocess(cls_logits, bbox_deltas, anchors, image_size)
 
-    def postprocess(self, cls_logits: List[torch.Tensor], bbox_deltas: List[torch.Tensor], anchors: torch.Tensor, image_size: Tuple[int, int]) -> Tuple[List[torch.Tensor], List[torch.Tensor], List[torch.Tensor]]:
+    def postprocess(self, cls_logits: List[torch.Tensor], bbox_deltas: List[torch.Tensor], anchors: torch.Tensor, image_size: Tuple[int, int], return_indices: bool = False):
         """
         1. Decode deltas → absolute boxes
         2. Sigmoid scores, threshold
         3. Apply NMS per class
         4. Return top-k detections
+
+        Args:
+          return_indices — also return, per image, the anchor index each surviving
+            detection came from. Phase 11 samples uncertainty at the anchor level
+            (the anchor grid is fixed across stochastic passes, so per-anchor
+            variance needs no cross-pass matching); these indices are the bridge
+            back to per-detection features.
+
+        Returns: (boxes, scores, labels) or, with return_indices,
+                 (boxes, scores, labels, anchor_indices).
         """
         cls_logits_cat = torch.cat(cls_logits, dim=1)  # (B, N, C)
         bbox_deltas_cat = torch.cat(bbox_deltas, dim=1)  # (B, N, 4)
@@ -56,6 +66,7 @@ class FPNDetector(nn.Module):
         all_boxes: List[torch.Tensor] = []
         all_scores: List[torch.Tensor] = []
         all_labels: List[torch.Tensor] = []
+        all_indices: List[torch.Tensor] = []
 
         for b in range(B):
             scores_b = torch.sigmoid(cls_logits_cat[b])  # (N, C)
@@ -71,6 +82,7 @@ class FPNDetector(nn.Module):
             img_boxes: List[torch.Tensor] = []
             img_scores: List[torch.Tensor] = []
             img_labels: List[torch.Tensor] = []
+            img_indices: List[torch.Tensor] = []
 
             for c in range(self.num_classes):
                 cls_scores = scores_b[:, c]
@@ -79,6 +91,8 @@ class FPNDetector(nn.Module):
                     continue
                 cand_boxes = boxes_b[keep_mask]
                 cand_scores = cls_scores[keep_mask]
+                # anchor ids of the thresholded candidates, so they survive NMS
+                cand_idx = torch.nonzero(keep_mask, as_tuple=False).squeeze(1)
 
                 # Guard against box_utils.nms crash on empty input (Bug #6).
                 if cand_boxes.numel() == 0:
@@ -90,11 +104,13 @@ class FPNDetector(nn.Module):
                 img_labels.append(
                     torch.full((nms_keep.numel(),), c, dtype=torch.long, device=device)
                 )
+                img_indices.append(cand_idx[nms_keep])
 
             if len(img_boxes) > 0:
                 final_boxes = torch.cat(img_boxes, dim=0)
                 final_scores = torch.cat(img_scores, dim=0)
                 final_labels = torch.cat(img_labels, dim=0)
+                final_indices = torch.cat(img_indices, dim=0)
 
                 # Keep only top-k detections overall (by score).
                 if final_scores.numel() > self.max_detections:
@@ -102,13 +118,18 @@ class FPNDetector(nn.Module):
                     final_boxes = final_boxes[topk.indices]
                     final_scores = topk.values
                     final_labels = final_labels[topk.indices]
+                    final_indices = final_indices[topk.indices]
             else:
                 final_boxes = torch.zeros((0, 4), device=device)
                 final_scores = torch.zeros((0,), device=device)
                 final_labels = torch.zeros((0,), dtype=torch.long, device=device)
+                final_indices = torch.zeros((0,), dtype=torch.long, device=device)
 
             all_boxes.append(final_boxes)
             all_scores.append(final_scores)
             all_labels.append(final_labels)
+            all_indices.append(final_indices)
 
+        if return_indices:
+            return all_boxes, all_scores, all_labels, all_indices
         return all_boxes, all_scores, all_labels

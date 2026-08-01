@@ -1,0 +1,56 @@
+# Phase 10 ablation — CAMERA-ONLY arm.
+# Byte-identical to bev_surround.yaml except for ckpt_path, so the only
+# difference from bev_radar.yaml is the radar block itself. Written to a
+# separate checkpoint so the Phase 8 surround model is not overwritten.
+# Phase 5 upgrade — 6-camera surround Lift-Splat-Shoot BEV detection.
+# All six cameras splat into one shared 360° ego-frame BEV grid.
+
+# data
+data_root: data/raw/v1.0-trainval
+batch_size: 1            # 6 cameras/sample → 6× backbone passes; keep batch tiny
+num_classes: 3           # detection classes — car / pedestrian / cyclist
+num_seg_classes: 5       # BEV map classes — background / drivable / lane / ped_crossing / walkway
+
+# input
+image_size: [448, 800]
+
+# the six surround cameras
+cameras: [CAM_FRONT, CAM_FRONT_LEFT, CAM_FRONT_RIGHT, CAM_BACK, CAM_BACK_LEFT, CAM_BACK_RIGHT]
+
+# backbone
+pretrained: true
+
+# BEV grid — full 360° around the ego vehicle (vs the CAM_FRONT-only forward half-plane)
+xbound: [-51.2, 51.2, 0.8]    # 128 cells
+ybound: [-51.2, 51.2, 0.8]    # 128 cells
+zbound: [-10.0, 10.0, 20.0]
+dbound: [4.0, 50.0, 1.0]
+
+# feature dim
+bev_channels: 64
+
+# loss weights — the CenterNet detection heatmap loss is large, so the
+# segmentation and depth terms are up-weighted to influence the shared features.
+seg_weight: 20.0
+depth_weight: 10.0
+
+# training
+epochs: 12
+lr: 0.001
+backbone_lr_scale: 0.1
+weight_decay: 0.0001
+scheduler: cosine
+patience: 10
+grad_clip: 1.0
+ckpt_path: checkpoints/bev_surround_p10_best.pt
+
+# ── Phase 10 ablation: fixed-epoch training ─────────────────────────────────
+# BEV mIoU is noise-dominated at this dataset size (camera arm ranged 0.12-0.19
+# across 12 epochs with no trend), so early-stopping on it selects an arbitrary
+# epoch. Both arms therefore train for exactly 12 epochs and the ablation
+# compares the FINAL checkpoints, which are matched by construction.
+# 12 epochs matches where the camera arm's early stop fired, so no information
+# is lost relative to the original run.
+early_stop: false
+last_ckpt_path: checkpoints/bev_surround_p10_last.pt
+seed: 0

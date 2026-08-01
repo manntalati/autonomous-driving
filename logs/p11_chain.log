@@ -1,0 +1,24 @@
+=== [P11 arm A: no epistemic] start 2026-07-31 15:08:03 ===
+=== [arm A] exit 0 at 2026-07-31 15:14:02 ===
+==============================================================================
+cell                      n  AUROC head  AUROC raw  ECE head  ECE raw
+------------------------------------------------------------------------------
+train_cell            47001       0.941      0.907     0.003    0.086
+unseen_day            22756       0.932      0.920     0.005    0.086
+unseen_night          11899       0.817      0.767     0.012    0.063
+==============================================================================
+wrote logs/introspection_nomc.json
+=== [P11 arm B: MC-dropout, 20 samples] start 2026-07-31 15:14:02 ===
+    (20x the forward cost — this is the long one)
+=== [P11 arm B: MC-dropout, 20 samples] restart 2026-07-31 15:25:13 ===
+=== [arm B] exit 0 at 2026-07-31 16:01:06 ===
+Python(92949) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+
+==============================================================================
+cell                      n  AUROC head  AUROC raw  ECE head  ECE raw
+------------------------------------------------------------------------------
+train_cell            47001       0.943      0.907     0.003    0.086
+unseen_day            22756       0.931      0.920     0.006    0.086
+unseen_night          11899       0.821      0.767     0.011    0.063
+==============================================================================
+wrote logs/introspection_mc.json

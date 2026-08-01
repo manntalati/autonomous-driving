@@ -1,0 +1,27 @@
+device: cpu
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+[harvest] introspection-train = trainval val (13 scenes)
+  harvest: 47001 detections, 2489 TP / 44512 FP (positive rate 0.053), pos_weight 17.88
+    epoch  50  loss 0.7036
+    epoch 100  loss 0.6183
+    epoch 150  loss 0.5948
+    epoch 200  loss 0.5792
+  fitted calibration: a=0.969 b=-2.831
+[saved] checkpoints/introspection_mc.pt
+
+[eval] unseen_day: ['scene-0103', 'scene-0553', 'scene-0655', 'scene-0757', 'scene-0796', 'scene-0916']
+Python(90274) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(90300) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+
+[eval] unseen_night: ['scene-1077', 'scene-1094', 'scene-1100']
+Python(92928) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(92949) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+
+==============================================================================
+cell                      n  AUROC head  AUROC raw  ECE head  ECE raw
+------------------------------------------------------------------------------
+train_cell            47001       0.943      0.907     0.003    0.086
+unseen_day            22756       0.931      0.920     0.006    0.086
+unseen_night          11899       0.821      0.767     0.011    0.063
+==============================================================================
+wrote logs/introspection_mc.json

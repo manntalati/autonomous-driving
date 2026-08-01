@@ -1,0 +1,20 @@
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/albumentations/core/validation.py:114: UserWarning: ShiftScaleRotate is a special case of Affine transform. Please use Affine transform instead.
+  original_init(self, **validated_kwargs)
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+Warm-started from checkpoints/detector_best.pt
+Best checkpoint -> checkpoints/detector_dropout_best.pt
+Epoch 1/20 | train: 0.6602 (pos/img 21.0) | val: 0.4458 (pos/img 33.5) | mAP: 0.240 [0.550 0.141 0.029]
+Epoch 2/20 | train: 0.4179 (pos/img 21.0) | val: 0.4368 (pos/img 33.5) | mAP: 0.249 [0.545 0.152 0.051]
+Epoch 3/20 | train: 0.4054 (pos/img 21.0) | val: 0.4242 (pos/img 33.5) | mAP: 0.270 [0.561 0.151 0.097]
+Epoch 4/20 | train: 0.4039 (pos/img 21.0) | val: 0.4362 (pos/img 33.5) | mAP: 0.249 [0.564 0.156 0.026]
+Epoch 5/20 | train: 0.3936 (pos/img 21.0) | val: 0.4550 (pos/img 33.5) | mAP: 0.240 [0.547 0.154 0.019]
+Epoch 6/20 | train: 0.3910 (pos/img 21.0) | val: 0.4238 (pos/img 33.5) | mAP: 0.274 [0.569 0.153 0.098]
+Epoch 7/20 | train: 0.3818 (pos/img 20.9) | val: 0.4318 (pos/img 33.5) | mAP: 0.274 [0.566 0.155 0.101]
+Epoch 8/20 | train: 0.3812 (pos/img 21.1) | val: 0.4473 (pos/img 33.5) | mAP: 0.252 [0.557 0.120 0.078]
+Epoch 9/20 | train: 0.3810 (pos/img 21.0) | val: 0.4540 (pos/img 33.5) | mAP: 0.259 [0.552 0.153 0.072]
+Epoch 10/20 | train: 0.3551 (pos/img 21.0) | val: 0.4275 (pos/img 33.5) | mAP: 0.252 [0.555 0.162 0.038]
+Epoch 11/20 | train: 0.2897 (pos/img 21.0) | val: 0.4393 (pos/img 33.5) | mAP: 0.245 [0.551 0.159 0.025]
+Epoch 12/20 | train: 0.2748 (pos/img 21.0) | val: 0.4291 (pos/img 33.5) | mAP: 0.253 [0.555 0.132 0.071]
+Early stopping triggered. Best mAP: 0.274

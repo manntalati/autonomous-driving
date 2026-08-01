@@ -1,0 +1,47 @@
+# Phase 11 — detector fine-tuned WITH dropout, so MC-dropout has something to sample.
+#
+# Identical to detector.yaml except for the dropout, the warm start, and a lower
+# LR. The architecture is unchanged: Dropout2d modules hold no parameters, so
+# detector_best.pt loads into this model with strict=True and the conv keys are
+# byte-identical (models/detection/head.py builds the tower with explicit names
+# for exactly this reason).
+#
+# Why fine-tune rather than train from scratch: the features are already good
+# (mAP 0.285 on unseen day). What the model has never seen is its own activations
+# being randomly zeroed, so it only needs to adapt to dropout noise — which is why
+# this converges in a fraction of the original run.
+
+# data
+data_root: data/raw/v1.0-trainval
+batch_size: 4
+
+# model — identical geometry to detector.yaml, do not touch
+num_classes: 3
+num_anchors: 3
+scales: [128, 64, 32]
+aspect_ratios: [0.5, 1.0, 2.0]
+strides: [32, 16, 8]
+
+# backbone
+pretrained: true
+init_from: checkpoints/detector_best.pt
+
+# ── Phase 11 ────────────────────────────────────────────────────────────────
+# Dropout2d probability in the shared detection tower. 0.2 is a compromise:
+# too low and the stochastic passes are near-identical (variance ~0, MC-dropout
+# tells you nothing); too high and the fine-tune degrades mAP, which would
+# confound the P11 comparison against the non-dropout baseline.
+head_dropout: 0.2
+
+# training — lower LR and fewer epochs than the original run; this is an
+# adaptation, not a fresh fit.
+epochs: 20
+lr: 0.0002
+backbone_lr_scale: 0.1
+weight_decay: 0.0001
+scheduler: cosine
+patience: 6
+grad_clip: 1.0
+
+# NEVER write to detector_best.pt — Phase 9's entire audit is measured against it.
+ckpt_path: checkpoints/detector_dropout_best.pt

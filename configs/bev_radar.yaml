@@ -18,6 +18,9 @@ use_radar: true
 radar_channels: [RADAR_FRONT, RADAR_FRONT_LEFT, RADAR_FRONT_RIGHT, RADAR_BACK_LEFT, RADAR_BACK_RIGHT]
 radar_in_channels: 5          # occupancy / rcs / vx / vy / speed
 radar_encoder_channels: 64    # must equal bev_channels for gated fusion
+radar_dilate: 1               # each return paints a 3x3 cell neighbourhood;
+                              # raises grid occupancy ~1.5% -> ~8% so the encoder
+                              # is not just convolving zeros
 fusion_mode: gated            # "concat" | "gated" — run both, report both
 radar_filter_invalid: true
 log_gate_stats: true          # per-frame mean gate, for the day/night gate plot
@@ -39,7 +42,7 @@ seg_weight: 20.0
 depth_weight: 10.0
 
 # training
-epochs: 40
+epochs: 12
 lr: 0.001
 backbone_lr_scale: 0.1
 weight_decay: 0.0001
@@ -47,3 +50,14 @@ scheduler: cosine
 patience: 10
 grad_clip: 1.0
 ckpt_path: checkpoints/bev_radar_best.pt
+
+# ── Phase 10 ablation: fixed-epoch training ─────────────────────────────────
+# BEV mIoU is noise-dominated at this dataset size (camera arm ranged 0.12-0.19
+# across 12 epochs with no trend), so early-stopping on it selects an arbitrary
+# epoch. Both arms therefore train for exactly 12 epochs and the ablation
+# compares the FINAL checkpoints, which are matched by construction.
+# 12 epochs matches where the camera arm's early stop fired, so no information
+# is lost relative to the original run.
+early_stop: false
+last_ckpt_path: checkpoints/bev_radar_last.pt
+seed: 0
