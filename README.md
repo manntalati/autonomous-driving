@@ -6,9 +6,11 @@ A full autonomous driving perception pipeline built **from scratch** in PyTorch 
 
 The training data here is 3,376 keyframes of clear daylight. Evaluated on held-out daytime frames the detector reaches **mAP 0.285**. Evaluated on night footage it has never seen, it collapses to **mAP 0.095** — a 67% drop, with cyclists falling 87%. Nothing warns you this is happening. The detector reports the same confidence scores it always did.
 
-That silent failure — not raw accuracy — is the open problem in autonomous driving deployment. Phases 0–8 build the perception stack. Phases 9–12 measure where it breaks, close the gap with radar, and wrap it in a monitor that knows when its own output should not be trusted.
+That silent failure — not raw accuracy — is the open problem in autonomous driving deployment. Phases 0–8 build the perception stack. **Phases 9–13 are an investigation into where it breaks**, run as three hypotheses each with a pre-registered failure condition. Two were refuted by their own tests; the third was confirmed and then largely overturned by a cheaper fix. What survived is documented below alongside what did not.
 
-Built as a deep learning capstone covering the modern CV stack: linear classifiers, CNNs, object detection, dense prediction, Vision Transformers, BEV transforms, temporal attention — plus uncertainty quantification, sensor fusion, and an agentic runtime monitor.
+Built as a deep learning capstone covering the modern CV stack: linear classifiers, CNNs, object detection, dense prediction, Vision Transformers, BEV transforms, temporal attention — plus uncertainty quantification, sensor fusion, cross-camera transfer, and an agentic runtime monitor.
+
+**Run it:** `streamlit run demo/showcase.py`
 
 ---
 ## Demo
@@ -192,6 +194,12 @@ In depth architecture: [Architecture Plan](architecture_plan.md)
 
 **Result: the hypothesis was refuted, and a different mechanism confirmed.**
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/range_gap_dark.png">
+  <img alt="Radar closes the range gap, not the night gap: grouped bars of BEV mAP by range bucket for camera-only vs camera+radar, in daylight and at night" src="docs/figures/range_gap_light.png" width="100%">
+</picture>
+
+
 | | unseen day | unseen night |
 |---|---|---|
 | camera only | 0.1410 | 0.0057 |
@@ -227,11 +235,33 @@ exactly where trust arbitration matters most.
 
 | Ticket | Task | Status |
 |---|---|---|
-| `P11-1` | Epistemic uncertainty via MC-dropout / ensemble over the detector | [ ] |
+| `P11-1` | Epistemic uncertainty via MC-dropout / ensemble over the detector | [✅] |
 | `P11-2` | Cross-modal disagreement signal (radar ⟂ camera) | [ ] |
-| `P11-3` | Introspection head: signals → P(detection is correct) | [ ] |
-| `P11-4` | Calibration + failure-prediction metrics (ECE, AUROC, risk-coverage) | [ ] |
-| `P11-5` | Per-frame trust score + ODD boundary threshold | [ ] |
+| `P11-3` | Introspection head: signals → P(detection is correct) | [✅] |
+| `P11-4` | Calibration + failure-prediction metrics (ECE, AUROC, risk-coverage) | [✅] |
+| `P11-5` | Per-frame trust score + ODD boundary threshold | [✅] |
+
+**Calibration is the win.** On night footage the introspection head reaches ECE
+**0.012** against the raw detector score's **0.063** — and unlike accuracy, that
+holds across the ODD boundary (its night ECE is no worse than its day ECE).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/calibration_dark.png">
+  <img alt="Reliability diagram on the night set: the introspection head tracks the diagonal while the raw detector score sits consistently below it" src="docs/figures/calibration_light.png" width="70%">
+</picture>
+
+**Ranking is not.** A controlled A/B on one checkpoint — same detections, the only
+difference being whether epistemic features are attached — found MC-dropout adds
+**+0.004 AUROC at night against a ±0.006 confidence interval**. Noise. The cause is
+measurable: `score_var` peaks around 2e-05 because dropout sits only in the
+detection head, not the backbone, so the sampled posterior is far too narrow.
+
+And abstention buys less than hoped, because the problem upstream is too severe:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/risk_coverage_dark.png">
+  <img alt="Risk-coverage curves on night footage: the introspection head and raw score curves nearly coincide, both rising to a 0.97 base error rate" src="docs/figures/risk_coverage_light.png" width="70%">
+</picture>
 
 ---
 
@@ -246,6 +276,91 @@ exactly where trust arbitration matters most.
 | `P12-3` | Slow tier: event-triggered LLM advisories with memory of what was already said | [ ] |
 | `P12-4` | Abstention behaviour driven by the Phase 11 trust score | [ ] |
 | `P12-5` | Streaming eval: warning lead time, false-alarm rate, abstention correctness | [ ] |
+
+---
+
+### Phase 13: Bring Your Own Video
+
+> **Goal:** Run the stack on footage the user supplies, not on nuScenes — and be honest about what survives the trip.
+
+```bash
+streamlit run demo/byo_app.py     # upload a clip, pick your camera geometry, run
+```
+
+| Ticket | Task | Status |
+|---|---|---|
+| `P13-1` | Video ingest, FOV normalisation, estimated intrinsics/extrinsics | [✅] |
+| `P13-2` | Test-time BatchNorm adaptation (AdaBN) on the user's own frames | [✅] |
+| `P13-3` | Simulated-foreign-camera benchmark (optics / ISP / codec / motion) | [✅] |
+| `P13-4` | Cross-camera robustness retrain, scored on that benchmark | [✅] |
+
+**Result: the free geometric fix beats the retrain.** Scoring both detectors with
+and without FOV normalisation — the step the demo actually performs — gives a 2×2
+that separates the two interventions:
+
+| Simulated camera | base | base + FOV norm | robust | robust + FOV norm |
+|---|---|---|---|---|
+| phone, 78° | 0.2218 | **0.2794** | 0.2470 | 0.2562 |
+| dashcam, 110° | 0.1541 | 0.2296 | 0.1797 | **0.2387** |
+| action cam, 140° | 0.0303 | 0.0234 | 0.0357 | **0.0420** |
+| **mean** | 0.1354 | **0.1775** | 0.1541 | 0.1790 |
+
+- **FOV normalisation alone: +31%.** Augmentation alone: +14%. A free inference-time
+  crop is worth more than twice a two-hour retrain that also costs 8% native mAP.
+- **Together: +32%** — the retrain adds ~1% on top of normalisation. Strongly
+  sub-additive, because both interventions address scale.
+- On phone footage the **baseline beats the robust model** once normalised
+  (0.2794 vs 0.2562): the retrain's native-accuracy cost surfaces exactly when
+  normalisation restores near-native conditions.
+
+What survives is narrower and more useful: **the retrain's value grows with FOV.**
+At 140° it nearly doubles the normalised baseline (0.0234 → 0.0420), because a
+23%-width crop upscales heavily and the augmentation trained on that degradation —
+while normalisation alone actually *hurt* the baseline there. So the deployment
+rule is per-camera: baseline + normalisation up to ~80°, the robust checkpoint
+beyond it.
+
+An earlier version of this section reported the retrain as a clear win (+14% for
+−8%). That measurement was real but taken against un-normalised input, which is
+not the path the demo runs — a reminder to benchmark the pipeline you deploy, not
+the model in isolation.
+
+**What transfers.** Detection and segmentation run directly on your video. BEV
+needs camera intrinsics *and* camera→ego extrinsics, which no consumer video file
+carries — both are **estimated** from the FOV and mount geometry you supply, so
+every BEV output on this path rests on assumptions rather than calibration. Radar
+cannot run at all; there is no sensor.
+
+**The biggest fix is geometric, not learned.** The detector's anchor scales are
+calibrated for nuScenes CAM_FRONT, measured at **64.8° HFOV** (fx = 1261 px at
+1600 px wide). A 120° dashcam sees roughly twice as wide, so every object lands at
+about half the pixel scale the anchors expect and the detector misses
+systematically. `fov_normalize` centre-crops to exactly the training FOV before
+inference — a 120° camera keeps 36.6% of its width — which recovers more than any
+amount of colour augmentation would, and costs nothing.
+
+**How far the models actually fall.** `data/foreign_camera.py` simulates another
+camera's optics, ISP, compression and motion blur, so cross-camera transfer gets a
+number instead of an impression:
+
+| Simulated camera | mAP | Retained vs native |
+|---|---|---|
+| native (nuScenes) | 0.2853 | — |
+| phone, 78° | 0.2218 | 78% |
+| dashcam, 110° | 0.1541 | 54% |
+| action cam, 140° | 0.0303 | **11%** |
+
+That benchmark needed one correctness fix worth stating: the FOV simulation shrinks
+image content toward the centre, so ground-truth boxes must move with the pixels.
+Leaving them at their original coordinates measures misalignment rather than
+robustness — a *perfect* detector scores near zero. Both paths derive the transform
+from one function so they cannot drift apart.
+
+**Expect the trust layer to fire.** Phase 9 measured a 67% collapse moving from day
+to night inside a single dataset. Your footage is a different camera, different
+optics, different colour pipeline and a different mounting — further out of
+distribution than that. The stack degrading and reporting **OUTSIDE ODD** is the
+thesis working on real input, not the demo failing.
 
 ---
 
@@ -420,6 +535,11 @@ Every earlier phase blamed its modest numbers on dataset size. That explanation 
 
 **The setup.** Two nuScenes roots are present. The downloaded trainval blob is 85 scenes (scene-0001…0102), 3,376 CAM_FRONT keyframes — and **100% daytime, clear weather**; a keyword scan over all 85 hand-written scene descriptions finds no mention of night, rain, or dusk. The mini split contains three night scenes: 1077, 1094 ("Night, after rain"), and 1100 ("Night… difficult lighting"). Only scene-0061 overlaps the blob, and it is a day scene. **The night scenes are therefore provably unseen by any trainval-trained model** — a zero-shot day→night transfer benchmark with no contamination.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/day_night_dark.png">
+  <img alt="Detection collapses at night: mAP across four conditions, with the mini-day control scoring like trainval-day" src="docs/figures/day_night_light.png" width="100%">
+</picture>
+
 `evaluation/day_night_audit.py` evaluates one checkpoint across four condition cells (and refuses to report anything if a night scene is found in the training set):
 
 | Cell | Frames | mAP | Car | Ped | Cyclist |
@@ -464,7 +584,9 @@ The full pipeline runs all three models in **57 ms/frame (17.5 FPS)** — intera
 
 The consistent thread across every phase: each module works and is built from scratch, but nuScenes mini (~400 samples) is small enough that pretrained features help enormously while extra capacity (ViT, temporal attention) mostly overfits. The architecture is sound; the data is the ceiling.
 
-Run the demo with `streamlit run demo/app.py` (after `pip install streamlit`).
+**Run the showcase:** `streamlit run demo/showcase.py` — a single entry point with
+the Phase 9–13 investigation, the live nuScenes demo, and bring-your-own-video.
+The agent demo runs separately (`streamlit run demo/agent_app.py`, needs an API key).
 
 ---
 

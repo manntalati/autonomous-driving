@@ -13,6 +13,7 @@ def get_loaders(
     cameras=None,
     data_root: str = "data/raw/v1.0-mini",
     batch_size: int = 4,
+    train_transform=None,
 ):
     """
     Build train and val DataLoaders for nuScenes detection.
@@ -23,7 +24,11 @@ def get_loaders(
     if nusc is None:
         nusc = NuScenes(version=version_from_data_root(data_root), dataroot=str(data_root), verbose=False)
     data_root = Path(data_root)
-    train_ds = NuScenesDetectionDataset(nusc, data_root, split="train", cameras=cameras)
+    # train_transform lets a config swap in the P13 cross-camera augmentation
+    # without touching the val pipeline — the val set must stay undegraded or the
+    # comparison against every earlier phase breaks.
+    train_ds = NuScenesDetectionDataset(nusc, data_root, split="train", cameras=cameras,
+                                        transform=train_transform)
     val_ds   = NuScenesDetectionDataset(nusc, data_root, split="val", cameras=cameras)
 
     train_loader = DataLoader(

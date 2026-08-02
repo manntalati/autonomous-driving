@@ -144,7 +144,15 @@ def main(cfg_path: str) -> None:
     with open(cfg_path) as f:
         cfg = yaml.safe_load(f)
     device = _pick_device()
-    train_loader, val_loader = get_loaders(data_root=cfg["data_root"], batch_size=cfg["batch_size"])
+    # P13: cross-camera augmentation for the bring-your-own-video use case.
+    train_tf = None
+    if cfg.get("robust_augment", False):
+        from data.transforms import get_robust_train_transforms
+        train_tf = get_robust_train_transforms()
+        print("Using P13 cross-camera augmentation (robust_augment: true)")
+    train_loader, val_loader = get_loaders(data_root=cfg["data_root"],
+                                           batch_size=cfg["batch_size"],
+                                           train_transform=train_tf)
     model = build_detector(cfg).to(device)
 
     # Optional warm start. Dropout modules hold no parameters, so a checkpoint
@@ -176,6 +184,17 @@ def main(cfg_path: str) -> None:
         mode="max",
         min_delta=1e-3,
     )
+    # FIXED-EPOCH MODE (P13). Early stopping here selects on NATIVE val mAP, but
+    # the cross-camera retrain deliberately trades a little native accuracy for
+    # foreign-camera accuracy — so that criterion would select against the goal.
+    # Same failure the BEV ablation hit when it selected on a metric that was not
+    # the one being reported. With early_stop: false both the best-by-mAP and the
+    # FINAL checkpoint are written, and foreign_camera_eval scores the final one.
+    use_early_stop = cfg.get("early_stop", True)
+    last_path = cfg.get("last_ckpt_path")
+    if not use_early_stop:
+        print(f"Fixed-epoch mode: {cfg['epochs']} epochs, no early stopping.")
+
     for epoch in range(cfg["epochs"]):
         train_log = train_one_epoch(model, train_loader, optimizer, loss, device, scaler, grad_clip)
         val_log = val_one_epoch(model, val_loader, loss, device, cfg["num_classes"])
@@ -188,9 +207,14 @@ def main(cfg_path: str) -> None:
             f"mAP: {val_log['mAP']:.3f} [{per_cls}]"
         )
         early_stop(val_log["mAP"], model)
-        if early_stop.should_stop:
+        if last_path:
+            torch.save(model.state_dict(), last_path)
+        if use_early_stop and early_stop.should_stop:
             print(f"Early stopping triggered. Best mAP: {early_stop.best:.3f}")
             break
+
+    if not use_early_stop and last_path:
+        print(f"Final checkpoint (epoch {cfg['epochs']}) -> {last_path}")
 
 if __name__ == "__main__":
     import sys

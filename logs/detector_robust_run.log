@@ -1,0 +1,28 @@
+Using P13 cross-camera augmentation (robust_augment: true)
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+Warm-started from checkpoints/detector_best.pt
+Best checkpoint -> checkpoints/detector_robust_best.pt
+Fixed-epoch mode: 20 epochs, no early stopping.
+/Users/manntalati/Documents/Projects/autonomous-driving/.venv/lib/python3.14/site-packages/torch/utils/data/dataloader.py:692: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  warnings.warn(warn_msg)
+Epoch 1/20 | train: 1.0020 (pos/img 15.0) | val: 0.4079 (pos/img 33.5) | mAP: 0.258 [0.557 0.161 0.057]
+Epoch 2/20 | train: 7.7762 (pos/img 15.0) | val: 0.4081 (pos/img 33.5) | mAP: 0.254 [0.563 0.163 0.035]
+Epoch 3/20 | train: 0.5378 (pos/img 15.4) | val: 0.4087 (pos/img 33.5) | mAP: 0.276 [0.561 0.156 0.111]
+Epoch 4/20 | train: 0.5140 (pos/img 15.1) | val: 0.4213 (pos/img 33.5) | mAP: 0.257 [0.559 0.170 0.042]
+Epoch 5/20 | train: 0.4419 (pos/img 15.2) | val: 0.4037 (pos/img 33.5) | mAP: 0.253 [0.570 0.161 0.028]
+Epoch 6/20 | train: 0.4302 (pos/img 15.1) | val: 0.4020 (pos/img 33.5) | mAP: 0.249 [0.560 0.160 0.026]
+Epoch 7/20 | train: 0.4093 (pos/img 15.1) | val: 0.3976 (pos/img 33.5) | mAP: 0.265 [0.566 0.173 0.056]
+Epoch 8/20 | train: 0.4046 (pos/img 15.1) | val: 0.3898 (pos/img 33.5) | mAP: 0.257 [0.579 0.168 0.024]
+Epoch 9/20 | train: 0.3975 (pos/img 15.3) | val: 0.3942 (pos/img 33.5) | mAP: 0.259 [0.573 0.172 0.030]
+Epoch 10/20 | train: 0.3911 (pos/img 15.3) | val: 0.3947 (pos/img 33.5) | mAP: 0.256 [0.575 0.159 0.033]
+Epoch 11/20 | train: 0.3795 (pos/img 15.1) | val: 0.3950 (pos/img 33.5) | mAP: 0.260 [0.570 0.171 0.040]
+Epoch 12/20 | train: 0.3766 (pos/img 15.2) | val: 0.3941 (pos/img 33.5) | mAP: 0.268 [0.574 0.174 0.056]
+Epoch 13/20 | train: 0.3967 (pos/img 15.0) | val: 0.3944 (pos/img 33.5) | mAP: 0.263 [0.571 0.176 0.042]
+Epoch 14/20 | train: 0.3659 (pos/img 15.2) | val: 0.3899 (pos/img 33.5) | mAP: 0.259 [0.570 0.168 0.039]
+Epoch 15/20 | train: 0.3777 (pos/img 15.1) | val: 0.3930 (pos/img 33.5) | mAP: 0.263 [0.574 0.173 0.042]
+Epoch 16/20 | train: 0.3703 (pos/img 15.0) | val: 0.3885 (pos/img 33.5) | mAP: 0.263 [0.573 0.177 0.039]
+Epoch 17/20 | train: 0.3664 (pos/img 15.1) | val: 0.3916 (pos/img 33.5) | mAP: 0.262 [0.577 0.176 0.033]
+Epoch 18/20 | train: 0.3611 (pos/img 15.2) | val: 0.3883 (pos/img 33.5) | mAP: 0.260 [0.575 0.173 0.033]
+Epoch 19/20 | train: 0.3619 (pos/img 15.2) | val: 0.3905 (pos/img 33.5) | mAP: 0.261 [0.575 0.169 0.039]
+Epoch 20/20 | train: 0.3664 (pos/img 15.1) | val: 0.3900 (pos/img 33.5) | mAP: 0.262 [0.574 0.174 0.038]
+Final checkpoint (epoch 20) -> checkpoints/detector_robust_last.pt

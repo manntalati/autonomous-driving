@@ -23,3 +23,20 @@ bev:
 det_score_threshold: 0.3
 bev_score_threshold: 0.3
 bev_max_detections: 50
+
+# ── Phase 10 A/B arm ────────────────────────────────────────────────────────
+# The radar-fused BEV model, for the side-by-side comparison panel. Both arms
+# come from the ablation: 12 fixed epochs, seed 0, final checkpoints, identical
+# configs apart from the radar block — so the panel shows the same comparison the
+# numbers came from. Optional: the demo falls back to camera-only BEV if this
+# checkpoint is absent.
+bev_radar:
+  config: configs/bev_radar.yaml
+  checkpoint: checkpoints/bev_radar_last.pt
+
+# The camera arm of the ablation, so the A/B panel compares like with like.
+# (the `bev:` entry above is the Phase-8 surround model used by the single-view
+# panel; it was trained under a different protocol and is NOT the ablation arm)
+bev_ab_camera:
+  config: configs/bev_surround_p10.yaml
+  checkpoint: checkpoints/bev_surround_p10_last.pt

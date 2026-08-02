@@ -46,6 +46,29 @@ class PerceptionPipeline:
         self.bev = _load(build_bev_detector(self.bev_cfg),
                          cfg["bev"]["checkpoint"], device)
 
+        # Phase 10 A/B arm. Optional: the demo still runs with camera-only BEV if
+        # the radar model has not been trained. Both arms come from the ablation
+        # (12 fixed epochs, seed 0, final checkpoints), so a side-by-side panel is
+        # showing the same comparison the numbers came from.
+        # BOTH arms are loaded from the ablation, never mixed with the Phase-8
+        # `bev` model above. That model was trained under a different protocol
+        # (early stopping on mIoU, different epoch count), so pairing it against
+        # the radar arm would reintroduce precisely the training-maturity confound
+        # the ablation was restructured to remove.
+        self.bev_radar = None
+        self.bev_radar_cfg = None
+        self.bev_ab_camera = None
+        self.bev_ab_camera_cfg = None
+        rad, cam = cfg.get("bev_radar"), cfg.get("bev_ab_camera")
+        if (rad and cam and Path(rad["checkpoint"]).exists()
+                and Path(cam["checkpoint"]).exists()):
+            self.bev_radar_cfg = yaml.safe_load(open(rad["config"]))
+            self.bev_radar = _load(build_bev_detector(self.bev_radar_cfg),
+                                   rad["checkpoint"], device)
+            self.bev_ab_camera_cfg = yaml.safe_load(open(cam["config"]))
+            self.bev_ab_camera = _load(build_bev_detector(self.bev_ab_camera_cfg),
+                                       cam["checkpoint"], device)
+
     @torch.no_grad()
     def process_frame(self, frame_window: torch.Tensor, intrinsic: torch.Tensor,
                       cam_to_ego: torch.Tensor, bev_surround=None) -> dict:
@@ -106,3 +129,66 @@ class PerceptionPipeline:
             "bev_boxes": bev_boxes, "bev_scores": bev_scores, "bev_labels": bev_labels,
             "bev_seg": bev_seg,
         }
+
+    @property
+    def has_radar_arm(self) -> bool:
+        return self.bev_radar is not None
+
+    @torch.no_grad()
+    def process_bev_pair(self, images: torch.Tensor, intrinsic: torch.Tensor,
+                         cam_to_ego: torch.Tensor, radar_bev: torch.Tensor) -> dict:
+        """
+        Run BOTH BEV arms on one frame for the Phase 10 side-by-side panel.
+
+        Args:
+          images — (1, N, 3, H, W) camera batch.
+          intrinsic — (1, N, 3, 3); cam_to_ego — (1, N, 4, 4).
+          radar_bev — (1, 5, X, Y) rasterized radar grid.
+
+        Returns: {"camera": {...}, "camera_radar": {...}, "gate": float|None},
+        each inner dict holding boxes / scores / labels / seg.
+
+        Both arms decode with the SAME score threshold. Using different thresholds
+        would let the panel show a difference that came from the decode step
+        rather than from radar.
+        """
+        if self.bev_radar is None or self.bev_ab_camera is None:
+            raise RuntimeError("A/B panel needs both ablation checkpoints")
+
+        # Validate the contract instead of letting a wrong rank surface as a
+        # confusing channel-count error deep inside the first convolution. A
+        # caller that forgets the batch dimension gets (6,3,H,W) flattened to 18
+        # "channels"; this says what actually went wrong.
+        if images.dim() != 5:
+            raise ValueError(
+                f"images must be (B, N, 3, H, W); got {tuple(images.shape)}. "
+                "Add a batch dimension — e.g. images.unsqueeze(0)."
+            )
+        want = next(self.bev_radar.parameters()).device
+        for name, t in (("images", images), ("intrinsic", intrinsic),
+                        ("cam_to_ego", cam_to_ego), ("radar_bev", radar_bev)):
+            if t is not None and t.device != want:
+                raise ValueError(
+                    f"{name} is on {t.device} but the model is on {want}; "
+                    "move every input with .to(pipeline.device)."
+                )
+
+        thr = self.cfg.get("bev_score_threshold", 0.3)
+        topk = self.cfg.get("bev_max_detections", 50)
+        out = {}
+        for name, model, mcfg, radar in (
+            ("camera", self.bev_ab_camera, self.bev_ab_camera_cfg, None),
+            ("camera_radar", self.bev_radar, self.bev_radar_cfg, radar_bev),
+        ):
+            o = model(images, intrinsic, cam_to_ego, radar_bev=radar)
+            b, s, l = decode_bev_detections(
+                o["heatmap"][0].cpu(), o["regression"][0].cpu(),
+                tuple(mcfg["xbound"]), tuple(mcfg["ybound"]),
+                score_threshold=thr, max_detections=topk,
+            )
+            out[name] = {"boxes": b, "scores": s, "labels": l,
+                         "seg": o["seg"][0].argmax(dim=0).cpu()}
+            if "gate" in o:
+                out["gate"] = o["gate"]
+        out.setdefault("gate", None)
+        return out

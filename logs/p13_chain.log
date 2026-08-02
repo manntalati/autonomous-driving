@@ -1,0 +1,13 @@
+=== [P13 robustness retrain] start 2026-08-01 14:05:54 ===
+=== [retrain] exit 0 at 2026-08-01 15:53:07 ===
+=== [foreign-camera eval on the retrained model] ===
+=== [eval] exit 0 at 2026-08-01 15:58:47 ===
+============================================================
+camera              mAP   vs native   retained
+------------------------------------------------------------
+native           0.2622                       
+phone            0.2470     -0.0152        94%
+dashcam          0.1797     -0.0825        69%
+action_cam       0.0357     -0.2266        14%
+============================================================
+wrote logs/foreign_camera_eval_robust.json

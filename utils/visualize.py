@@ -99,6 +99,151 @@ def draw_bev(bev_boxes, scores, labels, xbound, ybound, seg=None, canvas_px: int
     return canvas
 
 
+# ── Phase 10 visualisation ──────────────────────────────────────────────────
+# The P10-4 range buckets. Drawing them on the BEV canvas is what makes the
+# headline finding legible: camera-only mAP is 0.239 near and 0.012 far (in
+# daylight), while camera+radar holds 0.102 far. Without the band boundaries a
+# viewer cannot see *where* on the canvas the two models diverge.
+RANGE_BANDS = [("near", 0.0, 20.0), ("mid", 20.0, 35.0), ("far", 35.0, 51.2)]
+
+# Radar returns are drawn as CROSSES, not dots: shape carries identity so the
+# overlay never depends on colour alone (the three class colours are already
+# pure R/G/B, and a fourth hue would be one confusion away from a cyclist box).
+RADAR_COLOR = (255, 255, 0)      # BGR — cyan
+
+
+def draw_radar_points(canvas: np.ndarray, radar_points, xbound, ybound,
+                      color=RADAR_COLOR, min_size: int = 2, max_size: int = 5) -> np.ndarray:
+    """
+    Overlay ego-frame radar returns on an existing BEV canvas.
+
+    Args:
+      canvas — (P, P, 3) uint8 BEV image from draw_bev (modified in place and returned).
+      radar_points — (N, 6) [x, y, z, rcs, vx, vy] ego-frame returns.
+      xbound/ybound — the extent the canvas spans, matching draw_bev.
+      min_size/max_size — cross half-length in px, scaled by RCS so strong
+        reflectors read as larger marks.
+
+    Returns: the canvas.
+    """
+    pts = np.asarray(radar_points, dtype=np.float64).reshape(-1, 6)
+    if len(pts) == 0:
+        return canvas
+    p = canvas.shape[0]
+    x_lo, x_hi, _ = xbound
+    y_lo, y_hi, _ = ybound
+
+    rcs = pts[:, 3]
+    lo, hi = float(rcs.min()), float(rcs.max())
+    span = max(hi - lo, 1e-6)
+
+    for (x, y, _z, r, _vx, _vy) in pts:
+        col = int((y - y_lo) / (y_hi - y_lo) * p)
+        row = int(p - (x - x_lo) / (x_hi - x_lo) * p)
+        if not (0 <= col < p and 0 <= row < p):
+            continue
+        s = int(min_size + (r - lo) / span * (max_size - min_size))
+        cv2.line(canvas, (col - s, row), (col + s, row), color, 1, cv2.LINE_AA)
+        cv2.line(canvas, (col, row - s), (col, row + s), color, 1, cv2.LINE_AA)
+    return canvas
+
+
+def draw_range_bands(canvas: np.ndarray, xbound, ybound, label: bool = True) -> np.ndarray:
+    """
+    Draw the near/mid/far boundaries used by the P10-4 ablation.
+
+    Rings at 20 m and 35 m, brighter than draw_bev's decorative 10 m rings so the
+    analysis boundaries are the ones that read. Returns the canvas.
+    """
+    p = canvas.shape[0]
+    x_lo, x_hi, _ = xbound
+    metres_per_px = (x_hi - x_lo) / p
+    ego = (int((0.0 - ybound[0]) / (ybound[1] - ybound[0]) * p),
+           int(p - (0.0 - x_lo) / (x_hi - x_lo) * p))
+    for name, _lo, hi in RANGE_BANDS[:-1]:
+        cv2.circle(canvas, ego, int(hi / metres_per_px), (200, 200, 200), 1, cv2.LINE_AA)
+        if label:
+            ty = ego[1] - int(hi / metres_per_px)
+            if 10 < ty < p - 4:
+                cv2.putText(canvas, f"{hi:.0f}m", (ego[0] + 4, ty - 4),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.35, (200, 200, 200), 1, cv2.LINE_AA)
+    return canvas
+
+
+def _banner(canvas: np.ndarray, text: str, sub: str = "", height: int = 34) -> np.ndarray:
+    """Title strip above a panel. Text uses neutral ink, never a data colour."""
+    p = canvas.shape[1]
+    bar = np.full((height, p, 3), 24, dtype=np.uint8)
+    cv2.putText(bar, text, (8, 21), cv2.FONT_HERSHEY_SIMPLEX, 0.52, (245, 245, 245), 1, cv2.LINE_AA)
+    if sub:
+        (tw, _), _ = cv2.getTextSize(sub, cv2.FONT_HERSHEY_SIMPLEX, 0.42, 1)
+        cv2.putText(bar, sub, (p - tw - 8, 21), cv2.FONT_HERSHEY_SIMPLEX, 0.42,
+                    (170, 170, 170), 1, cv2.LINE_AA)
+    return np.vstack([bar, canvas])
+
+
+def draw_bev_comparison(left_bev: np.ndarray, right_bev: np.ndarray,
+                        left_title: str = "camera only", right_title: str = "camera + radar",
+                        left_sub: str = "", right_sub: str = "", gap_px: int = 2) -> np.ndarray:
+    """
+    Side-by-side BEV panels for the Phase 10 A/B comparison.
+
+    Args: two equal-size BEV canvases (from draw_bev, optionally with radar and
+      range bands already overlaid), plus per-panel titles and right-aligned
+      sub-labels (e.g. detection counts).
+
+    The panels are separated by a 2px surface gap rather than a border — the same
+    spacer rule the charts use. Identity comes from the titles and from position,
+    so the two sides need no colour coding of their own and the class colours
+    inside each panel keep their usual meaning.
+    """
+    if left_bev.shape != right_bev.shape:
+        raise ValueError(f"panels must match: {left_bev.shape} vs {right_bev.shape}")
+    l = _banner(left_bev, left_title, left_sub)
+    r = _banner(right_bev, right_title, right_sub)
+    gap = np.full((l.shape[0], gap_px, 3), 24, dtype=np.uint8)
+    return np.hstack([l, gap, r])
+
+
+def _ascii(text: str) -> str:
+    """
+    OpenCV's Hershey fonts are ASCII-only — anything outside renders as '???'.
+    Reason strings come from TrustScorer and titles are author-written, so both
+    can pick up en/em dashes and typographic quotes. Transliterate the common
+    offenders and drop the rest rather than shipping '???' into a demo.
+    """
+    for a, b in (("—", "-"), ("–", "-"), ("’", "'"), ("‘", "'"),
+                 ("“", '"'), ("”", '"'), ("×", "x"), ("≥", ">="), ("≤", "<=")):
+        text = text.replace(a, b)
+    return text.encode("ascii", "ignore").decode()
+
+
+def draw_trust_banner(width: int, trust: float, in_odd: bool, reason: str = "",
+                      height: int = 46) -> np.ndarray:
+    """
+    Phase 11/12 trust strip: per-frame trust score and ODD state.
+
+    Uses the reserved STATUS palette (good / critical), never a categorical hue,
+    and always ships text alongside the colour — state is never colour-alone.
+    """
+    good, critical = (122, 175, 27), (72, 73, 227)      # BGR of #1baf7a / #e34948
+    color = good if in_odd else critical
+    bar = np.full((height, width, 3), 24, dtype=np.uint8)
+    cv2.rectangle(bar, (0, 0), (6, height), color, -1)          # status keyline
+    state = "IN ODD" if in_odd else "OUTSIDE ODD - DO NOT RELY"
+    cv2.putText(bar, _ascii(f"trust {trust:.2f}   {state}"), (14, 19),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.48, (245, 245, 245), 1, cv2.LINE_AA)
+    if reason:
+        cv2.putText(bar, _ascii(reason)[:88], (14, 37), cv2.FONT_HERSHEY_SIMPLEX, 0.38,
+                    (170, 170, 170), 1, cv2.LINE_AA)
+    # trust meter, right-aligned
+    mx0, mx1 = width - 130, width - 14
+    cv2.rectangle(bar, (mx0, 12), (mx1, 22), (70, 70, 70), -1)
+    cv2.rectangle(bar, (mx0, 12), (mx0 + int((mx1 - mx0) * max(0.0, min(1.0, trust))), 22),
+                  color, -1)
+    return bar
+
+
 def draw_boxes(image, boxes, labels, scores=None) -> np.ndarray:
     """
     Draw colored bounding boxes and class labels onto an image.

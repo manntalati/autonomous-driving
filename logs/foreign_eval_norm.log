@@ -1,0 +1,23 @@
+Loaded ImageNet-pretrained ResNet-18 weights (120 params mapped)
+
+[native] 513 frames
+  mAP 0.2853 | AP [0.575, 0.157, 0.124]
+
+[phone] (78° FOV, q70) 513 frames
+  mAP 0.2794 | AP [0.561, 0.15, 0.127]
+
+[dashcam] (110° FOV, q45) 513 frames
+  mAP 0.2296 | AP [0.482, 0.107, 0.1]
+
+[action_cam] (140° FOV, q30) 513 frames
+  mAP 0.0234 | AP [0.068, 0.001, 0.001]
+
+============================================================
+camera              mAP   vs native   retained
+------------------------------------------------------------
+native           0.2853                       
+phone            0.2794     -0.0059        98%
+dashcam          0.2296     -0.0557        80%
+action_cam       0.0234     -0.2619         8%
+============================================================
+wrote logs/foreign_camera_eval_norm.json

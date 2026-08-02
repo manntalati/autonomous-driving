@@ -146,3 +146,53 @@ def get_seg_val_transforms(input_h=INPUT_H, input_w=INPUT_W):
             ToTensorV2(),
         ]
     )
+
+
+def get_robust_train_transforms(input_h=INPUT_H, input_w=INPUT_W):
+    """
+    P13 — augmentation aimed at CROSS-CAMERA transfer, for bring-your-own-video.
+
+    `get_train_transforms` augments for variation *within* nuScenes. This set
+    targets the specific ways another camera differs, each element chosen to match
+    a term measured by `evaluation/foreign_camera_eval.py`:
+
+      Affine(scale 0.35-1.0)  the dominant term. A 110-140 deg camera lands objects
+                              at 0.44-0.35 of the pixel scale the anchors expect;
+                              the baseline detector retains only 54% / 11% of its
+                              mAP there. This is bbox-aware, so boxes shrink with
+                              the content — the same correctness requirement that
+                              made the benchmark meaningful.
+      RandomGamma + ColorJitter  a different ISP curve and white balance.
+      ImageCompression(q 25-70)  consumer H.264/JPEG artifacts; nuScenes ships clean.
+      MotionBlur / Downscale     windscreen vibration, rolling shutter, and the
+                              resolution actually left after an FOV crop.
+
+    Horizontal flip and the standard geometric jitter are kept, so this is a
+    superset of the normal pipeline rather than a replacement for it.
+    """
+    return A.Compose(
+        [
+            A.Resize(input_h, input_w),
+            A.HorizontalFlip(p=0.5),
+            # Scale is the big one — wide-FOV cameras shrink everything.
+            A.Affine(scale=(0.35, 1.0), translate_percent=(-0.05, 0.05),
+                     rotate=(-4, 4), border_mode=cv2.BORDER_CONSTANT, fill=0, p=0.8),
+            A.RandomGamma(gamma_limit=(60, 160), p=0.5),
+            A.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.08, p=0.6),
+            A.OneOf([
+                A.MotionBlur(blur_limit=(3, 9)),
+                A.GaussianBlur(blur_limit=(3, 7)),
+                A.Downscale(scale_range=(0.35, 0.75)),
+            ], p=0.4),
+            A.ImageCompression(quality_range=(25, 70), p=0.5),
+            A.GaussNoise(p=0.15),
+            A.Normalize(mean=MEAN, std=STD),
+            ToTensorV2(),
+        ],
+        bbox_params=A.BboxParams(
+            format="pascal_voc",
+            label_fields=["labels"],
+            min_visibility=0.3,
+            clip=True,
+        ),
+    )

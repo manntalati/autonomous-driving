@@ -25,10 +25,13 @@ from pyquaternion import Quaternion
 from nuscenes.nuscenes import NuScenes
 
 from data.dataset import get_scene_split
+from data.radar_utils import load_radar_points, radar_bev_for_sample
 from data.transforms import MEAN, STD, INPUT_H, INPUT_W
 from demo.pipeline import PerceptionPipeline
 from demo.render_video import render_scene_video
-from utils.visualize import draw_boxes, overlay_segmentation, draw_bev
+from utils.visualize import (draw_bev, draw_bev_comparison, draw_boxes,
+                             draw_radar_points, draw_range_bands,
+                             overlay_segmentation)
 
 CAM = "CAM_FRONT"
 _MEAN = np.array(MEAN, dtype=np.float32)
@@ -130,7 +133,10 @@ def _surround_inputs(nusc, data_root: str, cam_sd_token: str, cameras):
 
 def main() -> None:
     """Streamlit entry point — scene picker, frame slider, unified perception view."""
-    st.set_page_config(page_title="AD Perception Demo", layout="wide")
+    try:
+        st.set_page_config(page_title="AD Perception Demo", layout="wide")
+    except Exception:
+        pass   # already configured by demo/showcase.py
     st.title("Autonomous Driving Perception — Unified Demo")
 
     pipeline, cfg, _ = load_pipeline(_CFG_PATH)
@@ -188,6 +194,83 @@ def main() -> None:
             render_scene_video(cfg, scene, out_path, fps=12,
                                 max_frames=n_frames, pipeline=pipeline)
         st.video(out_path)
+
+    # ── Phase 10: camera-only vs camera+radar, side by side ──────────────────
+    # The headline finding is a RANGE effect, so the panel draws the 20 m / 35 m
+    # analysis boundaries and the raw radar returns. Segmentation is deliberately
+    # off here: this comparison is about detections, and the BEV map's large
+    # colour fields drown the boxes that carry the story.
+    st.divider()
+    st.subheader("Phase 10 — does radar help? (camera only vs camera + radar)")
+    # Opt-in: this runs TWO 6-camera BEV forward passes (measured 3.5s) plus
+    # six uncached image loads. Running it on every rerun made each scene
+    # change and slider move stall before the rest of the page rendered, which
+    # looked like the scene picker and video renderer had stopped working.
+    run_ab = st.checkbox("Run the radar A/B comparison", value=False,
+                         help="Two 6-camera BEV passes, ~4 s per frame")
+    if not run_ab:
+        st.caption("Enable to compare camera-only vs camera+radar BEV on this frame.")
+    elif not pipeline.has_radar_arm:
+        st.info(
+            "Radar A/B unavailable — needs `checkpoints/bev_radar_last.pt` and "
+            "`checkpoints/bev_surround_p10_last.pt`. Train both arms with "
+            "`bash scripts/run_p10_ablation.sh`."
+        )
+    else:
+        rcfg = pipeline.bev_radar_cfg
+        XB, YB = tuple(rcfg["xbound"]), tuple(rcfg["ybound"])
+        ab_imgs, ab_K, ab_c2e = _surround_inputs(
+            nusc, cfg["data_root"], cam_tokens[frame_idx], rcfg["cameras"])
+        # _surround_inputs returns (N, ...) on CPU; the BEV models want a batch
+        # dimension and everything on the pipeline's device. Without the unsqueeze
+        # the model flattens (6,3,H,W) to 18 "channels"; without the .to() the
+        # camera tensors and the radar grid land on different devices.
+        ab_imgs = ab_imgs.unsqueeze(0).to(pipeline.device)
+        ab_K = ab_K.unsqueeze(0).to(pipeline.device)
+        ab_c2e = ab_c2e.unsqueeze(0).to(pipeline.device)
+        sample_tok = nusc.get("sample_data", cam_tokens[frame_idx])["sample_token"]
+        sample = nusc.get("sample", sample_tok)
+        radar_grid = torch.from_numpy(
+            radar_bev_for_sample(nusc, cfg["data_root"], sample, XB, YB)
+        ).float().unsqueeze(0).to(pipeline.device)
+        radar_pts = load_radar_points(nusc, cfg["data_root"], sample)
+
+        with st.spinner("Running both BEV arms…"):
+            ab = pipeline.process_bev_pair(ab_imgs, ab_K, ab_c2e, radar_grid)
+
+        show_radar = st.checkbox("Overlay radar returns", value=True)
+        panels = []
+        for key, title in (("camera", "camera only"), ("camera_radar", "camera + radar")):
+            canvas = draw_bev(ab[key]["boxes"], ab[key]["scores"], ab[key]["labels"],
+                              XB, YB, seg=None, canvas_px=420)
+            draw_range_bands(canvas, XB, YB)
+            if show_radar and key == "camera_radar":
+                draw_radar_points(canvas, radar_pts, XB, YB)
+            panels.append((canvas, title, f"{len(ab[key]['boxes'])} detections"))
+
+        st.image(draw_bev_comparison(panels[0][0], panels[1][0], panels[0][1],
+                                     panels[1][1], panels[0][2], panels[1][2]),
+                 width="stretch")
+
+        gate = ab.get("gate")
+        gate_note = ""
+        if gate is not None:
+            lean = "camera" if gate > 0.5 else "radar"
+            gate_note = (f" · fusion gate {gate:.3f} (leans {lean}; "
+                         f"ablation measured 0.522 day → 0.660 night)")
+        st.caption(
+            f"{len(radar_pts)} radar returns · rings at 20 m / 35 m mark the "
+            f"analysis buckets{gate_note}"
+        )
+        st.markdown(
+            "**What this shows.** Radar's benefit is concentrated at long range: "
+            "camera-only BEV mAP is 0.012 beyond 35 m *in daylight* versus 0.102 "
+            "with radar. It is **not** night-specific — day benefit +0.044 vs night "
+            "+0.038, inside the ±0.02 noise band declared before the run — so the "
+            "original illumination-invariance hypothesis was refuted. "
+            "Both arms: 12 fixed epochs, seed 0, final checkpoints, n=1."
+        )
+
 
 
 if __name__ == "__main__":
