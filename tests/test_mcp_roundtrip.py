@@ -9,8 +9,16 @@ import asyncio
 
 import pytest
 
-# Skip cleanly if the optional `mcp` dependency isn't installed yet.
-pytest.importorskip("mcp")
+# Skip cleanly if the optional MCP *server* stack isn't available.
+#
+# This guarded on plain `mcp` before, which is the wrong check: the client half
+# imports fine while the server subprocess is what needs FastMCP. When mcp 2.0
+# removed `mcp.server.fastmcp` the guard passed, the server died on import, and
+# the test failed with an opaque "Connection closed" instead of skipping.
+# Guard on the module the server actually imports.
+pytest.importorskip("mcp.server.fastmcp",
+                    reason="mcp.server.fastmcp unavailable (removed in mcp 2.0) "
+                           "— pin mcp<2.0 to run the MCP round-trip test")
 
 from agent.mcp_client import MCPClient
 

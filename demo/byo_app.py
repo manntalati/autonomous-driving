@@ -162,8 +162,11 @@ def main() -> None:
         st.caption(f"Adapted {n_bn} BatchNorm layers in the detector on "
                    f"{len(tensors)} of your frames.")
 
-    K = torch.from_numpy(estimate_intrinsics(hfov)).unsqueeze(0).unsqueeze(0).to(device)
-    T = torch.from_numpy(assumed_extrinsics(assumption)).unsqueeze(0).unsqueeze(0).to(device)
+    # process_frame documents (3, 3) and (4, 4). Passing (1, 3, 3) happened to work
+    # because it reshapes by element count downstream, but it violated the contract
+    # and would break the moment that reshape changed.
+    K = torch.from_numpy(estimate_intrinsics(hfov)).to(device)
+    T = torch.from_numpy(assumed_extrinsics(assumption)).to(device)
     xb = tuple(pipeline.bev_cfg["xbound"]); yb = tuple(pipeline.bev_cfg["ybound"])
     seq_len = cfg.get("seq_len", 3)
 
@@ -183,7 +186,7 @@ def main() -> None:
         # detector it also holds is unused here — see _load_detector.
         window = torch.stack([normalize_for_model(frames[max(0, idx - k)][2])
                               for k in reversed(range(seq_len))]).to(device)
-        out = pipeline.process_frame(window, K[0], T[0])
+        out = pipeline.process_frame(window, K, T)
     out["boxes"], out["scores"], out["labels"] = boxes, scores, labels
 
     vis = overlay_segmentation(norm.copy() if norm.dtype == np.uint8 else norm,

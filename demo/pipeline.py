@@ -88,6 +88,16 @@ class PerceptionPipeline:
           'bev_boxes' (M,5), 'bev_scores' (M,), 'bev_labels' (M,) — BEV detections,
           'bev_seg' (X, Y) int                          — BEV semantic-map argmax.
         """
+        # Validate the documented contract. `intrinsic.view(1,1,3,3)` below
+        # reshapes by element count, so a (1,3,3) input silently "works" — which
+        # hides a caller bug until the reshape changes. Check the rank explicitly.
+        if frame_window.dim() != 4:
+            raise ValueError(f"frame_window must be (T, 3, H, W); got {tuple(frame_window.shape)}")
+        if intrinsic.shape[-2:] != (3, 3) or intrinsic.dim() != 2:
+            raise ValueError(f"intrinsic must be (3, 3); got {tuple(intrinsic.shape)}")
+        if cam_to_ego.shape[-2:] != (4, 4) or cam_to_ego.dim() != 2:
+            raise ValueError(f"cam_to_ego must be (4, 4); got {tuple(cam_to_ego.shape)}")
+
         device = self.device
         frame_window = frame_window.to(device)
         current = frame_window[-1].unsqueeze(0)

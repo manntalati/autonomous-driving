@@ -19,5 +19,10 @@ pytest==9.0.2
 streamlit>=1.30,<2.0
 
 # Agentic Perception Platform (companion project)
-mcp>=1.2.0
+# Pinned below 2.0: mcp 2.0.0 removed `mcp.server.fastmcp` and replaced it with
+# a new `mcp.server.mcpserver` API. mcp_server/server.py is written against
+# FastMCP, so an unpinned `mcp>=1.2.0` resolves to 2.0.0 in a fresh CI install and
+# the server subprocess fails to import — which is what broke CI from 2026-07-30.
+# Migrating to the 2.0 API is tracked separately; 1.29.0 is the latest 1.x.
+mcp>=1.2.0,<2.0
 anthropic>=0.40.0
