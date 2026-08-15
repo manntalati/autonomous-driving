@@ -26,3 +26,7 @@ streamlit>=1.30,<2.0
 # Migrating to the 2.0 API is tracked separately; 1.29.0 is the latest 1.x.
 mcp>=1.2.0,<2.0
 anthropic>=0.40.0
+
+# Datadog LLM Observability — traces the agent's Anthropic calls only.
+# Inactive unless DD_LLMOBS_ENABLED=1 and DD_API_KEY are set (see .env.example).
+ddtrace>=4.0

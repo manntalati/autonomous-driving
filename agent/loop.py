@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any, Callable
 from anthropic import AsyncAnthropic
 from agent.mcp_client import MCPClient
+from agent.observability import annotate_agent_run, enable_llm_observability
 from dataclasses import dataclass, field
 
 EventCallback = Callable[[dict], None]
@@ -49,6 +50,10 @@ async def run_agent(question: str, client: MCPClient, *, model: str = "claude-op
         AgentResult with answer, trace, token counts, and turn count
     """
     result = AgentResult(answer="")
+    # Idempotent and a no-op when DD_LLMOBS_ENABLED is unset. Enabling here rather
+    # than at import keeps every entry point — CLI, Streamlit, eval harness —
+    # traced without each one remembering to initialise it.
+    enable_llm_observability()
     anthropic = AsyncAnthropic()
     tools = mcp_tools_to_anthropic(await client.list_tools())
     messages = [{"role": "user", "content": question}]
@@ -64,6 +69,7 @@ async def run_agent(question: str, client: MCPClient, *, model: str = "claude-op
         if response.stop_reason != "tool_use":
             result.answer = "".join(body.text for body in response.content if body.type == "text")
             if on_event: on_event({"type": "final", "answer": result.answer})
+            annotate_agent_run(question, result)
             return result
         tool_results = []
         for block in response.content:
@@ -89,4 +95,5 @@ async def run_agent(question: str, client: MCPClient, *, model: str = "claude-op
     )
     if on_event:
         on_event({"type": "exhausted", "answer": result.answer, "turns": result.turns})
+    annotate_agent_run(question, result)
     return result

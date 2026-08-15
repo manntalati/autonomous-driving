@@ -32,39 +32,6 @@
       "suppressed": 0
     }
   },
-  "scene-1100": {
-    "median_ttc_lead_s": NaN,
-    "n_ttc_hazards_warned": 0,
-    "hazards": 20,
-    "warned": 6,
-    "missed": 14,
-    "median_lead_frames": 0.0,
-    "median_lead_s": 0.0,
-    "false_alarms": 0,
-    "false_alarms_per_min": 0.0,
-    "hazards_by_kind": {
-      "ped_approaching": 3,
-      "entered_path": 3
-    },
-    "missed_by_kind": {
-      "entered_path": 8,
-      "ttc_low": 5,
-      "ped_approaching": 1
-    },
-    "night": true,
-    "frames": 40,
-    "duration_s": 19.500009,
-    "advisories": 6,
-    "rates": {
-      "frames": 40,
-      "events_per_min": 21.538451597637724,
-      "advisories_per_min": 18.461529940832335,
-      "llm_calls": 0,
-      "llm_calls_per_frame": 0.0,
-      "abstentions": 0,
-      "suppressed": 0
-    }
-  },
   "scene-0103": {
     "median_ttc_lead_s": NaN,
     "n_ttc_hazards_warned": 0,
@@ -95,38 +62,6 @@
       "llm_calls_per_frame": 0.0,
       "abstentions": 0,
       "suppressed": 0
-    }
-  },
-  "scene-0916": {
-    "median_ttc_lead_s": NaN,
-    "n_ttc_hazards_warned": 0,
-    "hazards": 83,
-    "warned": 9,
-    "missed": 74,
-    "median_lead_frames": 0.0,
-    "median_lead_s": 0.0,
-    "false_alarms": 0,
-    "false_alarms_per_min": 0.0,
-    "hazards_by_kind": {
-      "ped_approaching": 1,
-      "entered_path": 8
-    },
-    "missed_by_kind": {
-      "ped_approaching": 27,
-      "entered_path": 47
-    },
-    "night": false,
-    "frames": 41,
-    "duration_s": 19.89999,
-    "advisories": 9,
-    "rates": {
-      "frames": 41,
-      "events_per_min": 30.150768919984383,
-      "advisories_per_min": 27.135692027985947,
-      "llm_calls": 0,
-      "llm_calls_per_frame": 0.0,
-      "abstentions": 0,
-      "suppressed": 1
     }
   }
 }

@@ -170,22 +170,52 @@ class TrustScorer:
     """
 
     def __init__(self, head: IntrospectionHead, scaler: Optional[FeatureScaler] = None,
-                 odd_threshold: float = 0.5, vulnerable_classes: Sequence[int] = (1, 2)) -> None:
+                 odd_threshold: float = 0.5, vulnerable_classes: Sequence[int] = (1, 2),
+                 geometry: str = "image") -> None:
+        """
+        Args:
+            geometry — the coordinate convention of the boxes this scorer is fed:
+                "image" (pixels, [cx, cy, w, h]) or "bev" (metres, [x, y, l, w, yaw]).
+
+        THIS MUST MATCH WHAT THE HEAD WAS TRAINED ON. `train_introspection`
+        harvests 2-D detections and builds pixel-space geometry features, so a
+        head trained by it expects "image". Feeding it BEV metres puts every
+        feature many sigma from the training mean, reliability collapses to ~0,
+        and the frame is reported as outside the ODD on every frame — which looks
+        like a dramatic finding and is actually a unit mismatch.
+
+        The risk WEIGHTING (proximity, ego-corridor, class vulnerability) is only
+        meaningful in metres, so it is applied for "bev" and falls back to uniform
+        weighting for "image". Risk-weighted trust over image detections would
+        need a BEV-trained head; that is a real gap, not something to fake by
+        reinterpreting pixels as metres.
+        """
+        if geometry not in ("image", "bev"):
+            raise ValueError(f"geometry must be 'image' or 'bev', got {geometry!r}")
         self.head = head
         self.scaler = scaler
         self.odd_threshold = odd_threshold
         self.vulnerable_classes = set(vulnerable_classes)
+        self.geometry = geometry
 
     def _weights(self, detections: np.ndarray, labels: np.ndarray) -> np.ndarray:
-        """Risk weight per detection: closer, in-path, and vulnerable count more."""
+        """
+        Risk weight per detection: closer, in-path, and vulnerable count more.
+
+        Uniform for image-space boxes — `hypot(cx, cy)` on pixel coordinates is
+        not a range, and pretending otherwise would silently weight detections by
+        their distance from the top-left corner of the frame.
+        """
         det = np.asarray(detections, dtype=np.float64).reshape(-1, 5)
         if len(det) == 0:
             return np.zeros(0)
+        vulnerable = np.array([2.0 if int(l) in self.vulnerable_classes else 1.0
+                               for l in np.asarray(labels).reshape(-1)])
+        if self.geometry != "bev":
+            return vulnerable                      # class risk only; no usable geometry
         rng = np.sqrt((det[:, :2] ** 2).sum(axis=1))
         proximity = 1.0 / (1.0 + rng / 20.0)              # ~1.0 at 0 m, ~0.3 at 50 m
         in_path = np.where(np.abs(det[:, 1]) <= 2.0, 2.0, 1.0)   # ego corridor
-        vulnerable = np.array([2.0 if int(l) in self.vulnerable_classes else 1.0
-                               for l in np.asarray(labels).reshape(-1)])
         return proximity * in_path * vulnerable
 
     def _reason(self, features: np.ndarray) -> str:
@@ -261,6 +291,7 @@ class TrustScorer:
             "calib_b": getattr(self.head, "calib_b", 0.0),
             "scaler": None if self.scaler is None else self.scaler.state_dict(),
             "odd_threshold": self.odd_threshold,
+            "geometry": self.geometry,
         }, path)
 
     @classmethod
@@ -274,4 +305,7 @@ class TrustScorer:
         scaler = None
         if blob.get("scaler") is not None:
             scaler = FeatureScaler().load_state_dict(blob["scaler"])
-        return cls(head, scaler, blob.get("odd_threshold", 0.5))
+        # Older checkpoints predate the field; they were all trained by
+        # train_introspection on 2-D detections, so "image" is the right default.
+        return cls(head, scaler, blob.get("odd_threshold", 0.5),
+                   geometry=blob.get("geometry", "image"))

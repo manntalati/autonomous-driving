@@ -49,7 +49,12 @@ PRESETS = [
     ("Describe scene",     "Describe the scene at {scene} frame {frame}."),
 ]
 
-st.set_page_config(page_title="AD Perception + Agent", layout="wide")
+# Module-level, so it fires on import. Guarded so demo/showcase.py can import
+# this module as one of its pages after having configured the page itself.
+try:
+    st.set_page_config(page_title="AD Perception + Agent", layout="wide")
+except Exception:
+    pass
 
 
 # ─── caches ──────────────────────────────────────────────────────────────────
@@ -173,6 +178,32 @@ def _render_metrics_strip(result: AgentResult | None, latency: float) -> None:
 
 # ─── agent driver ────────────────────────────────────────────────────────────
 
+def _explain_agent_error(e: Exception) -> str:
+    """
+    Turn an API failure into something the viewer can act on.
+
+    The perception stack runs entirely locally; only this page calls a paid API,
+    so its failures are almost always account-level rather than code-level. Raw
+    SDK errors are a wall of JSON that reads like the demo is broken when the fix
+    is a billing page.
+    """
+    msg = str(e)
+    low = msg.lower()
+    if "credit balance is too low" in low or "insufficient" in low:
+        return ("**Anthropic account is out of credits.** The perception models, MCP "
+                "tools and every other page run locally and are unaffected — only "
+                "the agent's reasoning step needs the API. Add credits under "
+                "Plans & Billing, then re-run the question.")
+    if "authentication" in low or "invalid x-api-key" in low or "401" in low:
+        return ("**`ANTHROPIC_API_KEY` is invalid.** Check the key in your `.env` at "
+                "the repo root.")
+    if "rate limit" in low or "429" in low:
+        return "**Rate limited by the API.** Wait a moment and ask again."
+    if "not_found_error" in low or "model" in low and "404" in low:
+        return (f"**Model unavailable to this account.** {msg[:180]}")
+    return f"Agent call failed — {type(e).__name__}: {msg[:300]}"
+
+
 async def _run_agent_once(question: str, on_event) -> AgentResult:
     client = MCPClient()
     await client.connect()
@@ -250,8 +281,9 @@ def main() -> None:
             st.session_state["agent_result"] = result
         except Exception as e:
             st.session_state["agent_result"] = None
-            events.append({"type": "text", "text": f"ERROR: {e}"})
+            events.append({"type": "text", "text": _explain_agent_error(e)})
             trace_placeholder.markdown(_format_trace_md(events))
+            st.error(_explain_agent_error(e))
         st.session_state["last_latency"] = time.perf_counter() - t0
         st.session_state["trace_events"]  = events
         st.rerun()

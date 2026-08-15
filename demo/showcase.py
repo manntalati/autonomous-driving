@@ -6,10 +6,12 @@ Unified showcase — the single entry point for the whole project.
 Sections:
     Overview        the Phase 9-13 investigation and what it found
     Live demo       detection + segmentation + BEV on held-out nuScenes scenes
+    Monitor         the streaming autonomy monitor: events, trust, abstention
+    Agent           ask a question, watch it call MCP perception tools
     Your own video  upload a clip and run the stack on it (Phase 13)
 
-The agent demo stays a separate app (`streamlit run demo/agent_app.py`) because it
-configures its page at import time and needs an ANTHROPIC_API_KEY.
+Only the Agent page needs an ANTHROPIC_API_KEY; it explains itself and degrades to
+a description when the key is absent. Everything else runs locally.
 """
 from __future__ import annotations
 
@@ -190,12 +192,65 @@ def own_video() -> None:
     byo_main()
 
 
+def monitor() -> None:
+    from demo.monitor_app import main as monitor_main
+    monitor_main()
+
+
+def agent() -> None:
+    """
+    The agent: ask a question about a frame, watch it call MCP perception tools.
+
+    Checked up front rather than letting AsyncAnthropic raise mid-run, so a
+    missing key produces guidance instead of a stack trace after the user has
+    already typed a question.
+    """
+    import os
+
+    from agent.config import load_env
+    load_env()
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        st.title("Agent — perception tools over MCP")
+        st.warning(
+            "**`ANTHROPIC_API_KEY` is not set.** The agent calls the Anthropic API "
+            "to decide which perception tools to invoke, so it needs a key.\n\n"
+            "Add one to a `.env` file at the repo root:\n\n"
+            "```\nANTHROPIC_API_KEY=sk-...\n```\n\n"
+            "Everything else in this showcase runs locally and needs no key."
+        )
+        st.divider()
+        st.subheader("What this page does when it is configured")
+        st.markdown(
+            """
+The agent never sees pixels. It answers questions about a driving frame purely by
+calling MCP tools that wrap the trained models, and the panel streams every tool
+call as it happens — so you can watch it decide *which* perception it needs:
+
+- `load_frame` → pins the scene and frame
+- `detect_objects` / `segment_scene` / `bev_map` → the primitives
+- `check_lane_switch_safety`, `check_pedestrian_crossing`, `estimate_following_distance`
+  → higher-level driving judgements that encode validated thresholds
+- `scene_summary` → everything at once, for open-ended questions
+
+The camera and BEV views render the *same* frame beside the trace, so any claim
+the agent makes about counts or distances is visually checkable — which is the
+point: the tool output is grounded in the models, not in the language model.
+            """
+        )
+        return
+
+    from demo.agent_app import main as agent_main
+    agent_main()
+
+
 def main() -> None:
     st.set_page_config(page_title="AD Perception — Showcase", layout="wide",
                        initial_sidebar_state="expanded")
     nav = st.navigation([
         st.Page(overview, title="Overview", icon="🔍", default=True),
         st.Page(live_demo, title="Live demo (nuScenes)", icon="🎥"),
+        st.Page(monitor, title="Autonomy monitor (P12)", icon="📡"),
+        st.Page(agent, title="Agent (MCP tools)", icon="🤖"),
         st.Page(own_video, title="Your own video", icon="📹"),
     ])
     nav.run()

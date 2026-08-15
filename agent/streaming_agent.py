@@ -280,31 +280,103 @@ class StreamingAgent:
                 on_advisory(advisory)
         return out
 
-    async def run(self, stream, on_advisory: Optional[Callable] = None) -> List[Advisory]:
+    def _score_trust(self, boxes, scores, labels) -> Optional[Dict]:
         """
-        Consume a FrameStream to completion.
+        Per-frame trust from the Phase 11 introspection head.
 
-        Requires a pipeline exposing `process_frame(image) -> dict` with BEV
-        detections. `on_advisory` is a callback for live UI updates.
+        The features are built HERE rather than read off the pipeline's output.
+        An earlier version checked `if "features" in result`, but
+        `PerceptionPipeline.process_frame` never returns that key — so trust was
+        permanently None and abstention, the whole point of P12-4, could never
+        fire. Nothing raised; the feature was just silently absent.
+        """
+        if self.trust_scorer is None:
+            return None
+        import numpy as np
+
+        from models.uncertainty.signals import assemble_features
+
+        det = np.asarray(boxes, dtype=np.float64).reshape(-1, 5)
+        sc = np.asarray(scores, dtype=np.float64).reshape(-1)
+        lb = np.asarray(labels, dtype=np.int64).reshape(-1)
+        feats = assemble_features(det, sc, lb)
+        return self.trust_scorer.score_frame(det, sc, lb, feats)
+
+    @staticmethod
+    def _boxes_2d_as_geometry(boxes) -> "np.ndarray":
+        """
+        (N, 4) [x1, y1, x2, y2] -> the [cx, cy, w, h, 0] layout the introspection
+        head was trained on. Matching the training convention exactly is the whole
+        point: BEV metres through a pixel-trained head reads as ~0 reliability on
+        every frame.
+        """
+        import numpy as np
+        b = np.asarray(boxes, dtype=np.float64).reshape(-1, 4)
+        if len(b) == 0:
+            return np.zeros((0, 5))
+        cx = (b[:, 0] + b[:, 2]) / 2.0
+        cy = (b[:, 1] + b[:, 3]) / 2.0
+        w = np.maximum(b[:, 2] - b[:, 0], 1e-6)
+        h = np.maximum(b[:, 3] - b[:, 1], 1e-6)
+        return np.stack([cx, cy, w, h, np.zeros_like(cx)], axis=1)
+
+    async def run(self, stream, intrinsic, cam_to_ego,
+                  on_advisory: Optional[Callable] = None,
+                  seq_len: int = 3, max_frames: Optional[int] = None) -> List[Advisory]:
+        """
+        Consume a FrameStream to completion, driving the full two-tier loop.
+
+        Args:
+          stream — a demo.stream.FrameStream.
+          intrinsic — (3, 3) camera K; cam_to_ego — (4, 4). Fixed for the camera,
+            so they are passed once rather than re-derived per frame.
+          on_advisory — callback for live UI updates.
+          seq_len — temporal window the detector expects.
+          max_frames — stop early (useful for a demo).
+
+        The detector needs a T-frame window, so frames are buffered and the window
+        is left-padded by repeating the first frame at the start of the stream —
+        matching how the other demos handle the same edge.
         """
         if self.pipeline is None:
             raise RuntimeError("run() needs a pipeline; use step() to drive frames manually")
 
-        advisories: List[Advisory] = []
-        for frame in stream:
-            result = self.pipeline.process_frame(frame.image)
-            det = result.get("bev_boxes", [])
-            labels = result.get("bev_labels", [])
-            scores = result.get("bev_scores", [])
+        import torch
 
-            trust = None
-            if self.trust_scorer is not None and "features" in result:
-                trust = self.trust_scorer.score_frame(det, scores, labels, result["features"])
+        advisories: List[Advisory] = []
+        buf: List = []
+        for n, frame in enumerate(stream):
+            if max_frames is not None and n >= max_frames:
+                break
+            if frame.image is None:
+                raise RuntimeError("FrameStream must be built with load_images=True")
+            buf.append(frame.image)
+            if len(buf) > seq_len:
+                buf.pop(0)
+            window = torch.stack([buf[max(0, len(buf) - 1 - k)]
+                                  for k in reversed(range(seq_len))])
+
+            result = self.pipeline.process_frame(window, intrinsic, cam_to_ego)
+            boxes = result["bev_boxes"]
+            scores = result["bev_scores"]
+            labels = result["bev_labels"]
+
+            # Trust scores the 2-D detections, because that is what the head was
+            # trained on. Tracking and event detection keep using BEV metres,
+            # where range and the ego corridor are actually defined.
+            trust = self._score_trust(
+                self._boxes_2d_as_geometry(result["boxes"]),
+                result["scores"], result["labels"])
+            state = {
+                "detections_2d": int(len(result["boxes"])),
+                "bev_objects": int(len(boxes)),
+                "frame": frame.frame_idx,
+            }
 
             advisories += await self.step(
-                det, labels, scores, frame.timestamp_us, frame.frame_idx,
+                boxes, labels, scores, frame.timestamp_us, frame.frame_idx,
                 ego_pose=frame.ego_pose, trust=trust,
-                frame_state=result.get("summary"), on_advisory=on_advisory,
+                frame_state=state, on_advisory=on_advisory,
             )
         return advisories
 

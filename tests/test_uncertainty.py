@@ -191,10 +191,69 @@ class TestIntrospection:
         assert out["per_detection"][0]["class"] == "car"
 
     def test_risk_weight_favours_close_vulnerable_in_path(self):
-        s = TrustScorer(IntrospectionHead())
+        """BEV geometry: proximity, ego-corridor and class vulnerability all apply."""
+        s = TrustScorer(IntrospectionHead(), geometry="bev")
         close_ped = s._weights(np.array([[5.0, 0.0, 1, 1, 0]]), [1])
         far_car = s._weights(np.array([[45.0, 20.0, 4, 2, 0]]), [0])
         assert close_ped[0] > far_car[0]
+
+    def test_bev_weighting_uses_distance(self):
+        """Same class, different range — only the BEV path should separate them."""
+        s = TrustScorer(IntrospectionHead(), geometry="bev")
+        near = s._weights(np.array([[5.0, 0.0, 4, 2, 0]]), [0])
+        far = s._weights(np.array([[45.0, 0.0, 4, 2, 0]]), [0])
+        assert near[0] > far[0]
+
+    def test_image_geometry_ignores_pixel_distance(self):
+        """`hypot(cx, cy)` on pixels is not a range — weighting it would rank
+        detections by distance from the top-left corner of the frame."""
+        s = TrustScorer(IntrospectionHead(), geometry="image")
+        near_corner = s._weights(np.array([[10.0, 10.0, 40, 60, 0]]), [0])
+        far_corner = s._weights(np.array([[700.0, 400.0, 40, 60, 0]]), [0])
+        assert near_corner[0] == far_corner[0]
+
+    def test_geometry_must_be_valid(self):
+        with pytest.raises(ValueError, match="geometry must be"):
+            TrustScorer(IntrospectionHead(), geometry="metres")
+
+    def test_geometry_defaults_to_image(self):
+        """train_introspection harvests 2-D detections, so image is the match."""
+        assert TrustScorer(IntrospectionHead()).geometry == "image"
+
+    def test_geometry_survives_save_load(self, tmp_path):
+        from models.uncertainty.signals import FeatureScaler
+        p = tmp_path / "s.pt"
+        sc = FeatureScaler().fit(np.random.randn(20, len(FEATURE_NAMES)))
+        TrustScorer(IntrospectionHead(), sc, geometry="bev").save(str(p))
+        assert TrustScorer.load(str(p)).geometry == "bev"
+
+    def test_bev_metres_through_an_image_head_collapses_trust(self):
+        """Regression guard for the P12 wiring bug: BEV metres fed to a head
+        trained on pixels reads as many sigma out of distribution, so every frame
+        reports ~0 trust and the monitor abstains constantly."""
+        from models.uncertainty.signals import FeatureScaler, assemble_features
+        rng = np.random.default_rng(0)
+        # scaler fitted on PIXEL-scale geometry, as train_introspection produces
+        px = np.stack([rng.uniform(0, 800, 200), rng.uniform(0, 448, 200),
+                       rng.uniform(20, 200, 200), rng.uniform(20, 200, 200),
+                       np.zeros(200)], axis=1)
+        feats_px = assemble_features(px, rng.uniform(0, 1, 200),
+                                     rng.integers(0, 3, 200))
+        scaler = FeatureScaler().fit(feats_px)
+        # BEV metres are far outside that distribution
+        bev = np.array([[10.0, 2.0, 4.0, 2.0, 0.0]])
+        feats_bev = assemble_features(bev, np.array([0.8]), np.array([0]))
+        # Check the SCALE-DEPENDENT geometry features. Measured, the shift is
+        # concentrated there: range 2.5s and abs_y 1.8s, while bearing (degrees)
+        # and aspect (a ratio) are scale-invariant and barely move — so averaging
+        # over the whole block understates it.
+        z_px = np.abs(scaler.transform(feats_px))
+        z_bev = np.abs(scaler.transform(feats_bev))
+        i_range = FEATURE_NAMES.index("range")
+        assert z_bev[0, i_range] > 2.0, (
+            f"BEV range should read >2s out of distribution, got {z_bev[0, i_range]:.2f}")
+        assert z_bev[0, i_range] > z_px[:, i_range].mean() * 2, (
+            "BEV range should be much further out than in-domain pixel ranges")
 
 
 class TestMCDropout:
