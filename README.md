@@ -377,6 +377,55 @@ thesis working on real input, not the demo failing.
 
 ---
 
+### Phase 14: Housekeeping and the Unified Scorecard
+
+> **Goal:** One harness that scores every experiment on the same cells, with seed spread, so that every idea from here on is comparable and pre-registered.
+
+| Ticket | Task | Status |
+|---|---|---|
+| `P14-1` | README checkboxes match the code | [✅] |
+| `P14-2` | `evaluation/scorecard.py`: day/night audit + foreign cameras + range-bucketed BEV, one JSON row per run | [✅] code, first run pending |
+| `P14-3` | Multi-seed support: N seeds, mean and 95% interval per cell | [ ] aggregation done; seeded detector training not yet |
+| `P14-4` | `results/scorecard.csv` leaderboard with the existing baselines re-scored | [ ] |
+| `P14-5` | Run metadata (git SHA, config hash, seed, scenes, wall time) in every training log | [ ] |
+| `P14-6` | Fix the MC-dropout baseline (dropout in the backbone) + a 3–5 model deep ensemble | [ ] |
+| `P14-7` | Pre-registration template, used for every experiment | [✅] |
+
+```bash
+python -m evaluation.scorecard --name baseline      # current detector + P10 camera-only BEV
+python -m evaluation.scorecard --name r1_dinov2 \
+    --det-config configs/detector_dinov2.yaml \
+    --det-ckpt 'checkpoints/detector_dinov2_s{seed}.pt' --seeds 0,1,2
+```
+
+**Every cell, every row.** A row reports 17 cells:
+- the four Phase 9 condition cells, plus `det.night_gap_rel = (day - night) / day`
+- the three simulated foreign cameras and their mean, FOV-normalised because that is the deployed path
+- BEV mAP, day and night, overall and near / mid / far
+
+Each cell carries a mean, a t-based 95% interval and n. Checkpoints are named
+with `{seed}`; a path without it counts as n=1 and gets no interval. Derived cells
+are computed per seed, so a gap is never built from one checkpoint's day number and
+another's night number. The full row goes to `results/scorecard/<name>.json`, and
+the leaderboard is `results/scorecard.csv`.
+
+**One benchmark fix came with it.** The foreign-camera simulation seeded each
+frame's blur and noise with Python's `hash()`, which is salted per process, so the
+degradation changed between runs. It is now seeded with CRC32. Re-scored
+foreign-camera numbers will differ slightly from the Phase 13 tables above, which
+were taken before the fix.
+
+**Pre-registration.** Experiments are written up in `docs/experiments/` from
+[`TEMPLATE.md`](docs/experiments/TEMPLATE.md) before they run. The first is
+[R1: a frozen foundation backbone vs the night gap](docs/experiments/R1_foundation_backbone.md),
+still a draft.
+
+**Track A has started.** `python -m demo.live_camera --list`, then `--camera N`,
+runs the stack live on an iPhone via Continuity Camera (v0: assumed geometry, no
+trust score yet, always marked OUTSIDE ODD).
+
+---
+
 ### Phase 8 (Agentic): MCP Perception Tool API
 
 > **Goal:** Expose the trained perception pipeline as an MCP tool API that an LLM agent can call autonomously to understand driving scenes.
@@ -652,6 +701,8 @@ autonomous-driving/
 │   └── temporal/             # Temporal fusion module
 ├── training/                 # Training loops, losses, schedulers
 ├── evaluation/               # Metrics (mAP, mIoU) and eval scripts
+│   └── scorecard.py          # P14 unified scorecard: one JSON row + CSV leaderboard per experiment
+├── results/                  # scorecard.csv leaderboard + scorecard/<name>.json rows
 ├── utils/
 │   └── visualize.py          # draw_boxes, visualize_batch, visualize_sample
 ├── notebooks/
@@ -668,5 +719,6 @@ autonomous-driving/
 │   ├── mcp_client.py         # stdio MCP client wrapper
 │   └── config.py             # .env loader (ANTHROPIC_API_KEY)
 └── docs/
-    └── agentic_perception_roadmap.md  # Phase-by-phase agentic roadmap
+    ├── agentic_perception_roadmap.md  # Phase-by-phase agentic roadmap
+    └── experiments/                   # Pre-registrations (TEMPLATE.md, R1, ...)
 ```
