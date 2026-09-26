@@ -29,6 +29,23 @@ def build_detector(cfg: dict) -> FPNDetector:
     return FPNDetector(resnet, fpn, detection, anchor, cfg["num_classes"])
 
 
+def load_detector(cfg: dict, ckpt: str, device) -> FPNDetector:
+    """
+    Build the detector from `cfg`, load `ckpt` into it, and return it in eval mode.
+
+    Accepts both a bare state_dict and the {"model": state_dict} wrapper. Shared by
+    every evaluation entry point so they cannot drift apart in how a checkpoint is
+    read.
+    """
+    model = build_detector(cfg).to(device)
+    state = torch.load(ckpt, map_location=device, weights_only=False)
+    if isinstance(state, dict) and "model" in state:
+        state = state["model"]
+    model.load_state_dict(state)
+    model.eval()
+    return model
+
+
 def _unpack_batch(batch, device):
     images, targets = batch
     images = images.to(device)

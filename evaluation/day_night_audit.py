@@ -30,7 +30,6 @@ import argparse
 import json
 from pathlib import Path
 
-import torch
 import yaml
 from nuscenes.nuscenes import NuScenes
 from torch.utils.data import DataLoader
@@ -42,7 +41,7 @@ from data.dataset import (
     version_from_data_root,
 )
 from models.detection.losses import DetectionLoss
-from models.detection.train_detector import build_detector, val_one_epoch, _pick_device
+from models.detection.train_detector import load_detector, val_one_epoch, _pick_device
 
 # nuScenes scene descriptions are hand-written and reliably say "Night" for night
 # scenes; there is no structured lighting field in the schema.
@@ -85,31 +84,15 @@ def build_eval_loader(nusc, data_root, scenes, batch_size, cameras=None) -> Data
     )
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("config")
-    ap.add_argument("--ckpt", default="checkpoints/detector_best.pt")
-    ap.add_argument("--trainval-root", default="data/raw/v1.0-trainval")
-    ap.add_argument("--mini-root", default="data/raw/v1.0-mini")
-    ap.add_argument("--out", default="logs/day_night_audit.json")
-    args = ap.parse_args()
+def audit_cells(nusc_tv, tv_root, nusc_mini, mini_root):
+    """
+    The four condition cells, as [(name, nusc, root, scenes)], plus the mini scene
+    conditions read off their descriptions.
 
-    cfg = yaml.safe_load(open(args.config))
-    device = _pick_device()
-    batch_size = cfg.get("batch_size", 4)
-
-    model = build_detector(cfg).to(device)
-    state = torch.load(args.ckpt, map_location=device, weights_only=False)
-    if isinstance(state, dict) and "model" in state:
-        state = state["model"]
-    model.load_state_dict(state)
-    model.eval()
-    loss_fn = DetectionLoss(cfg["num_classes"])
-
-    tv_root, mini_root = Path(args.trainval_root), Path(args.mini_root)
-    nusc_tv = NuScenes(version=version_from_data_root(tv_root), dataroot=str(tv_root), verbose=False)
-    nusc_mini = NuScenes(version=version_from_data_root(mini_root), dataroot=str(mini_root), verbose=False)
-
+    Refuses to return anything if a night scene is in the training set: every
+    number downstream assumes the night cell is unseen.
+    """
+    tv_root, mini_root = Path(tv_root), Path(mini_root)
     tv_train, tv_val = get_scene_split(nusc_tv, tv_root)
     mini_all = scenes_on_disk(nusc_mini, mini_root)
     mini_cond = classify_scenes(nusc_mini, mini_all)
@@ -127,7 +110,18 @@ def main():
         ("unseen_night", nusc_mini, mini_root, mini_night),
         ("unseen_miniday", nusc_mini, mini_root, mini_day - set(tv_train)),
     ]
+    return cells, mini_cond
 
+
+def evaluate_audit_cells(model, cfg: dict, device, cells) -> dict:
+    """
+    Score one detector on each (name, nusc, root, scenes) cell.
+
+    Returns name -> val_one_epoch metrics (loss, mAP, AP per class) plus frame and
+    scene counts. Cells with no scenes on disk are skipped, not scored as zero.
+    """
+    batch_size = cfg.get("batch_size", 4)
+    loss_fn = DetectionLoss(cfg["num_classes"])
     results = {}
     for name, nusc, root, scenes in cells:
         if not scenes:
@@ -142,6 +136,28 @@ def main():
         metrics["scenes"] = sorted(scenes)
         results[name] = metrics
         print(f"  loss {metrics['loss']:.3f} | mAP {metrics['mAP']:.4f} | AP {[round(a,4) for a in metrics['AP']]}")
+    return results
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("config")
+    ap.add_argument("--ckpt", default="checkpoints/detector_best.pt")
+    ap.add_argument("--trainval-root", default="data/raw/v1.0-trainval")
+    ap.add_argument("--mini-root", default="data/raw/v1.0-mini")
+    ap.add_argument("--out", default="logs/day_night_audit.json")
+    args = ap.parse_args()
+
+    cfg = yaml.safe_load(open(args.config))
+    device = _pick_device()
+    model = load_detector(cfg, args.ckpt, device)
+
+    tv_root, mini_root = Path(args.trainval_root), Path(args.mini_root)
+    nusc_tv = NuScenes(version=version_from_data_root(tv_root), dataroot=str(tv_root), verbose=False)
+    nusc_mini = NuScenes(version=version_from_data_root(mini_root), dataroot=str(mini_root), verbose=False)
+
+    cells, mini_cond = audit_cells(nusc_tv, tv_root, nusc_mini, mini_root)
+    results = evaluate_audit_cells(model, cfg, device, cells)
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     json.dump({"ckpt": args.ckpt, "cells": results, "mini_conditions": mini_cond},
