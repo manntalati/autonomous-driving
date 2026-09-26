@@ -271,11 +271,24 @@ And abstention buys less than hoped, because the problem upstream is too severe:
 
 | Ticket | Task | Status |
 |---|---|---|
-| `P12-1` | Frame stream player (12 Hz mini sweeps for demo, 2 Hz keyframes for eval) | [ ] |
-| `P12-2` | Fast tier: per-frame state tracking + deterministic event detector (no LLM) | [ ] |
-| `P12-3` | Slow tier: event-triggered LLM advisories with memory of what was already said | [ ] |
-| `P12-4` | Abstention behaviour driven by the Phase 11 trust score | [ ] |
-| `P12-5` | Streaming eval: warning lead time, false-alarm rate, abstention correctness | [ ] |
+| `P12-1` | Frame stream player (12 Hz mini sweeps for demo, 2 Hz keyframes for eval) | [✅] |
+| `P12-2` | Fast tier: per-frame state tracking + deterministic event detector (no LLM) | [✅] |
+| `P12-3` | Slow tier: event-triggered LLM advisories with memory of what was already said | [✅] |
+| `P12-4` | Abstention behaviour driven by the Phase 11 trust score | [✅] |
+| `P12-5` | Streaming eval: warning lead time, false-alarm rate, abstention correctness | [✅] |
+
+```bash
+streamlit run demo/monitor_app.py                     # the live monitor
+python -m evaluation.streaming_eval                   # the metrics
+```
+
+**Status: built, not yet measured.** The code is in `demo/stream.py`,
+`agent/monitor.py`, `agent/streaming_agent.py` and `evaluation/streaming_eval.py`,
+covered by `tests/test_streaming.py`. The only numbers so far
+(`logs/streaming_eval.json`) are a plumbing check, not a result: two scenes (1094
+night, 0103 day), ground-truth boxes replayed in place of the detector, and zero LLM
+calls. So the slow tier and trust-driven abstention have not yet been scored
+against real detections, and there is no write-up until they are.
 
 ---
 
@@ -376,9 +389,13 @@ thesis working on real input, not the demo failing.
 | `A1-2` | `ModelRegistry` — pipeline singleton + `run_perception(frame_id)` | [✅] |
 | `A1-3` | Core tools: `list_scenes`, `load_frame`, `detect_objects`, `segment_scene`, `bev_map` | [✅] |
 | `A1-4` | Driving-decision tools: `check_lane_switch_safety`, `check_turn_clearance`, `check_obstacle_stop`, `check_pedestrian_crossing`, `estimate_following_distance`, `scene_summary` | [✅] |
-| `A2-1` | Orchestrator agent (spatial-reasoning system prompt + chained tool calls) | [ ] |
-| `A3-1` | Eval harness (GT-derived question bank, accuracy / tool-call count / latency / cost) | [ ] |
-| `A4-1` | Interactive Streamlit agent demo with live tool-trace panel | [ ] |
+| `A2-1` | Orchestrator agent (spatial-reasoning system prompt + chained tool calls) | [✅] |
+| `A3-1` | Eval harness (GT-derived question bank, accuracy / tool-call count / latency / cost) | [✅] |
+| `A4-1` | Interactive Streamlit agent demo with live tool-trace panel | [✅] |
+
+The A3 harness is validated on a 5-question smoke run; the full 320-question run
+hit API rate limits and is not a usable result yet. Details and the decision are in
+the roadmap below.
 
 Detailed agentic roadmap: [docs/agentic_perception_roadmap.md](docs/agentic_perception_roadmap.md)
 

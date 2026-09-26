@@ -45,7 +45,7 @@ overfitting ceiling hit in every phase of the driving project.
 - [✅] **Phase 1** — Perception tools (the tool API)
 - [✅] **Phase 2** — Orchestrator agent (spatial reasoning)
 - [✅] **Phase 3** — Eval harness (accuracy / efficiency / latency / cost)
-- [ ] **Phase 4** — Interactive demo (live tool trace)
+- [✅] **Phase 4** — Interactive demo (live tool trace)
 - [ ] **Phase 5** — Embedding & retrieval tools (FAISS)
 - [ ] **Phase 6** — Active-learning scoring tools (uncertainty)
 - [ ] **Phase 7** — Curation agent
