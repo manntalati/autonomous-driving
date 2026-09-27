@@ -13,10 +13,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import zlib
 from pathlib import Path
 
 import numpy as np
-import torch
 import yaml
 from nuscenes.nuscenes import NuScenes
 from torch.utils.data import DataLoader
@@ -25,7 +25,20 @@ from data.dataset import (NuScenesDetectionDataset, collate_fn, get_scene_split,
                           version_from_data_root)
 from data.foreign_camera import PRESETS, ForeignCamera, simulate, transform_boxes
 from models.detection.losses import DetectionLoss
-from models.detection.train_detector import _pick_device, build_detector, val_one_epoch
+from models.detection.train_detector import _pick_device, load_detector, val_one_epoch
+
+
+def frame_seed(sd_token: str) -> int:
+    """
+    Per-frame RNG seed for the degradation, identical in every process and run.
+
+    The first version used `hash(sd_token)`. Python salts str hashes per process
+    (PYTHONHASHSEED), and on macOS each spawned DataLoader worker is a fresh
+    process, so the motion blur and noise applied to a frame changed between
+    invocations. CRC32 of the token is fixed, so two runs of the same checkpoint
+    score exactly the same degraded images.
+    """
+    return zlib.crc32(sd_token.encode("utf-8"))
 
 
 class ForeignCameraDataset(NuScenesDetectionDataset):
@@ -53,7 +66,7 @@ class ForeignCameraDataset(NuScenesDetectionDataset):
         img, w, h = super()._load_image(sd_token)
         # Seed per frame so the degradation is deterministic across runs — an
         # eval whose noise changes between invocations is not a benchmark.
-        rng = np.random.default_rng(abs(hash(sd_token)) % (2 ** 32))
+        rng = np.random.default_rng(frame_seed(sd_token))
         return Image.fromarray(simulate(np.asarray(img), self.camera, rng)), w, h
 
     def _get_2d_boxes(self, sd_token: str, img_w: int, img_h: int):
@@ -106,6 +119,43 @@ def fov_normalized_val_transform(hfov_deg: float):
         format="pascal_voc", label_fields=["labels"], min_visibility=0.3, clip=True))
 
 
+def evaluate_foreign(model, cfg: dict, device, nusc, root, val_scenes, cameras,
+                     fov_normalize: bool = False, include_native: bool = True) -> dict:
+    """
+    Score one detector on the held-out frames as seen through each simulated camera.
+
+    Args: cameras — preset names from `data.foreign_camera.PRESETS`;
+      fov_normalize — apply the deployed BYO crop before inference;
+      include_native — also score the undegraded control. The scorecard turns
+      this off because the native row is the same frames and transform as the
+      day/night audit's unseen_day cell, which it has already scored.
+    Returns: camera name -> {mAP, AP, loss, frames}.
+    """
+    loss_fn = DetectionLoss(cfg["num_classes"])
+    root = Path(root)
+
+    def loader(camera=None):
+        kw = dict(split="val", scenes=set(val_scenes))
+        if camera is not None and fov_normalize:
+            kw["transform"] = fov_normalized_val_transform(camera.hfov_deg)
+        ds = (NuScenesDetectionDataset(nusc, root, **kw) if camera is None
+              else ForeignCameraDataset(nusc, root, camera=camera, **kw))
+        return DataLoader(ds, batch_size=cfg.get("batch_size", 4), shuffle=False,
+                          num_workers=2, collate_fn=collate_fn)
+
+    results = {}
+    cells = ([("native", None)] if include_native else []) + [(n, PRESETS[n]) for n in cameras]
+    for name, cam in cells:
+        dl = loader(cam)
+        desc = "" if cam is None else f" ({cam.hfov_deg:.0f}° FOV, q{cam.jpeg_quality})"
+        print(f"\n[{name}]{desc} {len(dl.dataset)} frames")
+        m = val_one_epoch(model, dl, loss_fn, device, cfg["num_classes"])
+        results[name] = {"mAP": m["mAP"], "AP": m["AP"], "loss": m["loss"],
+                         "frames": len(dl.dataset)}
+        print(f"  mAP {m['mAP']:.4f} | AP {[round(a, 3) for a in m['AP']]}")
+    return results
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("config")
@@ -119,37 +169,14 @@ def main():
 
     cfg = yaml.safe_load(open(args.config))
     device = _pick_device()
-    model = build_detector(cfg).to(device)
-    state = torch.load(args.ckpt, map_location=device, weights_only=False)
-    if isinstance(state, dict) and "model" in state:
-        state = state["model"]
-    model.load_state_dict(state)
-    model.eval()
-    loss_fn = DetectionLoss(cfg["num_classes"])
+    model = load_detector(cfg, args.ckpt, device)
 
     root = Path(args.trainval_root)
     nusc = NuScenes(version=version_from_data_root(root), dataroot=str(root), verbose=False)
     _, val_scenes = get_scene_split(nusc, root)
 
-    def loader(camera=None):
-        kw = dict(split="val", scenes=set(val_scenes))
-        if camera is not None and args.fov_normalize:
-            kw["transform"] = fov_normalized_val_transform(camera.hfov_deg)
-        ds = (NuScenesDetectionDataset(nusc, root, **kw) if camera is None
-              else ForeignCameraDataset(nusc, root, camera=camera, **kw))
-        return DataLoader(ds, batch_size=cfg.get("batch_size", 4), shuffle=False,
-                          num_workers=2, collate_fn=collate_fn)
-
-    results = {}
-    cells = [("native", None)] + [(n, PRESETS[n]) for n in args.cameras.split(",")]
-    for name, cam in cells:
-        dl = loader(cam)
-        desc = "" if cam is None else f" ({cam.hfov_deg:.0f}° FOV, q{cam.jpeg_quality})"
-        print(f"\n[{name}]{desc} {len(dl.dataset)} frames")
-        m = val_one_epoch(model, dl, loss_fn, device, cfg["num_classes"])
-        results[name] = {"mAP": m["mAP"], "AP": m["AP"], "loss": m["loss"],
-                         "frames": len(dl.dataset)}
-        print(f"  mAP {m['mAP']:.4f} | AP {[round(a, 3) for a in m['AP']]}")
+    results = evaluate_foreign(model, cfg, device, nusc, root, val_scenes,
+                               args.cameras.split(","), fov_normalize=args.fov_normalize)
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     json.dump({"ckpt": args.ckpt, "cells": results}, open(args.out, "w"), indent=2)

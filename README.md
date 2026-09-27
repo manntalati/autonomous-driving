@@ -271,11 +271,24 @@ And abstention buys less than hoped, because the problem upstream is too severe:
 
 | Ticket | Task | Status |
 |---|---|---|
-| `P12-1` | Frame stream player (12 Hz mini sweeps for demo, 2 Hz keyframes for eval) | [ ] |
-| `P12-2` | Fast tier: per-frame state tracking + deterministic event detector (no LLM) | [ ] |
-| `P12-3` | Slow tier: event-triggered LLM advisories with memory of what was already said | [ ] |
-| `P12-4` | Abstention behaviour driven by the Phase 11 trust score | [ ] |
-| `P12-5` | Streaming eval: warning lead time, false-alarm rate, abstention correctness | [ ] |
+| `P12-1` | Frame stream player (12 Hz mini sweeps for demo, 2 Hz keyframes for eval) | [✅] |
+| `P12-2` | Fast tier: per-frame state tracking + deterministic event detector (no LLM) | [✅] |
+| `P12-3` | Slow tier: event-triggered LLM advisories with memory of what was already said | [✅] |
+| `P12-4` | Abstention behaviour driven by the Phase 11 trust score | [✅] |
+| `P12-5` | Streaming eval: warning lead time, false-alarm rate, abstention correctness | [✅] |
+
+```bash
+streamlit run demo/monitor_app.py                     # the live monitor
+python -m evaluation.streaming_eval                   # the metrics
+```
+
+**Status: built, not yet measured.** The code is in `demo/stream.py`,
+`agent/monitor.py`, `agent/streaming_agent.py` and `evaluation/streaming_eval.py`,
+covered by `tests/test_streaming.py`. The only numbers so far
+(`logs/streaming_eval.json`) are a plumbing check, not a result: two scenes (1094
+night, 0103 day), ground-truth boxes replayed in place of the detector, and zero LLM
+calls. So the slow tier and trust-driven abstention have not yet been scored
+against real detections, and there is no write-up until they are.
 
 ---
 
@@ -364,6 +377,55 @@ thesis working on real input, not the demo failing.
 
 ---
 
+### Phase 14: Housekeeping and the Unified Scorecard
+
+> **Goal:** One harness that scores every experiment on the same cells, with seed spread, so that every idea from here on is comparable and pre-registered.
+
+| Ticket | Task | Status |
+|---|---|---|
+| `P14-1` | README checkboxes match the code | [✅] |
+| `P14-2` | `evaluation/scorecard.py`: day/night audit + foreign cameras + range-bucketed BEV, one JSON row per run | [✅] code, first run pending |
+| `P14-3` | Multi-seed support: N seeds, mean and 95% interval per cell | [ ] aggregation done; seeded detector training not yet |
+| `P14-4` | `results/scorecard.csv` leaderboard with the existing baselines re-scored | [ ] |
+| `P14-5` | Run metadata (git SHA, config hash, seed, scenes, wall time) in every training log | [ ] |
+| `P14-6` | Fix the MC-dropout baseline (dropout in the backbone) + a 3–5 model deep ensemble | [ ] |
+| `P14-7` | Pre-registration template, used for every experiment | [✅] |
+
+```bash
+python -m evaluation.scorecard --name baseline      # current detector + P10 camera-only BEV
+python -m evaluation.scorecard --name r1_dinov2 \
+    --det-config configs/detector_dinov2.yaml \
+    --det-ckpt 'checkpoints/detector_dinov2_s{seed}.pt' --seeds 0,1,2
+```
+
+**Every cell, every row.** A row reports 17 cells:
+- the four Phase 9 condition cells, plus `det.night_gap_rel = (day - night) / day`
+- the three simulated foreign cameras and their mean, FOV-normalised because that is the deployed path
+- BEV mAP, day and night, overall and near / mid / far
+
+Each cell carries a mean, a t-based 95% interval and n. Checkpoints are named
+with `{seed}`; a path without it counts as n=1 and gets no interval. Derived cells
+are computed per seed, so a gap is never built from one checkpoint's day number and
+another's night number. The full row goes to `results/scorecard/<name>.json`, and
+the leaderboard is `results/scorecard.csv`.
+
+**One benchmark fix came with it.** The foreign-camera simulation seeded each
+frame's blur and noise with Python's `hash()`, which is salted per process, so the
+degradation changed between runs. It is now seeded with CRC32. Re-scored
+foreign-camera numbers will differ slightly from the Phase 13 tables above, which
+were taken before the fix.
+
+**Pre-registration.** Experiments are written up in `docs/experiments/` from
+[`TEMPLATE.md`](docs/experiments/TEMPLATE.md) before they run. The first is
+[R1: a frozen foundation backbone vs the night gap](docs/experiments/R1_foundation_backbone.md),
+still a draft.
+
+**Track A has started.** `python -m demo.live_camera --list`, then `--camera N`,
+runs the stack live on an iPhone via Continuity Camera (v0: assumed geometry, no
+trust score yet, always marked OUTSIDE ODD).
+
+---
+
 ### Phase 8 (Agentic): MCP Perception Tool API
 
 > **Goal:** Expose the trained perception pipeline as an MCP tool API that an LLM agent can call autonomously to understand driving scenes.
@@ -376,9 +438,13 @@ thesis working on real input, not the demo failing.
 | `A1-2` | `ModelRegistry` — pipeline singleton + `run_perception(frame_id)` | [✅] |
 | `A1-3` | Core tools: `list_scenes`, `load_frame`, `detect_objects`, `segment_scene`, `bev_map` | [✅] |
 | `A1-4` | Driving-decision tools: `check_lane_switch_safety`, `check_turn_clearance`, `check_obstacle_stop`, `check_pedestrian_crossing`, `estimate_following_distance`, `scene_summary` | [✅] |
-| `A2-1` | Orchestrator agent (spatial-reasoning system prompt + chained tool calls) | [ ] |
-| `A3-1` | Eval harness (GT-derived question bank, accuracy / tool-call count / latency / cost) | [ ] |
-| `A4-1` | Interactive Streamlit agent demo with live tool-trace panel | [ ] |
+| `A2-1` | Orchestrator agent (spatial-reasoning system prompt + chained tool calls) | [✅] |
+| `A3-1` | Eval harness (GT-derived question bank, accuracy / tool-call count / latency / cost) | [✅] |
+| `A4-1` | Interactive Streamlit agent demo with live tool-trace panel | [✅] |
+
+The A3 harness is validated on a 5-question smoke run; the full 320-question run
+hit API rate limits and is not a usable result yet. Details and the decision are in
+the roadmap below.
 
 Detailed agentic roadmap: [docs/agentic_perception_roadmap.md](docs/agentic_perception_roadmap.md)
 
@@ -635,6 +701,8 @@ autonomous-driving/
 │   └── temporal/             # Temporal fusion module
 ├── training/                 # Training loops, losses, schedulers
 ├── evaluation/               # Metrics (mAP, mIoU) and eval scripts
+│   └── scorecard.py          # P14 unified scorecard: one JSON row + CSV leaderboard per experiment
+├── results/                  # scorecard.csv leaderboard + scorecard/<name>.json rows
 ├── utils/
 │   └── visualize.py          # draw_boxes, visualize_batch, visualize_sample
 ├── notebooks/
@@ -651,5 +719,6 @@ autonomous-driving/
 │   ├── mcp_client.py         # stdio MCP client wrapper
 │   └── config.py             # .env loader (ANTHROPIC_API_KEY)
 └── docs/
-    └── agentic_perception_roadmap.md  # Phase-by-phase agentic roadmap
+    ├── agentic_perception_roadmap.md  # Phase-by-phase agentic roadmap
+    └── experiments/                   # Pre-registrations (TEMPLATE.md, R1, ...)
 ```
